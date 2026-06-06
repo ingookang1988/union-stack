@@ -50,7 +50,7 @@ The pillars are not flat. They operate at three distinct layers. **All of them l
 ```
 .union-stack/                  ← the entire control plane is isolated here
 [ FRAME / boundary ]   defines "what this project is"
-  monocron/          identity & domain vocabulary (tech whitepaper). Injected once at session start.
+  project/          identity & domain vocabulary (tech whitepaper). Injected once at session start.
 
 [ CELLS / pillars ]    where knowledge actually lives. Placed on an abstraction x state/action grid.
                    state (exists)          action (changes)
@@ -103,7 +103,7 @@ When an agent receives `WO-01a1-2`, **before writing any code**:
 ### Session bootstrap (the relay)
 
 The order an agent reads when a new session starts:
-1. `.union-stack/monocron/` — what this project is (identity)
+1. `.union-stack/project/` — what this project is (identity)
 2. `.union-stack/sprint/HANDOFF.md` — where the previous session stopped and what to pick up (the relay)
 3. Upward-fetch from the changed-location IDs in HANDOFF -> restore the severed context
 
@@ -118,7 +118,7 @@ When a session **ends**, the agent updates `HANDOFF.md` (5 required parts: summa
 git clone <this-repo> my-project && cd my-project
 
 # 2. Fill in identity — replace dummies with your project
-#    .union-stack/monocron/IDENTITY_example.md -> real content
+#    .union-stack/project/IDENTITY_example.md -> real content
 
 # 3. Define architecture norms
 #    edit the dummy norms in .union-stack/topology/ to fit your stack

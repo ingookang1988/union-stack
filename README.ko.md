@@ -50,7 +50,7 @@ LLM 에이전트는 컨텍스트 윈도우와 추론력이 커질수록 *능력*
 ```
 .union-stack/                  ← 컨트롤 평면 전체가 여기에 격리됨
 [ 액자 / 경계 ]   이 프로젝트가 "무엇인가"를 정하는 경계
-  monocron/          정체성·도메인 어휘 (기술 백서). 세션 시작 시 1회 주입.
+  project/          정체성·도메인 어휘 (기술 백서). 세션 시작 시 1회 주입.
 
 [ 칸 / 기둥 ]     실제 지식을 담는 곳. 추상 레벨 × 상태/행위 격자로 배치.
                    상태(존재)              행위(변화)
@@ -103,7 +103,7 @@ LLM 에이전트는 컨텍스트 윈도우와 추론력이 커질수록 *능력*
 ### 세션 부트스트랩 (이어달리기)
 
 새 세션이 시작될 때 에이전트가 읽는 순서:
-1. `.union-stack/monocron/` — 이 프로젝트가 무엇인가 (정체성)
+1. `.union-stack/project/` — 이 프로젝트가 무엇인가 (정체성)
 2. `.union-stack/sprint/HANDOFF.md` — 직전 세션이 어디서 멈췄고 무엇을 이어받을지 (이어달리기)
 3. HANDOFF의 변경 위치 ID들로 Upward Fetching → 끊긴 맥락 복원
 
@@ -118,7 +118,7 @@ LLM 에이전트는 컨텍스트 윈도우와 추론력이 커질수록 *능력*
 git clone <this-repo> my-project && cd my-project
 
 # 2. 정체성 채우기 — 더미를 당신 프로젝트로 교체
-#    .union-stack/monocron/IDENTITY_example.md → 실제 내용으로
+#    .union-stack/project/IDENTITY_example.md → 실제 내용으로
 
 # 3. 아키텍처 규범 정의
 #    .union-stack/topology/ 의 더미 규범을 당신 스택에 맞게 수정
