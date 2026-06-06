@@ -6,10 +6,11 @@ const fs = require('fs');
 const path = require('path');
 const { isValidName } = require('./zfs_util');
 
-// ZFS ID를 갖는 원자적 문서가 사는 디렉터리
+// ZFS ID를 갖는 원자적 문서가 사는 디렉터리 (.union-stack/ 격리 구조)
+const BASE = '.union-stack';
 const TARGET_DIRS = [
-  '.plan', '.feature/flow', '.sprint', '.topology', '.mechanism', '.contracts', '.lessons',
-];
+  'plan', 'feature/flow', 'sprint', 'topology', 'mechanism', 'contracts', 'lessons',
+].map(d => `${BASE}/${d}`);
 
 // ZFS 규약에서 면제되는 고정 매니페스트/가이드 파일
 const IGNORED = new Set([

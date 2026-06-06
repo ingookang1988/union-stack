@@ -45,31 +45,33 @@ LLM 에이전트는 컨텍스트 윈도우와 추론력이 커질수록 *능력*
 
 ## 2. 문서 지도 — 3층위로 읽기
 
-기둥들은 평평하지 않다. 세 층위로 작동 방식이 다르다.
+기둥들은 평평하지 않다. 세 층위로 작동 방식이 다르다. **전부 `.union-stack/` 아래에 격리되어 산다**(제품 코드와 섞이지 않고 루트를 더럽히지 않는 격리된 컨트롤 평면).
 
 ```
+.union-stack/                  ← 컨트롤 평면 전체가 여기에 격리됨
 [ 액자 / 경계 ]   이 프로젝트가 "무엇인가"를 정하는 경계
-  .monocron/         정체성·도메인 어휘 (기술 백서). 세션 시작 시 1회 주입.
-  README.md          (이 파일) 사용법
+  monocron/          정체성·도메인 어휘 (기술 백서). 세션 시작 시 1회 주입.
 
 [ 칸 / 기둥 ]     실제 지식을 담는 곳. 추상 레벨 × 상태/행위 격자로 배치.
                    상태(존재)              행위(변화)
-  당위(불변)       .topology/              .roadmap/
-  계약(약속)       .contracts/  ★          .plan/
-  실제(관찰)       .feature/               .sprint/  (+ HANDOFF.md 세션 이어달리기)
-  시간축(반복)     .lessons/    ★          (mechanism의 시간축 짝)
+  당위(불변)       topology/               roadmap/
+  계약(약속)       contracts/  ★           plan/
+  실제(관찰)       feature/                sprint/  (+ HANDOFF.md 세션 이어달리기)
+  시간축(반복)     lessons/    ★           (mechanism의 시간축 짝)
 
 [ 화살표 / 검증 ] 칸과 칸이 어긋났는지 재는 동적 평면 — 기둥이 아니다.
-  .mechanism/raw/      외부 신호 수신 (CI·컴파일러 생성, 에이전트 read-only)
-  .mechanism/derived/  검증 출력: gap(규범↔현실), state(구조 관찰)
+  mechanism/raw/       외부 신호 수신 (CI·컴파일러 생성, 에이전트 read-only)
+  mechanism/derived/   검증 출력: gap(규범↔현실), state(구조 관찰)
 
 [ 메타 / 자기 진화 ]
-  .proposals/        하네스 규칙 변경 제안 → 인간 승인/거부 → 사유 보존 (= 회고)
+  proposals/         하네스 규칙 변경 제안 → 인간 승인/거부 → 사유 보존 (= 회고)
 ```
 
+(레포 루트엔 `README.md`, `AGENTS.md`, `LICENSE`, `package.json`, `scripts/`만 남고, 나머지는 전부 `.union-stack/` 아래에 있다.)
+
 ★ = 일반적인 doc-stack에 흔히 빠져 있는 두 평면. 이 템플릿의 차별점이다.
-- `.contracts/` — 공유 정적 명세(타입·인터페이스)와 **테스트 도구 카탈로그**. "에이전트가 새로 만들지 말고 찾아 쓸 것들."
-- `.lessons/` — 반복된 실패의 누적(오답노트). 작업 진입 시 *사전 경고*로 주입.
+- `.union-stack/contracts/` — 공유 정적 명세(타입·인터페이스)와 **테스트 도구 카탈로그**. "에이전트가 새로 만들지 말고 찾아 쓸 것들."
+- `.union-stack/lessons/` — 반복된 실패의 누적(오답노트). 작업 진입 시 *사전 경고*로 주입.
 
 각 디렉터리의 `_GUIDE.md`에 "무엇을 싣고 무엇을 빼는가"가 적혀 있다.
 
@@ -88,7 +90,7 @@ LLM 에이전트는 컨텍스트 윈도우와 추론력이 커질수록 *능력*
   - `01` → `01a` → `01a1` → `WO-01a1-1`
 - **slug**: 소문자 스네이크. 공백·하이픈·대문자 금지.
 
-> 검증된 정규식과 자식/형제 판정 로직은 `scripts/`에 있고 테스트로 보증된다. 자세한 규약은 `.topology/ARCH-00_zfs_naming.md`.
+> 검증된 정규식과 자식/형제 판정 로직은 `scripts/`에 있고 테스트로 보증된다. 자세한 규약은 `.union-stack/topology/ARCH-00_zfs_naming.md`.
 
 ### 작업 진입 의식 (Upward Fetching)
 
@@ -101,11 +103,11 @@ LLM 에이전트는 컨텍스트 윈도우와 추론력이 커질수록 *능력*
 ### 세션 부트스트랩 (이어달리기)
 
 새 세션이 시작될 때 에이전트가 읽는 순서:
-1. `.monocron/` — 이 프로젝트가 무엇인가 (정체성)
-2. `.sprint/HANDOFF.md` — 직전 세션이 어디서 멈췄고 무엇을 이어받을지 (이어달리기)
+1. `.union-stack/monocron/` — 이 프로젝트가 무엇인가 (정체성)
+2. `.union-stack/sprint/HANDOFF.md` — 직전 세션이 어디서 멈췄고 무엇을 이어받을지 (이어달리기)
 3. HANDOFF의 변경 위치 ID들로 Upward Fetching → 끊긴 맥락 복원
 
-세션을 **마칠 때**는 에이전트가 `HANDOFF.md`를 갱신한다(필수 5요소: 요약·변경위치·다음작업·미해결·검증상태). 상세 규율은 `.sprint/_GUIDE.md`.
+세션을 **마칠 때**는 에이전트가 `HANDOFF.md`를 갱신한다(필수 5요소: 요약·변경위치·다음작업·미해결·검증상태). 상세 규율은 `.union-stack/sprint/_GUIDE.md`.
 
 ---
 
@@ -116,17 +118,21 @@ LLM 에이전트는 컨텍스트 윈도우와 추론력이 커질수록 *능력*
 git clone <this-repo> my-project && cd my-project
 
 # 2. 정체성 채우기 — 더미를 당신 프로젝트로 교체
-#    .monocron/IDENTITY_example.md → 실제 내용으로
+#    .union-stack/monocron/IDENTITY_example.md → 실제 내용으로
 
 # 3. 아키텍처 규범 정의
-#    .topology/ 의 더미 규범을 당신 스택에 맞게 수정
+#    .union-stack/topology/ 의 더미 규범을 당신 스택에 맞게 수정
 
 # 4. 첫 기획 작성
-#    .plan/PLAN-01_example_feature.md 를 복제해 실제 기능 기획 작성
+#    .union-stack/plan/PLAN-01_example_feature.md 를 복제해 실제 기능 기획 작성
 
 # 5. 네이밍 린터로 검증
 node scripts/zfs-linter.js
 ```
+
+AI 에이전트는 레포 루트의 **`AGENTS.md`**를 자동으로 읽는다(범용 표준). 이 파일이 결정론적 규율을 못 박고 `.union-stack/`으로 안내한다. 자기 전용 파일만 읽는 도구를 위해 한 줄 스텁(예: `CLAUDE.md`)이 `AGENTS.md`를 가리킨다 — 진실의 출처는 하나로 두고 규칙을 중복시키지 않는다.
+
+각 디렉터리의 `_GUIDE.md`에서 상세를 확인하라.
 
 각 단계의 상세는 해당 디렉터리 `_GUIDE.md` 참조.
 

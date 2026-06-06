@@ -45,31 +45,33 @@ The core principle is **Fail-close**. On a norm violation, contract mismatch, or
 
 ## 2. Document map — read it in three layers
 
-The pillars are not flat. They operate at three distinct layers.
+The pillars are not flat. They operate at three distinct layers. **All of them live under `.union-stack/`** (an isolated control plane that sits alongside your product code without polluting the project root).
 
 ```
+.union-stack/                  ← the entire control plane is isolated here
 [ FRAME / boundary ]   defines "what this project is"
-  .monocron/         identity & domain vocabulary (tech whitepaper). Injected once at session start.
-  README.md          (this file) usage
+  monocron/          identity & domain vocabulary (tech whitepaper). Injected once at session start.
 
 [ CELLS / pillars ]    where knowledge actually lives. Placed on an abstraction x state/action grid.
                    state (exists)          action (changes)
-  ought(immutable) .topology/              .roadmap/
-  contract(agreed) .contracts/  *          .plan/
-  actual(observed) .feature/               .sprint/  (+ HANDOFF.md session relay)
-  time-axis(repeat).lessons/    *          (the time-axis counterpart of mechanism)
+  ought(immutable) topology/               roadmap/
+  contract(agreed) contracts/  *           plan/
+  actual(observed) feature/                sprint/  (+ HANDOFF.md session relay)
+  time-axis(repeat)lessons/    *           (the time-axis counterpart of mechanism)
 
 [ ARROWS / verification ] dynamic planes measuring whether cells diverge — not pillars.
-  .mechanism/raw/      inbound signals (CI/compiler-generated, agent read-only)
-  .mechanism/derived/  verification output: gap(norm<->reality), state(structure observed)
+  mechanism/raw/       inbound signals (CI/compiler-generated, agent read-only)
+  mechanism/derived/   verification output: gap(norm<->reality), state(structure observed)
 
 [ META / self-evolution ]
-  .proposals/        proposed harness-rule changes -> human approve/reject -> reasons preserved (= retrospective)
+  proposals/         proposed harness-rule changes -> human approve/reject -> reasons preserved (= retrospective)
 ```
 
+(The repo root keeps only `README.md`, `AGENTS.md`, `LICENSE`, `package.json`, and `scripts/`. Everything else is under `.union-stack/`.)
+
 `*` = two planes commonly missing from an ordinary doc-stack. They are this template's differentiator.
-- `.contracts/` — shared static specs (types/interfaces) and a **test-tooling catalog**. "Things the agent should find and reuse, not recreate."
-- `.lessons/` — accumulated repeated failures (a mistake log). Injected as a *pre-warning* when entering work.
+- `.union-stack/contracts/` — shared static specs (types/interfaces) and a **test-tooling catalog**. "Things the agent should find and reuse, not recreate."
+- `.union-stack/lessons/` — accumulated repeated failures (a mistake log). Injected as a *pre-warning* when entering work.
 
 Each directory's `_GUIDE.md` states "what to put in, what to keep out."
 
@@ -88,7 +90,7 @@ Parent/child/sibling relations are inferred from filenames alone, borrowing Nikl
   - `01` -> `01a` -> `01a1` -> `WO-01a1-1`
 - **slug**: lowercase snake_case. No spaces, hyphens, or uppercase.
 
-> The verified regex and child/sibling logic live in `scripts/` and are guaranteed by tests. Full convention: `.topology/ARCH-00_zfs_naming.md`.
+> The verified regex and child/sibling logic live in `scripts/` and are guaranteed by tests. Full convention: `.union-stack/topology/ARCH-00_zfs_naming.md`.
 
 ### Work-entry ritual (Upward Fetching)
 
@@ -101,11 +103,11 @@ When an agent receives `WO-01a1-2`, **before writing any code**:
 ### Session bootstrap (the relay)
 
 The order an agent reads when a new session starts:
-1. `.monocron/` — what this project is (identity)
-2. `.sprint/HANDOFF.md` — where the previous session stopped and what to pick up (the relay)
+1. `.union-stack/monocron/` — what this project is (identity)
+2. `.union-stack/sprint/HANDOFF.md` — where the previous session stopped and what to pick up (the relay)
 3. Upward-fetch from the changed-location IDs in HANDOFF -> restore the severed context
 
-When a session **ends**, the agent updates `HANDOFF.md` (5 required parts: summary, changed locations, next task, open issues, verification status). Detailed discipline in `.sprint/_GUIDE.md`.
+When a session **ends**, the agent updates `HANDOFF.md` (5 required parts: summary, changed locations, next task, open issues, verification status). Detailed discipline in `.union-stack/sprint/_GUIDE.md`.
 
 ---
 
@@ -116,17 +118,19 @@ When a session **ends**, the agent updates `HANDOFF.md` (5 required parts: summa
 git clone <this-repo> my-project && cd my-project
 
 # 2. Fill in identity — replace dummies with your project
-#    .monocron/IDENTITY_example.md -> real content
+#    .union-stack/monocron/IDENTITY_example.md -> real content
 
 # 3. Define architecture norms
-#    edit the dummy norms in .topology/ to fit your stack
+#    edit the dummy norms in .union-stack/topology/ to fit your stack
 
 # 4. Write your first plan
-#    copy .plan/PLAN-01_example_feature.md and write a real feature plan
+#    copy .union-stack/plan/PLAN-01_example_feature.md and write a real feature plan
 
 # 5. Validate with the naming linter
 node scripts/zfs-linter.js
 ```
+
+Your AI agent reads **`AGENTS.md`** at the repo root automatically (the cross-tool standard). It pins the deterministic rules and points into `.union-stack/`. For tools that only read their own file, a one-line stub (e.g. `CLAUDE.md`) points back to `AGENTS.md` — keep one source of truth, never duplicate rules.
 
 See each directory's `_GUIDE.md` for details.
 
