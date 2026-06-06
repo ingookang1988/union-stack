@@ -12,7 +12,7 @@ function check(label, got, exp) {
 // --- isSanitized: 순수 판정 ---
 // 더미 마커(본문/슬러그)
 check('본문 (예시) 마커', isSanitized('.union-stack/plan/PLAN-01_x.md', '# (예시) 인증'), true);
-check('슬러그 example',   isSanitized('.union-stack/lessons/LSN-01a_example_pitfall.md', '내용'), true);
+check('슬러그 example',   isSanitized('.union-stack/reference/lessons/LSN-01a_example_pitfall.md', '내용'), true);
 check('영문 dummy 마커',  isSanitized('.union-stack/feature/live.md', 'a dummy row'), true);
 // 방법론 allowlist
 check('_GUIDE 면제',      isSanitized('.union-stack/sprint/_GUIDE.md', '마커 전혀 없음'), true);

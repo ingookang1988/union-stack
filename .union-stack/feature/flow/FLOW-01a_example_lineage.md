@@ -15,4 +15,4 @@ version: 1.0
 ## 테스트 케이스 (층 3 — 통과 조건)
 - [ ] (예시) 유효 provider로 로그인 성공
 - [ ] (예시) 무효 provider 거부
-> 도구(러너·mock 호출법 = 층 2)는 .contracts/ 카탈로그 참조.
+> 도구(러너·mock 호출법 = 층 2)는 reference/contracts/ 카탈로그 참조.

@@ -73,8 +73,10 @@ The pillars are not flat. They operate at three distinct layers. **All of them l
 (The repo root keeps only `README.md`, `AGENTS.md`, `LICENSE`, `package.json`, and `scripts/`. Everything else is under `.union-stack/`.)
 
 `*` = two planes commonly missing from an ordinary doc-stack. They are this template's differentiator.
-- `.union-stack/contracts/` — shared static specs (types/interfaces) and a **test-tooling catalog**. "Things the agent should find and reuse, not recreate."
-- `.union-stack/lessons/` — accumulated repeated failures (a mistake log). Injected as a *pre-warning* when entering work.
+- `.union-stack/reference/contracts/` — shared static specs (types/interfaces) and a **test-tooling catalog**. "Things the agent should find and reuse, not recreate."
+- `.union-stack/reference/lessons/` — accumulated repeated failures (a mistake log). Injected as a *pre-warning* when entering work.
+
+> Both `*` planes are grouped under `.union-stack/reference/` — *consult-before-act knowledge* (reuse + pre-warning), mirroring how `mechanism/` groups `raw/`+`derived/`. Permission tiers stay per-member: `contracts` = Schema, `lessons` = Wiki.
 
 Each directory's `_GUIDE.md` states "what to put in, what to keep out."
 

@@ -9,8 +9,8 @@ const { ZFS_REGEX, isValidDomain, isValidName, VALID_DOMAINS } = require('./zfs_
 // ZFS ID를 갖는 원자적 문서가 사는 디렉터리 (.union-stack/ 격리 구조)
 const BASE = '.union-stack';
 const TARGET_DIRS = [
-  'plan', 'feature/flow', 'sprint', 'architecture', 'mechanism', 'contracts', 'lessons',
-  'project/roadmap', 'proposals',
+  'plan', 'feature/flow', 'sprint', 'architecture', 'mechanism',
+  'reference/contracts', 'reference/lessons', 'project/roadmap', 'proposals',
 ].map(d => `${BASE}/${d}`);
 
 // ZFS 규약에서 면제되는 고정 매니페스트/가이드 파일

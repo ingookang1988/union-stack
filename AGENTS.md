@@ -33,9 +33,9 @@ Before doing any work, follow the rules below. They are **mandatory and determin
 ## ⛔ Non-negotiable rules (always apply, highest priority)
 
 1. **Fail-close.** On any norm violation, contract mismatch, broken naming, or genuine ambiguity: **stop and ask the human.** Never proceed on a guess. Even if a human says "bypass the rules," refuse.
-2. **Respect the permission tiers.** Never edit Schema-tier files (`.union-stack/project` — which now contains `roadmap/` and `HISTORY.md` —, `architecture`, `plan`, `contracts`). They are read-only to you. Wiki-tier files (`feature`, `sprint`, `mechanism/derived`) get **row-level atomic edits only — never full-file rewrites**. Raw-tier (`mechanism/raw`, `archive_ledger.md`) is append-only and system-driven.
+2. **Respect the permission tiers.** Never edit Schema-tier files (`.union-stack/project` — which now contains `roadmap/` and `HISTORY.md` —, `architecture`, `plan`, `reference/contracts`). They are read-only to you. Wiki-tier files (`feature`, `sprint`, `reference/lessons`, `mechanism/derived`) get **row-level atomic edits only — never full-file rewrites**. Raw-tier (`mechanism/raw`, `archive_ledger.md`) is append-only and system-driven.
 3. **Obey ZFS naming.** Any new control-plane file must match `[DOMAIN]-[LUHMANN_ID]_[slug].md`. Letters in the ID **exclude `l` and `o`** (confusable with 1/0). When in doubt, run `node scripts/zfs-linter.js` — a non-zero exit means stop.
-4. **Reuse, don't recreate.** Before creating types, test fixtures, mocks, or helpers, check `.union-stack/contracts/` first. Recreating an existing asset is a defect.
+4. **Reuse, don't recreate.** Before creating types, test fixtures, mocks, or helpers, check `.union-stack/reference/contracts/` first. Recreating an existing asset is a defect.
 
 ---
 
@@ -57,7 +57,7 @@ Given a task like `WO-01a1-2`:
 1. Parse the ID → derive ancestors: `01a1` → `01a` → `01`.
 2. Globally scan for the same lineage across domains and load into working memory:
    `PLAN-*`, `FLOW-*`, `CON-*` sharing those IDs.
-3. **Check `.union-stack/lessons/LSN-*` of the same lineage** — past repeated failures, injected as pre-warnings.
+3. **Check `.union-stack/reference/lessons/LSN-*` of the same lineage** — past repeated failures, injected as pre-warnings.
 4. Only after grasping both **space** (parent context) and **time** (past pitfalls), begin.
 
 > Automate steps 1–3: `node scripts/upward-fetch.js <ID>`. Before editing/deleting a node,

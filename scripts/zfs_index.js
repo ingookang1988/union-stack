@@ -8,8 +8,8 @@ const { parse } = require('./zfs_util');
 // ZFS ID를 갖는 원자적 문서가 사는 디렉터리(.union-stack/ 격리 구조, 린터와 동일 집합).
 const BASE = '.union-stack';
 const SCAN_DIRS = [
-  'plan', 'feature/flow', 'sprint', 'architecture', 'mechanism', 'contracts', 'lessons',
-  'project/roadmap', 'proposals',
+  'plan', 'feature/flow', 'sprint', 'architecture', 'mechanism',
+  'reference/contracts', 'reference/lessons', 'project/roadmap', 'proposals',
 ].map(d => `${BASE}/${d}`);
 
 // frontmatter에서 status 한 줄만 의존성 없이 추출. 없으면 null.

@@ -3,7 +3,7 @@
 > On human approval it is promoted to Schema; on rejection it is *preserved with the rejection rationale*.
 
 ## Goes in: proposed changes to harness rules (Schema) / processes. Also proposals to
-##   list/retire entries in .union-stack/lessons & .union-stack/contracts route here.
+##   list/retire entries in .union-stack/reference/lessons & .union-stack/reference/contracts route here.
 ## Two loops: the fast loop (product wiki updates) is automatic. The slow loop (rule changes) *always* passes this gate.
 
 ## Preserving rejection records is mandatory: delete them and the same proposal repeats forever.

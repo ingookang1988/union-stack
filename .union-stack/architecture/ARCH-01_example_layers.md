@@ -15,6 +15,6 @@ version: 1.0
 - Domain logic is unit-tested without infrastructure.
 - All external dependencies are abstracted behind ports; adapters are mocked.
 - E2E runs only at this boundary.
-- (Concrete runner/fixture/mock calling conventions = tier 2, cataloged in `.union-stack/contracts/`.)
+- (Concrete runner/fixture/mock calling conventions = tier 2, cataloged in `.union-stack/reference/contracts/`.)
 
 > Everything above is a synthetic example. Replace it with your real stack's rules.

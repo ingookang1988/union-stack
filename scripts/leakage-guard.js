@@ -17,7 +17,7 @@ const path = require('path');
 // project 를 재귀 스캔하므로 project/roadmap·HISTORY 도 포함된다.
 const CONTENT_DIRS = [
   '.union-stack/project', '.union-stack/architecture', '.union-stack/plan',
-  '.union-stack/feature', '.union-stack/contracts', '.union-stack/lessons',
+  '.union-stack/feature', '.union-stack/reference',
   '.union-stack/sprint', '.union-stack/mechanism', '.union-stack/proposals',
 ];
 // 콘텐츠를 담는 매니페스트(디렉터리 밖이지만 스캔 대상).

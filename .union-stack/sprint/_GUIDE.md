@@ -8,7 +8,7 @@
 ## HANDOFF.md — the session relay (agent-generated)
 
 > The period of a session and the comma to the next. The *fast time-axis* linking session to session.
-> (cf. .union-stack/lessons/ is the repeated pattern across many sessions = the slow time-axis)
+> (cf. .union-stack/reference/lessons/ is the repeated pattern across many sessions = the slow time-axis)
 
 ### Who / when
 - The **agent ending a session** writes it, organizing its own work (Wiki atomic write).
@@ -17,7 +17,7 @@
 ### Volatile — only the latest one is valid
 - Overwrite `HANDOFF.md` at the end of each session. The previous one is pushed to `prev.md` (rolling).
 - Not for permanent retention. Once the next session reads it, its role is done.
-- Lasting lessons are promoted separately to .union-stack/lessons/, decision records to archive_ledger.
+- Lasting lessons are promoted separately to .union-stack/reference/lessons/, decision records to archive_ledger.
 
 ### Authoring discipline (the agent must follow)
 1. **A format a machine can pick up.** No prose diary. Structured items stamped with ZFS IDs.

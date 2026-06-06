@@ -4,12 +4,12 @@
 
 ## What goes in
 - Architecture rules: layer definitions, dependency direction, DDD/FSD boundaries.
-- **Test strategy (tier 1):** the norms of "why & how we test." (concrete tools go to `.union-stack/contracts/`)
+- **Test strategy (tier 1):** the norms of "why & how we test." (concrete tools go to `.union-stack/reference/contracts/`)
 - Cross-cutting norms: *principles* of security/observability (concrete impl goes to code/contracts).
 - The ZFS naming convention itself.
 
 ## What stays out
-- Concrete types/signatures → `.union-stack/contracts/` (contract).
+- Concrete types/signatures → `.union-stack/reference/contracts/` (contract).
 - The actual current code structure → `.union-stack/mechanism/derived/state`.
 - Anything that is "this is how it is" rather than "this is how it ought to be" belongs elsewhere.
 
