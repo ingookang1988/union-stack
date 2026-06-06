@@ -1,11 +1,11 @@
 {
   "name": "union-stack",
-  "version": "5.3.0",
+  "version": "5.4.0",
   "description": "Document-based control-plane template for AI-agent system coding",
   "scripts": {
-    "lint": "node scripts/zfs-linter.js",
+    "lint": "node scripts/zfs-linter.js && node scripts/history-linter.js",
     "lint:leakage": "node scripts/leakage-guard.js",
-    "test": "node scripts/zfs_util.test.js && node scripts/zfs_index.test.js && node scripts/leakage-guard.test.js",
+    "test": "node scripts/zfs_util.test.js && node scripts/zfs_index.test.js && node scripts/leakage-guard.test.js && node scripts/history-linter.test.js",
     "fetch": "node scripts/upward-fetch.js",
     "blast": "node scripts/blast-radius.js"
   },

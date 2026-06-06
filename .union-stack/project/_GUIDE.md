@@ -38,6 +38,9 @@ But as three files in one *folder*, not one *file* — they move at different ve
 3. **Limited authorship.** Major turning points only. Distinct from day-to-day work decisions (→ archive_ledger).
    Listed by a human directly, or via proposals/ (no auto-accretion — like lessons, dumping anything in is poison).
 
+> Rule 1 is **enforced**, not just declared: `node scripts/history-linter.js` Fail-closes (exit 1) on any
+> turning point whose reason cell is empty. (No-op when HISTORY.md is absent — history accretes over time.)
+
 ## How to use
 - Inject IDENTITY once at session start. Reference roadmap·HISTORY when direction judgment / anti-regression is needed.
 

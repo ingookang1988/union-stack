@@ -75,5 +75,6 @@ Read the relevant `_GUIDE.md` before acting in that area. Do not rely on this fi
 this file only pins the deterministic core. The detail lives in the structure.
 
 - Naming spec & verified logic: `.union-stack/topology/ARCH-00_zfs_naming.md`, `scripts/`
+- Enforced gates (`node scripts/zfs-linter.js`, `node scripts/history-linter.js`): naming + HISTORY fact-with-reason. A non-zero exit means stop.
 - Full design rationale: `DESIGN_RATIONALE.md`
 - Self-evolution: propose harness-rule changes in `.union-stack/proposals/` (never edit Schema directly).
