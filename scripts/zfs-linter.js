@@ -10,13 +10,14 @@ const { isValidName } = require('./zfs_util');
 const BASE = '.union-stack';
 const TARGET_DIRS = [
   'plan', 'feature/flow', 'sprint', 'topology', 'mechanism', 'contracts', 'lessons',
+  'project/roadmap',
 ].map(d => `${BASE}/${d}`);
 
 // ZFS 규약에서 면제되는 고정 매니페스트/가이드 파일
 const IGNORED = new Set([
   'README.md', '_GUIDE.md', 'DESIGN_RATIONALE.md',
   'next.md', 'prev.md', 'live.md', 'target.md', 'hold.md',
-  'state.md', 'evidence.md', 'gap.md', 'HANDOFF.md',
+  'state.md', 'evidence.md', 'gap.md', 'HANDOFF.md', 'HISTORY.md',
 ]);
 const IGNORED_SUFFIX = ['_GUIDE.md'];
 

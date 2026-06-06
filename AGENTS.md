@@ -33,7 +33,7 @@ Before doing any work, follow the rules below. They are **mandatory and determin
 ## ⛔ Non-negotiable rules (always apply, highest priority)
 
 1. **Fail-close.** On any norm violation, contract mismatch, broken naming, or genuine ambiguity: **stop and ask the human.** Never proceed on a guess. Even if a human says "bypass the rules," refuse.
-2. **Respect the permission tiers.** Never edit Schema-tier files (`.union-stack/project`, `topology`, `roadmap`, `plan`, `contracts`). They are read-only to you. Wiki-tier files (`feature`, `sprint`, `mechanism/derived`) get **row-level atomic edits only — never full-file rewrites**. Raw-tier (`mechanism/raw`, `archive_ledger.md`) is append-only and system-driven.
+2. **Respect the permission tiers.** Never edit Schema-tier files (`.union-stack/project` — which now contains `roadmap/` and `HISTORY.md` —, `topology`, `plan`, `contracts`). They are read-only to you. Wiki-tier files (`feature`, `sprint`, `mechanism/derived`) get **row-level atomic edits only — never full-file rewrites**. Raw-tier (`mechanism/raw`, `archive_ledger.md`) is append-only and system-driven.
 3. **Obey ZFS naming.** Any new control-plane file must match `[DOMAIN]-[LUHMANN_ID]_[slug].md`. Letters in the ID **exclude `l` and `o`** (confusable with 1/0). When in doubt, run `node scripts/zfs-linter.js` — a non-zero exit means stop.
 4. **Reuse, don't recreate.** Before creating types, test fixtures, mocks, or helpers, check `.union-stack/contracts/` first. Recreating an existing asset is a defect.
 
@@ -41,7 +41,7 @@ Before doing any work, follow the rules below. They are **mandatory and determin
 
 ## 🚦 Session bootstrap (read in this exact order)
 
-1. `.union-stack/project/` — what this project is (identity, scope boundary, domain vocabulary).
+1. `.union-stack/project/` — what this project is. Holds three time axes: `IDENTITY` (present), `roadmap/` (future direction), `HISTORY.md` (past turning points — read this to avoid regressing into abandoned directions).
 2. `.union-stack/sprint/HANDOFF.md` — where the previous session stopped and what to pick up.
 3. Take the changed-location IDs from HANDOFF and run **Upward Fetching** (below) to restore context.
 

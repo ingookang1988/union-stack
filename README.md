@@ -49,12 +49,15 @@ The pillars are not flat. They operate at three distinct layers. **All of them l
 
 ```
 .union-stack/                  ← the entire control plane is isolated here
-[ FRAME / boundary ]   defines "what this project is"
-  project/          identity & domain vocabulary (tech whitepaper). Injected once at session start.
+[ FRAME / boundary + time axis ]   "what this project is" — past/present/future in one folder
+  project/
+    IDENTITY (present)   identity, scope boundary, domain vocabulary. Injected once at session start.
+    roadmap/  (future)   milestones & gates — where the project is heading
+    HISTORY.md (past)    strategic turning points (pivots, dependency adopt/drop) — fact + reason, anti-regression
 
 [ CELLS / pillars ]    where knowledge actually lives. Placed on an abstraction x state/action grid.
                    state (exists)          action (changes)
-  ought(immutable) topology/               roadmap/
+  ought(immutable) topology/               (roadmap lives under project/)
   contract(agreed) contracts/  *           plan/
   actual(observed) feature/                sprint/  (+ HANDOFF.md session relay)
   time-axis(repeat)lessons/    *           (the time-axis counterpart of mechanism)
