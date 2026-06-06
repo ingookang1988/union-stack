@@ -2,9 +2,11 @@ name: Harness Checks
 on:
   push:
   pull_request:
-  workflow_run:
-    workflows: ["E2E Test Pipeline"]
-    types: [completed]
+  # 클론 후, 본인 테스트 파이프라인이 끝난 뒤 하네스 검사를 다시 돌리고 싶다면
+  # 아래를 켜고 workflows 값을 실제 워크플로 이름으로 교체하세요(이 템플릿엔 없음).
+  # workflow_run:
+  #   workflows: ["<your pipeline name>"]
+  #   types: [completed]
 
 jobs:
   validate:
@@ -17,3 +19,5 @@ jobs:
         run: node scripts/zfs-linter.js
       - name: ZFS util tests
         run: node scripts/zfs_util.test.js
+      - name: ZFS index integration tests
+        run: node scripts/zfs_index.test.js

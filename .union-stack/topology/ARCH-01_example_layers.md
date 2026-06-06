@@ -1,20 +1,20 @@
-<!-- [Schema/당위] 더미 예시. 당신의 아키텍처로 교체하세요. -->
+<!-- [Schema/ought] Dummy example. Replace with your own architecture. -->
 ---
 id: ARCH-01
-title: (예시) 레이어 의존성 규칙
+title: (example) Layer dependency rules
 status: Active
 version: 1.0
 ---
 
-# [ARCH-01] (예시) 클린 아키텍처 레이어 규칙
+# [ARCH-01] (example) Clean-architecture layer rules
 
-## 의존성 방향 (예시)
-`UI → App → Domain ← Infra` — 안쪽(Domain)은 바깥을 import하지 않는다.
+## Dependency direction (example)
+`UI → App → Domain ← Infra` — the inner layer (Domain) does not import the outer ones.
 
-## 테스트 전략 (층 1: 왜·어떻게)
-- Domain 로직은 인프라 없이 단위 테스트한다.
-- 모든 외부 의존은 포트로 추상화하고 어댑터를 mock한다.
-- E2E는 이 경계에서만 돈다.
-- (구체적 러너·fixture·mock 호출법 = 층 2는 `.contracts/`에 카탈로그.)
+## Test strategy (tier 1: why & how)
+- Domain logic is unit-tested without infrastructure.
+- All external dependencies are abstracted behind ports; adapters are mocked.
+- E2E runs only at this boundary.
+- (Concrete runner/fixture/mock calling conventions = tier 2, cataloged in `.union-stack/contracts/`.)
 
-> 위는 전부 가공 예시다. 당신의 실제 스택 규칙으로 교체하라.
+> Everything above is a synthetic example. Replace it with your real stack's rules.

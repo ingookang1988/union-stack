@@ -1,15 +1,15 @@
-# .contracts/ — 계약·상태 (공유 계약·재사용 자산) 가이드  ★신규 평면
-> **격자:** 계약(약속) × 상태. **권한:** Schema (계약은 강하게 박힘).
-> **변화 속도:** 거의 불변. **존재 이유: 재사용 강제 — "새로 만들지 말고 찾아 쓸 것".**
+# contracts/ — contract × state (shared contracts · reusable assets) guide  ★new plane
+> **Grid:** contract (agreed) × state. **Permission:** Schema (contracts are pinned hard).
+> **Change velocity:** near-immutable. **Reason for existence: enforce reuse — "find and use, don't recreate."**
 
-## 싣는 것 (두 종류, 같은 "상태쪽 계약")
-1. 공유 정적 명세: 전역 타입·인터페이스·enum·핵심 시그니처(SSOT).
-2. 테스트 도구 카탈로그(층 2): 러너·fixture·mock의 **호출 규약**.
+## What goes in (two kinds, both "state-side contracts")
+1. Shared static specs: global types · interfaces · enums · core signatures (SSOT).
+2. Test-tooling catalog (tier 2): the *calling conventions* of runners · fixtures · mocks.
 
-## 카탈로그 필수 3요소 (하나라도 빠지면 작동 안 함)
-- 무엇이 있고(존재) · 어디 있고(경로/ID) · **어떻게 쓰는가(호출 예시)**.
+## The catalog's 3 mandatory elements (missing any one and it doesn't work)
+- What exists (existence) · where it is (path/ID) · **how to use it (call example)**.
 
-## 동기화: 가능하면 코드에서 자동 추출(코드=진실, 카탈로그=투영).
-##   비정형은 에이전트 제안(→ .proposals) 후 인간 승인.
-## 가시성: 강제 게이트 대신 좌표화+부트스트랩 — 문제는 의지가 아니라 가시성.
-## 공개 주의: 구조는 공개 OK, 실제 호출 예시는 더미로 정화(누설 차단).
+## Sync: auto-extract from code where possible (code = truth, catalog = projection).
+##   For unstructured cases, agent proposes (→ .union-stack/proposals), then human approves.
+## Visibility: coordinates + bootstrap, not a forced gate — the problem is visibility, not willpower.
+## Publishing caution: structure is fine to publish, but sanitize real call examples to dummies (block leakage).

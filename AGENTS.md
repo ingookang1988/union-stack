@@ -60,6 +60,9 @@ Given a task like `WO-01a1-2`:
 3. **Check `.union-stack/lessons/LSN-*` of the same lineage** — past repeated failures, injected as pre-warnings.
 4. Only after grasping both **space** (parent context) and **time** (past pitfalls), begin.
 
+> Automate steps 1–3: `node scripts/upward-fetch.js <ID>`. Before editing/deleting a node,
+> run `node scripts/blast-radius.js <ID>` — it Fail-closes (exit 1) if a Verifying/Live descendant exists.
+
 Reference other documents by **bracket ID** (`[PLAN-01a1]`), never by relative path.
 
 ---

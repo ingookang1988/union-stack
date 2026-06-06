@@ -4,13 +4,13 @@
 // 실행: node scripts/zfs-linter.js
 const fs = require('fs');
 const path = require('path');
-const { isValidName } = require('./zfs_util');
+const { ZFS_REGEX, isValidDomain, isValidName, VALID_DOMAINS } = require('./zfs_util');
 
 // ZFS ID를 갖는 원자적 문서가 사는 디렉터리 (.union-stack/ 격리 구조)
 const BASE = '.union-stack';
 const TARGET_DIRS = [
   'plan', 'feature/flow', 'sprint', 'topology', 'mechanism', 'contracts', 'lessons',
-  'project/roadmap',
+  'project/roadmap', 'proposals',
 ].map(d => `${BASE}/${d}`);
 
 // ZFS 규약에서 면제되는 고정 매니페스트/가이드 파일
@@ -34,9 +34,16 @@ function scan(dir) {
       hasErrors = true;
       console.error(`\n[ZFS] 규칙 위반: ${full}`);
       console.error(`      형식: [DOMAIN]-[LUHMANN_ID]_[slug].md`);
-      const domainPart = entry.split('_')[0] || '';
-      if (/[lo]/.test(domainPart.replace(/^[A-Z]{2,6}-/, ''))) {
-        console.error(`      힌트: Luhmann ID에 'l'/'o'는 금지(숫자 1/0과 혼동).`);
+      const m = entry.match(ZFS_REGEX);
+      if (m && !isValidDomain(m[1])) {
+        // 구조는 맞으나 도메인이 화이트리스트 밖 — 가장 흔한 오타 경로
+        console.error(`      힌트: '${m[1]}'은 허용 도메인이 아님.`);
+        console.error(`            허용: ${[...VALID_DOMAINS].join(' ')}`);
+      } else {
+        const idPart = (entry.split('_')[0] || '').replace(/^[A-Z]{2,6}-/, '');
+        if (/[lo]/.test(idPart)) {
+          console.error(`      힌트: Luhmann ID에 'l'/'o'는 금지(숫자 1/0과 혼동).`);
+        }
       }
     }
   }

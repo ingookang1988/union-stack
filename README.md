@@ -88,12 +88,12 @@ Parent/child/sibling relations are inferred from filenames alone, borrowing Nikl
 [DOMAIN]-[LUHMANN_ID]_[slug].md      e.g. PLAN-01a1_example_oauth.md
 ```
 
-- **DOMAIN**: 2–6 uppercase letters. `PLAN FLOW ARCH WO WF EVD ADR CON LSN`, etc.
+- **DOMAIN**: 2–6 uppercase letters, from a **closed whitelist** enforced by `VALID_DOMAINS` in `scripts/zfs_util.js`: `ARCH PHASE CON PLAN FLOW WO WF LSN EVD ADR PRO`.
 - **LUHMANN_ID**: starts with a digit; digits and letters alternate. Letters **exclude `l`/`o`** (confusable with digits 1/0). Terminal tasks end with `-N`.
   - `01` -> `01a` -> `01a1` -> `WO-01a1-1`
 - **slug**: lowercase snake_case. No spaces, hyphens, or uppercase.
 
-> The verified regex and child/sibling logic live in `scripts/` and are guaranteed by tests. Full convention: `.union-stack/topology/ARCH-00_zfs_naming.md`.
+> The verified regex and child/sibling logic live in `scripts/` and are guaranteed by tests. The two rituals below are executable: `node scripts/upward-fetch.js <ID>` and `node scripts/blast-radius.js <ID>`. Full convention: `.union-stack/topology/ARCH-00_zfs_naming.md`.
 
 ### Work-entry ritual (Upward Fetching)
 
@@ -147,6 +147,8 @@ This repo publishes only the **frame**. The **content** you fill in after clonin
 - Keep private (the content): real ID lineage, real test cases, real lesson logs, real data lineage.
 
 **Leakage caution:** if you make a public fork with examples rewritten too specifically to your domain, your domain leaks. Always keep `example` dummies in public versions.
+
+**Leakage guard (for public template / public forks).** `node scripts/leakage-guard.js` Fail-closes if any content file under `.union-stack/` lacks a dummy marker (`example` / `dummy` / `예시` / `더미`) and isn't an allowlisted methodology file. It is a *tripwire for "forgot to sanitize,"* not a content-understanding tool — a marker is enough to pass, so it can be bypassed. CI gating lives in `.github/workflows/template-guard.yml` and runs **only** when the repo variable `TEMPLATE_MODE=true` is set, so it stays dormant in real-project clones. To enable: repo Settings → Actions → Variables → `TEMPLATE_MODE=true`. Building a real project instead? Leave it unset (or delete the workflow + `scripts/leakage-guard.js`).
 
 ---
 

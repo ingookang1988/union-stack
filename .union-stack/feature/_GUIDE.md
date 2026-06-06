@@ -1,8 +1,8 @@
-# .feature/ — 실제·상태 (살아있는 제품 표면) 가이드
-> **격자:** 실제(관찰) × 상태. **권한:** Wiki (에이전트 원자적 쓰기).
-> **변화 속도:** 자주.
+# feature/ — actual × state (the living product surface) guide
+> **Grid:** actual (observed) × state. **Permission:** Wiki (agent atomic writes).
+> **Change velocity:** frequent.
 
-## 싣는 것: "무엇이 살아있는가". 현재 동작하는 제품 기능 맵.
-##   live.md(라이브), target.md(목표), hold.md(보류).
-## flow/: E2E Data Lineage 계약(FLOW-*)과 기능별 테스트 케이스(층 3)가 같은 ZFS ID로.
-## 빼는 것: 규범·기획·작업. 오직 "지금 존재하는 상태"만.
+## Goes in: "what is alive." A map of currently-working product features.
+##   live.md (live), target.md (target), hold.md (on hold).
+## flow/: E2E data-lineage contracts (FLOW-*) and per-feature test cases (tier 3) under the same ZFS ID.
+## Stays out: norms, planning, work. Only "the state that exists right now."

@@ -1,7 +1,8 @@
-# .roadmap/ — 당위·행위 (방향·마일스톤) 가이드
-> **격자:** 당위 × 행위. **권한:** Schema. **변화 속도:** 느림.
-> **부모 역할:** plan(전술 기획)과 sprint(작업)의 거시 방향 부모.
+# roadmap/ — ought × action (direction · milestones) guide
+> **Grid:** ought × action. **Permission:** Schema. **Change velocity:** slow.
+> **Parent role:** the macro-direction parent of plan (tactical planning) and sprint (work).
+> Lives under `project/` because it is the future extension of identity, not an independent pillar.
 
-## 싣는 것: 마일스톤(phase), 단계 전환 게이트(gate), "어디로 가야 한다".
-## 빼는 것: 세부 기획(→ .plan), 현재 작업(→ .sprint).
-## 파일: PHASE-*, GATE-* (ZFS 네이밍). 예시는 ROADMAP-overview 매니페스트.
+## Goes in: milestones (phase), stage-transition gates (gate), "where we ought to go."
+## Stays out: detailed planning (→ .union-stack/plan), current work (→ .union-stack/sprint).
+## Files: PHASE-*, GATE-* (ZFS naming). The example is a ROADMAP-overview manifest.

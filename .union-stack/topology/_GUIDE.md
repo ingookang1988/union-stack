@@ -1,22 +1,22 @@
-# .topology/ — 당위·상태 (아키텍처 규범) 가이드
+# topology/ — ought × state (architecture norms) guide
 
-> **격자 위치:** 당위 × 상태. **권한:** Schema (인간만). **변화 속도:** 거의 불변.
+> **Grid position:** ought × state. **Permission:** Schema (human only). **Change velocity:** near-immutable.
 
-## 무엇을 싣는가
-- 아키텍처 규칙: 레이어 정의, 의존성 방향, DDD/FSD 경계.
-- **테스트 전략(층 1):** "왜·어떻게 테스트하는가"의 규범. (구체적 도구는 `.contracts/`로)
-- 횡단 규범: 보안·관측의 *원칙* (구체 구현은 코드/계약으로).
-- ZFS 네이밍 규약 자체.
+## What goes in
+- Architecture rules: layer definitions, dependency direction, DDD/FSD boundaries.
+- **Test strategy (tier 1):** the norms of "why & how we test." (concrete tools go to `.union-stack/contracts/`)
+- Cross-cutting norms: *principles* of security/observability (concrete impl goes to code/contracts).
+- The ZFS naming convention itself.
 
-## 무엇을 빼는가
-- 구체적 타입/시그니처 → `.contracts/` (계약).
-- 실제 현재 코드 구조 → `.mechanism/derived/state`.
-- "이래야 한다"가 아니라 "이렇다"는 전부 다른 곳.
+## What stays out
+- Concrete types/signatures → `.union-stack/contracts/` (contract).
+- The actual current code structure → `.union-stack/mechanism/derived/state`.
+- Anything that is "this is how it is" rather than "this is how it ought to be" belongs elsewhere.
 
-## 핵심 구분
-- topology = *규범*("도메인은 인프라를 import하지 않는다").
-- 규범 위반은 "나쁜 코드", 계약 위반은 "안 도는 코드". 둘을 섞지 말 것.
+## Core distinction
+- topology = *norms* ("the domain must not import infrastructure").
+- A norm violation yields "bad code"; a contract violation yields "code that doesn't run." Don't mix them.
 
-## 파일
-- `ARCH-00_zfs_naming.md` — ZFS 네이밍 규약 (이 템플릿의 핵심 규범)
-- `ARCH-01_example_layers.md` — 더미 레이어 규칙
+## Files
+- `ARCH-00_zfs_naming.md` — the ZFS naming convention (this template's core norm)
+- `ARCH-01_example_layers.md` — dummy layer rules

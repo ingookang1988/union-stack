@@ -1,0 +1,22 @@
+name: Template Guard (leakage)
+
+# 누설 방지 가드는 *공개 템플릿/공개 포크*에서만 의미가 있다.
+# 실제 프로젝트로 클론하면 더미를 실제 내용으로 채우며 마커를 지우는 게 정상이므로,
+# 이 워크플로는 repo variable TEMPLATE_MODE=true 일 때만 실행된다(기본: 비활성).
+#   켜기: 레포 Settings → Secrets and variables → Actions → Variables → TEMPLATE_MODE=true
+#   실제 프로젝트: 변수를 두지 말 것(자동 skip). 원하면 이 파일과 scripts/leakage-guard.js 삭제.
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  leakage:
+    if: ${{ vars.TEMPLATE_MODE == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: Leakage guard (dummy-marker Fail-close)
+        run: node scripts/leakage-guard.js

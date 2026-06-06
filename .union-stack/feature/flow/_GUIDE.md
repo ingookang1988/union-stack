@@ -1,3 +1,3 @@
-# .feature/flow/ — E2E 데이터 리니지 계약 + 테스트 케이스(층 3)
-> FLOW-*: UI→DB 변수명 1:1 매핑 표. 코드 전에 작성(죽음의 계곡 방어).
-> 같은 ZFS ID로 그 기능의 테스트 케이스(통과 조건)도 여기 둔다(TDD 순서).
+# feature/flow/ — E2E data-lineage contracts + test cases (tier 3)
+> FLOW-*: a UI→DB 1:1 variable-name mapping table. Written before code (defends the valley of death).
+> Under the same ZFS ID, the feature's test cases (pass conditions) also live here (TDD order).

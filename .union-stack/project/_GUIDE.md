@@ -1,46 +1,47 @@
-# project/ — 액자(경계) + 시간 3축 통합 계층 가이드
+# project/ — Frame (boundary) + unified time-3-axis layer guide
 
-> **층위:** 액자(Boundary). 격자의 칸이 아니라 "이 프로젝트가 무엇인가"를 정하는 경계.
-> **권한:** Schema (인간만 수정, 에이전트 read-only)
-> **변화 속도:** project.md/정체성은 거의 불변. 자식(roadmap·history)은 각자 다른 속도.
+> **Layer:** Frame (Boundary). Not a cell of the grid, but the boundary that defines "what this project is."
+> **Permission:** Schema (human edits only, agent read-only)
+> **Change velocity:** identity is near-immutable; the children (roadmap·history) each move at their own pace.
 
-## 시간 3축을 한 폴더에서 (핵심 설계)
-project 폴더 하나만 훑어도 프로젝트의 과거·현재·미래가 잡힌다.
-단, 한 *파일*이 아니라 한 *폴더* 안의 세 파일로 — 각자 변화 속도가 다르므로 분리한다.
+## Three time axes in one folder (core design)
+Skimming the single `project/` folder gives you the project's past, present, and future.
+But as three files in one *folder*, not one *file* — they move at different velocities, so they are split.
 
-- **현재** → `IDENTITY_example.md` (정체성: 무엇인가, 경계, 도메인 어휘)
-- **미래** → `roadmap/` (어디로 가는가: 마일스톤·게이트. project의 자식)
-- **과거** → `HISTORY.md` (어디서 왔고, 어디로 다시 안 가는가: 굵직한 분기점)
+- **Present** → `IDENTITY_example.md` (identity: what it is, the boundary, domain vocabulary)
+- **Future** → `roadmap/` (where it's heading: milestones & gates. a child of project)
+- **Past** → `HISTORY.md` (where it came from, and where not to return: major turning points)
 
-## 무엇을 싣는가 (IDENTITY = 현재)
-- 정체성: 푸는 문제, 존재 이유, 핵심 컨셉 (기술 백서 성격) → 에이전트의 경계 판별기
-- 경계: 스코프 안/밖 / 도메인 어휘: 프로젝트 고유 용어 → 에이전트의 어휘 사전
+## What goes in (IDENTITY = present)
+- Identity: the problem solved, reason to exist, core concept (tech-whitepaper) → the agent's boundary discriminator
+- Boundary: in/out of scope / Domain vocabulary: the project's own terms → the agent's vocabulary dictionary
 
-## 무엇을 빼는가
-- 구현 세부, 작업 현황, 변하는 수치 → 다른 기둥으로.
+## What stays out
+- Implementation detail, work status, changing figures → other pillars.
 
-## roadmap/ (미래) — project의 자식
-- 마일스톤(PHASE-*)·전환 게이트(GATE-*). 거시 방향.
-- roadmap은 독립 기둥이 아니라 "정체성의 미래 연장"이므로 project 하위에 둔다.
+## roadmap/ (future) — a child of project
+- Milestones (PHASE-*) · transition gates (GATE-*). The macro direction.
+- roadmap is not an independent pillar but "the future extension of identity," so it lives under project.
 
-## HISTORY.md (과거) — 굵직한 분기점 원장
-- **싣는 것:** 프로젝트 단위의 전략적 분기점 — 피봇, 의존성 도입/폐기, 아키텍처 대전환.
-- **archive_ledger와의 차이:** archive_ledger는 *전술적 과거*(작업 단위 ADR, ZFS ID에 묶임).
-  HISTORY는 *전략적 과거*(프로젝트 방향의 변천사). HISTORY는 ledger를 한 단계 더 압축·승격한 상위 레이어.
-- **효용:** ① 과거 조회로 현재 project·roadmap 이해 ② 회귀 방지(과거에 폐기한 방향으로의 회귀 차단).
+## HISTORY.md (past) — the ledger of major turning points
+- **Goes in:** project-level strategic turning points — pivots, dependency adopt/drop, architecture overhauls.
+- **Difference from archive_ledger:** archive_ledger is the *tactical past* (task-level ADRs, bound to ZFS IDs).
+  HISTORY is the *strategic past* (the evolution of the project's direction). HISTORY is the higher layer that
+  further compresses and promotes the ledger.
+- **Use:** ① read the past to understand the present project·roadmap ② anti-regression (block returning to an abandoned direction).
 
-### HISTORY 등재 규율 (회귀 방지를 진보 방지로 변질시키지 않기 위해)
-1. **사실 + 근거는 한 쌍. 근거 없는 사실은 등재 불가.**
-   "A 폐기"(독약) ✗  →  "A 폐기 — 성능이 아니라 라이선스 문제로"(맥락) ✓
-   근거가 있어야 에이전트가 "지금은 라이선스가 풀렸으니 재검토 가능"을 판단한다.
-2. **금지가 아니라 경고.** "하지 마라"가 아니라 "과거에 이랬으니 *고려하라*". 최종 판단은 현재 맥락에서.
-3. **등재 주체 제한.** 굵직한 분기점만. 일상 작업 결정(→ archive_ledger)과 구분.
-   사람이 직접, 또는 proposals/ 를 거쳐 등재(자동 적체 금지 — lessons처럼 아무거나 쌓이면 독).
+### HISTORY listing discipline (so anti-regression doesn't degrade into anti-progress)
+1. **Fact + reason are a pair. A fact without a reason cannot be listed.**
+   "Dropped A" (poison) ✗  →  "Dropped A — not for performance but a licensing issue" (context) ✓
+   With the reason, the agent can judge "the license is free now, so re-evaluation is possible."
+2. **A warning, not a ban.** Not "don't do this" but "this is how it went before, so *consider it*." Final call is in the present context.
+3. **Limited authorship.** Major turning points only. Distinct from day-to-day work decisions (→ archive_ledger).
+   Listed by a human directly, or via proposals/ (no auto-accretion — like lessons, dumping anything in is poison).
 
-## 사용법
-- 세션 시작 시 IDENTITY를 1회 주입. roadmap·HISTORY는 방향 판단·회귀 방지가 필요할 때 참조.
+## How to use
+- Inject IDENTITY once at session start. Reference roadmap·HISTORY when direction judgment / anti-regression is needed.
 
-## 파일
-- `IDENTITY_example.md` — 더미(현재). 복제 후 실제 프로젝트로 교체.
-- `roadmap/` — 미래 방향 (자식 폴더).
-- `HISTORY.md` — 과거 분기점 원장.
+## Files
+- `IDENTITY_example.md` — dummy (present). Replace with your real project after cloning.
+- `roadmap/` — future direction (child folder).
+- `HISTORY.md` — the ledger of past turning points.

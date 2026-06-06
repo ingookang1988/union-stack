@@ -1,31 +1,31 @@
-# .sprint/ — 실제·행위 (현재 작업) 가이드
-> **격자:** 실제(관찰) × 행위. **권한:** Wiki. **변화 속도:** 매우 자주.
-## 싣는 것: "무엇을 하는 중". WO(작업 오더)/WF(워크플로우). next.md/prev.md 롤링 윈도우.
-## 빼는 것: 기획 의도(→ .plan), 완료된 결정(→ archive_ledger).
+# sprint/ — actual × action (current work) guide
+> **Grid:** actual (observed) × action. **Permission:** Wiki. **Change velocity:** very frequent.
+## Goes in: "what is being done." WO (work order) / WF (workflow). next.md/prev.md rolling window.
+## Stays out: planning intent (→ .union-stack/plan), finished decisions (→ archive_ledger).
 
 ---
 
-## HANDOFF.md — 세션 이어달리기 (에이전트 생성)
+## HANDOFF.md — the session relay (agent-generated)
 
-> 세션의 마침표이자 다음 세션의 쉼표. 세션과 세션을 잇는 *빠른 시간축*.
-> (cf. .lessons/ 는 여러 세션에 걸친 반복 패턴 = 느린 시간축)
+> The period of a session and the comma to the next. The *fast time-axis* linking session to session.
+> (cf. .union-stack/lessons/ is the repeated pattern across many sessions = the slow time-axis)
 
-### 누가/언제
-- **세션을 마치는 에이전트**가 자기 작업을 스스로 정리해 작성(Wiki 원자적 쓰기).
-- 다음 세션 부트스트랩 시 project(정체성) 다음으로 **가장 먼저** 읽힌다.
+### Who / when
+- The **agent ending a session** writes it, organizing its own work (Wiki atomic write).
+- On the next session's bootstrap it is read **first**, right after project (identity).
 
-### 휘발성 — 최신 하나만 유효
-- 매 세션 종료 시 `HANDOFF.md`를 덮어쓴다. 직전 것은 `prev.md`로 밀어 보관(롤링).
-- 영구 보존 대상 아님. 다음 세션이 읽고 나면 역할을 다한다.
-- 영속적 교훈은 .lessons/, 결정 기록은 archive_ledger로 따로 승격.
+### Volatile — only the latest one is valid
+- Overwrite `HANDOFF.md` at the end of each session. The previous one is pushed to `prev.md` (rolling).
+- Not for permanent retention. Once the next session reads it, its role is done.
+- Lasting lessons are promoted separately to .union-stack/lessons/, decision records to archive_ledger.
 
-### 생성 규율 (에이전트가 반드시 지킬 것)
-1. **기계가 이어받을 형식.** 줄글 일기 금지. ZFS ID가 박힌 구조화 항목.
-2. **변경 위치는 ID 목록으로.** 산문 설명이 아니라 `[WO-01a-2] [FLOW-01a]` 식.
-   다음 에이전트가 그 ID로 Upward Fetching을 돌려 맥락을 스스로 복원한다.
-3. **극단 압축.** 모든 걸 설명하지 말 것. *어디를 보면 되는지*만 정확히 가리킨다.
-4. **다음 작업은 단일 진입점.** "다음은 [WO-01a-3]부터" 하나로 명확히.
-5. **막힌 것/주의는 분리 기재.** 미해결·함정은 별도 항목으로(다음 세션이 또 빠지지 않게).
+### Authoring discipline (the agent must follow)
+1. **A format a machine can pick up.** No prose diary. Structured items stamped with ZFS IDs.
+2. **Changed locations as an ID list.** Not prose but `[WO-01a-2] [FLOW-01a]` style.
+   The next agent runs Upward Fetching on those IDs to restore context itself.
+3. **Extreme compression.** Don't explain everything. Point *exactly to where to look*.
+4. **Next task as a single entry point.** One clear "start from [WO-01a-3]".
+5. **Blockers/cautions stated separately.** Open issues and pitfalls as distinct items (so the next session doesn't fall in again).
 
-### 필수 5요소 (하나라도 빠지면 이어달리기 실패)
-- 세션 요약(1~3줄) · 변경 위치(ID 목록) · 다음 작업(단일 진입점) · 미해결/주의 · 검증 상태(테스트 통과 여부)
+### The 5 mandatory parts (miss any one and the relay fails)
+- Session summary (1–3 lines) · changed locations (ID list) · next task (single entry point) · open/caution · verification status (did tests pass)

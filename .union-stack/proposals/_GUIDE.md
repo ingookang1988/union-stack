@@ -1,14 +1,14 @@
-# .proposals/ — 제4 권한 계층 (하네스 자기 진화) 가이드  ★신규 계층
-> **권한: Proposal — 에이전트가 쓰되 승인 전 효력 0.**
-> 인간 승인 시 Schema로 승격, 거부 시 *기각 사유와 함께 보존*.
+# proposals/ — the 4th permission tier (harness self-evolution) guide  ★new tier
+> **Permission: Proposal — the agent writes, but it has zero effect until approved.**
+> On human approval it is promoted to Schema; on rejection it is *preserved with the rejection rationale*.
 
-## 싣는 것: 하네스 규칙(Schema)·프로세스 변경 제안. 그리고 .lessons/.contracts의
-##   등재·은퇴 제안도 여기로.
-## 두 루프: 빠른 루프(제품 위키 갱신)는 자동. 느린 루프(규칙 변경)는 *항상 이 게이트*.
+## Goes in: proposed changes to harness rules (Schema) / processes. Also proposals to
+##   list/retire entries in .union-stack/lessons & .union-stack/contracts route here.
+## Two loops: the fast loop (product wiki updates) is automatic. The slow loop (rule changes) *always* passes this gate.
 
-## 거부 기록 보존 필수: 삭제하면 같은 제안이 무한 반복됨.
-##   사유가 남으면 에이전트가 읽고 되풀이를 멈춘다(Supersession 원칙).
-## 이 제안-결정 로그가 곧 "하네스 회고"의 실체다. 별도 회고 문서 불필요.
+## Preserving rejection records is mandatory: delete them and the same proposal repeats forever.
+##   When the rationale remains, the agent reads it and stops repeating (Supersession principle).
+## This proposal-decision log *is* the substance of the "harness retrospective." No separate retro doc needed.
 
-## 공개 전략: 외부 커뮤니티의 이슈/PR이 곧 *외부화된 제안 계층*이다.
-## 파일: PRO-* . status: Proposed | Approved | Rejected (사유 필수)
+## Publishing strategy: an external community's issues/PRs *are* the externalized proposal tier.
+## Files: PRO-* . status: Proposed | Approved | Rejected (rationale required)
