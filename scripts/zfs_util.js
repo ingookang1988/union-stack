@@ -17,9 +17,11 @@ const ZFS_REGEX =
 // 새 도메인은 .union-stack/proposals 승인 후 여기와 ARCH-00에 함께 추가한다.
 const VALID_DOMAINS = new Set([
   'ARCH',  // architecture    당위·상태
+  'INF',   // architecture/infra  당위·상태(인프라 규범·결정)
   'PHASE', // project/roadmap  당위·행위(마일스톤)
   'CON',   // contracts   계약·상태
   'PLAN',  // plan        계약·행위
+  'MTG',   // plan/meetings  기획 전 raw 심의(append-only)
   'FLOW',  // feature     실제·상태(데이터 리니지)
   'WO',    // sprint      실제·행위(작업 오더)
   'WF',    // sprint      실제·행위(워크플로우)

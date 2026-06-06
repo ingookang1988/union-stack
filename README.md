@@ -90,7 +90,7 @@ Parent/child/sibling relations are inferred from filenames alone, borrowing Nikl
 [DOMAIN]-[LUHMANN_ID]_[slug].md      e.g. PLAN-01a1_example_oauth.md
 ```
 
-- **DOMAIN**: 2–6 uppercase letters, from a **closed whitelist** enforced by `VALID_DOMAINS` in `scripts/zfs_util.js`: `ARCH PHASE CON PLAN FLOW WO WF LSN EVD ADR PRO`.
+- **DOMAIN**: 2–6 uppercase letters, from a **closed whitelist** enforced by `VALID_DOMAINS` in `scripts/zfs_util.js`: `ARCH INF PHASE CON PLAN MTG FLOW WO WF LSN EVD ADR PRO`.
 - **LUHMANN_ID**: starts with a digit; digits and letters alternate. Letters **exclude `l`/`o`** (confusable with digits 1/0). Terminal tasks end with `-N`.
   - `01` -> `01a` -> `01a1` -> `WO-01a1-1`
 - **slug**: lowercase snake_case. No spaces, hyphens, or uppercase.

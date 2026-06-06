@@ -9,3 +9,7 @@
 ##   lineage is terminal and a grace period passes does GC crystallize it into the
 ##   archive_ledger and remove it (GC guard).
 ## Files: PLAN-* (ZFS). Layer planning via parent-child relations.
+
+## Subfolder — meetings/ (the raw deliberation that precedes a plan)
+- `meetings/` holds `MTG-*`: pre-planning discussion, append-only, lineage-shared with the PLAN it produces.
+- meeting : plan = raw : derived. It is **append-only (not Schema)** — see `meetings/_GUIDE.md`.

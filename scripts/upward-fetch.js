@@ -23,7 +23,7 @@ const ancestors = new Set(chain);
 const index = buildIndex();
 
 // 공간 맥락: 계보(자기+조상) ID를 가진 맥락 도메인 문서.
-const CONTEXT_DOMAINS = new Set(['PLAN', 'FLOW', 'CON', 'ARCH']);
+const CONTEXT_DOMAINS = new Set(['PLAN', 'FLOW', 'CON', 'ARCH', 'MTG']);
 const context = index
   .filter(d => CONTEXT_DOMAINS.has(d.domain) && ancestors.has(d.id))
   .sort((a, b) => a.domain.localeCompare(b.domain));
@@ -34,7 +34,7 @@ const lessons = index.filter(d => d.domain === 'LSN' && isDescendant(d.id, id));
 console.log(`# Upward Fetching: ${id}`);
 console.log(`계보(조상 역산): ${chain.join(' → ')}\n`);
 
-console.log('## 공간 맥락 (부모 PLAN/FLOW/CON/ARCH)');
+console.log('## 공간 맥락 (부모 PLAN/FLOW/CON/ARCH/MTG)');
 if (context.length) context.forEach(d => console.log(`  [${d.domain}-${d.id}] ${d.file}`));
 else console.log('  (없음)');
 

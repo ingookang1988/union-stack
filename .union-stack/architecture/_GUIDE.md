@@ -17,6 +17,11 @@
 - architecture = *norms* ("the domain must not import infrastructure").
 - A norm violation yields "bad code"; a contract violation yields "code that doesn't run." Don't mix them.
 
+## Subfolder — infra/ (infrastructure NORMS only)
+- `infra/` holds `INF-*`: deployment/DB/test-infra *decisions & rationale* (ought). Schema tier.
+- ⚠️ Norms only — tooling call-conventions → `reference/contracts`, current state → `mechanism/derived/state`. See `infra/_GUIDE.md`.
+
 ## Files
 - `ARCH-00_zfs_naming.md` — the ZFS naming convention (this template's core norm)
 - `ARCH-01_example_layers.md` — dummy layer rules
+- `infra/INF-*` — infrastructure norms (subfolder)
