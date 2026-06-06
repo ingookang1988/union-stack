@@ -1,4 +1,4 @@
-# topology/ — ought × state (architecture norms) guide
+# architecture/ — ought × state (architecture norms) guide
 
 > **Grid position:** ought × state. **Permission:** Schema (human only). **Change velocity:** near-immutable.
 
@@ -14,7 +14,7 @@
 - Anything that is "this is how it is" rather than "this is how it ought to be" belongs elsewhere.
 
 ## Core distinction
-- topology = *norms* ("the domain must not import infrastructure").
+- architecture = *norms* ("the domain must not import infrastructure").
 - A norm violation yields "bad code"; a contract violation yields "code that doesn't run." Don't mix them.
 
 ## Files

@@ -16,7 +16,7 @@ const path = require('path');
 // 실제 프로젝트 내용이 들어설 수 있는 칸/화살표 평면(.union-stack/ 격리, 재귀 스캔).
 // project 를 재귀 스캔하므로 project/roadmap·HISTORY 도 포함된다.
 const CONTENT_DIRS = [
-  '.union-stack/project', '.union-stack/topology', '.union-stack/plan',
+  '.union-stack/project', '.union-stack/architecture', '.union-stack/plan',
   '.union-stack/feature', '.union-stack/contracts', '.union-stack/lessons',
   '.union-stack/sprint', '.union-stack/mechanism', '.union-stack/proposals',
 ];

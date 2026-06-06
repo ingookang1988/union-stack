@@ -57,7 +57,7 @@ LLM 에이전트는 컨텍스트 윈도우와 추론력이 커질수록 *능력*
 
 [ 칸 / 기둥 ]     실제 지식을 담는 곳. 추상 레벨 × 상태/행위 격자로 배치.
                    상태(존재)              행위(변화)
-  당위(불변)       topology/               (roadmap은 project/ 하위)
+  당위(불변)       architecture/               (roadmap은 project/ 하위)
   계약(약속)       contracts/  ★           plan/
   실제(관찰)       feature/                sprint/  (+ HANDOFF.md 세션 이어달리기)
   시간축(반복)     lessons/    ★           (mechanism의 시간축 짝)
@@ -93,7 +93,7 @@ LLM 에이전트는 컨텍스트 윈도우와 추론력이 커질수록 *능력*
   - `01` → `01a` → `01a1` → `WO-01a1-1`
 - **slug**: 소문자 스네이크. 공백·하이픈·대문자 금지.
 
-> 검증된 정규식과 자식/형제 판정 로직은 `scripts/`에 있고 테스트로 보증된다. 아래 두 의식은 실행 가능하다: `node scripts/upward-fetch.js <ID>`, `node scripts/blast-radius.js <ID>`. 자세한 규약은 `.union-stack/topology/ARCH-00_zfs_naming.md`.
+> 검증된 정규식과 자식/형제 판정 로직은 `scripts/`에 있고 테스트로 보증된다. 아래 두 의식은 실행 가능하다: `node scripts/upward-fetch.js <ID>`, `node scripts/blast-radius.js <ID>`. 자세한 규약은 `.union-stack/architecture/ARCH-00_zfs_naming.md`.
 
 ### 작업 진입 의식 (Upward Fetching)
 
@@ -124,7 +124,7 @@ git clone <this-repo> my-project && cd my-project
 #    .union-stack/project/IDENTITY_example.md → 실제 내용으로
 
 # 3. 아키텍처 규범 정의
-#    .union-stack/topology/ 의 더미 규범을 당신 스택에 맞게 수정
+#    .union-stack/architecture/ 의 더미 규범을 당신 스택에 맞게 수정
 
 # 4. 첫 기획 작성
 #    .union-stack/plan/PLAN-01_example_feature.md 를 복제해 실제 기능 기획 작성

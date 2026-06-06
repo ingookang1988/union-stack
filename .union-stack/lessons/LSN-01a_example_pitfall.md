@@ -4,7 +4,7 @@ id: LSN-01a
 title: (예시) 소셜 로그인 반복 함정
 status: Active
 occurrences: 3
-valid_reason: "(예시) 아직 topology에서 강제되지 않음"
+valid_reason: "(예시) 아직 architecture에서 강제되지 않음"
 version: 1.0
 ---
 # [LSN-01a] (예시)

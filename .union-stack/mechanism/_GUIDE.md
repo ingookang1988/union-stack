@@ -7,7 +7,7 @@
 - A temporary inbox for external signals. Test logs · CI results. The agent cannot forge them.
 
 ## derived/ (output) — Permission: Wiki, written by the agent
-- gap.md: drift between norms (topology) ↔ reality.
+- gap.md: drift between norms (architecture) ↔ reality.
 - state.md: the observed current code structure.
 
 ## Three verification arrows

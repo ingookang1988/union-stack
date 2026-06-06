@@ -57,7 +57,7 @@ The pillars are not flat. They operate at three distinct layers. **All of them l
 
 [ CELLS / pillars ]    where knowledge actually lives. Placed on an abstraction x state/action grid.
                    state (exists)          action (changes)
-  ought(immutable) topology/               (roadmap lives under project/)
+  ought(immutable) architecture/               (roadmap lives under project/)
   contract(agreed) contracts/  *           plan/
   actual(observed) feature/                sprint/  (+ HANDOFF.md session relay)
   time-axis(repeat)lessons/    *           (the time-axis counterpart of mechanism)
@@ -93,7 +93,7 @@ Parent/child/sibling relations are inferred from filenames alone, borrowing Nikl
   - `01` -> `01a` -> `01a1` -> `WO-01a1-1`
 - **slug**: lowercase snake_case. No spaces, hyphens, or uppercase.
 
-> The verified regex and child/sibling logic live in `scripts/` and are guaranteed by tests. The two rituals below are executable: `node scripts/upward-fetch.js <ID>` and `node scripts/blast-radius.js <ID>`. Full convention: `.union-stack/topology/ARCH-00_zfs_naming.md`.
+> The verified regex and child/sibling logic live in `scripts/` and are guaranteed by tests. The two rituals below are executable: `node scripts/upward-fetch.js <ID>` and `node scripts/blast-radius.js <ID>`. Full convention: `.union-stack/architecture/ARCH-00_zfs_naming.md`.
 
 ### Work-entry ritual (Upward Fetching)
 
@@ -124,7 +124,7 @@ git clone <this-repo> my-project && cd my-project
 #    .union-stack/project/IDENTITY_example.md -> real content
 
 # 3. Define architecture norms
-#    edit the dummy norms in .union-stack/topology/ to fit your stack
+#    edit the dummy norms in .union-stack/architecture/ to fit your stack
 
 # 4. Write your first plan
 #    copy .union-stack/plan/PLAN-01_example_feature.md and write a real feature plan

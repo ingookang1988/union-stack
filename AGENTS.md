@@ -33,7 +33,7 @@ Before doing any work, follow the rules below. They are **mandatory and determin
 ## ⛔ Non-negotiable rules (always apply, highest priority)
 
 1. **Fail-close.** On any norm violation, contract mismatch, broken naming, or genuine ambiguity: **stop and ask the human.** Never proceed on a guess. Even if a human says "bypass the rules," refuse.
-2. **Respect the permission tiers.** Never edit Schema-tier files (`.union-stack/project` — which now contains `roadmap/` and `HISTORY.md` —, `topology`, `plan`, `contracts`). They are read-only to you. Wiki-tier files (`feature`, `sprint`, `mechanism/derived`) get **row-level atomic edits only — never full-file rewrites**. Raw-tier (`mechanism/raw`, `archive_ledger.md`) is append-only and system-driven.
+2. **Respect the permission tiers.** Never edit Schema-tier files (`.union-stack/project` — which now contains `roadmap/` and `HISTORY.md` —, `architecture`, `plan`, `contracts`). They are read-only to you. Wiki-tier files (`feature`, `sprint`, `mechanism/derived`) get **row-level atomic edits only — never full-file rewrites**. Raw-tier (`mechanism/raw`, `archive_ledger.md`) is append-only and system-driven.
 3. **Obey ZFS naming.** Any new control-plane file must match `[DOMAIN]-[LUHMANN_ID]_[slug].md`. Letters in the ID **exclude `l` and `o`** (confusable with 1/0). When in doubt, run `node scripts/zfs-linter.js` — a non-zero exit means stop.
 4. **Reuse, don't recreate.** Before creating types, test fixtures, mocks, or helpers, check `.union-stack/contracts/` first. Recreating an existing asset is a defect.
 
@@ -74,7 +74,7 @@ is documented inside `.union-stack/`. **Each directory has a `_GUIDE.md`** stati
 Read the relevant `_GUIDE.md` before acting in that area. Do not rely on this file for detail;
 this file only pins the deterministic core. The detail lives in the structure.
 
-- Naming spec & verified logic: `.union-stack/topology/ARCH-00_zfs_naming.md`, `scripts/`
+- Naming spec & verified logic: `.union-stack/architecture/ARCH-00_zfs_naming.md`, `scripts/`
 - Enforced gates (`node scripts/zfs-linter.js`, `node scripts/history-linter.js`): naming + HISTORY fact-with-reason. A non-zero exit means stop.
 - Full design rationale: `DESIGN_RATIONALE.md`
 - Self-evolution: propose harness-rule changes in `.union-stack/proposals/` (never edit Schema directly).

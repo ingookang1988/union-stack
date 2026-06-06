@@ -1,6 +1,6 @@
 {
   "name": "union-stack",
-  "version": "5.4.0",
+  "version": "5.4.1",
   "description": "Document-based control-plane template for AI-agent system coding",
   "scripts": {
     "lint": "node scripts/zfs-linter.js && node scripts/history-linter.js",
