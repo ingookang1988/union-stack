@@ -135,6 +135,8 @@ node scripts/zfs-linter.js
 
 > 기획 전에 탐색이 필요하면? **`.union-stack/spike/`** 샌드박스를 쓰라 — ZFS 네이밍·의례 없이 자유롭게, 휘발성. 각 스파이크는 세 출구 중 하나로 종료(plan 승격 / lesson 증류 / 폐기). 상세는 `.union-stack/spike/_GUIDE.md`.
 
+**런타임 질의 표면 (읽기 전용).** **의존성 0 MCP 서버**(`scripts/mcp-server.js`, `.mcp.json`로 등록)로 에이전트가 plane을 런타임에 질의한다: `upward_fetch`·`blast_radius`·`where_to_record`·`zfs_lint`·`list_docs`. Claude Code엔 슬래시 커맨드(`/upward-fetch` 등)도 제공. *읽기*만 노출 — 쓰기는 거버넌스가 적용되는 파일 편집 경로 유지. (다른 도구는 같은 서버를 가리키면 됨; Cursor는 `.cursor/mcp.json`.)
+
 AI 에이전트는 레포 루트의 **`AGENTS.md`**를 자동으로 읽는다(범용 표준). 이 파일이 결정론적 규율을 못 박고 `.union-stack/`으로 안내한다. 자기 전용 파일만 읽는 도구를 위해 한 줄 스텁(예: `CLAUDE.md`)이 `AGENTS.md`를 가리킨다 — 진실의 출처는 하나로 두고 규칙을 중복시키지 않는다.
 
 각 디렉터리의 `_GUIDE.md`에서 상세를 확인하라.

@@ -87,3 +87,4 @@ this file only pins the deterministic core. The detail lives in the structure.
 - Full design rationale: `DESIGN_RATIONALE.md`
 - Self-evolution: propose harness-rule changes in `.union-stack/proposals/` (never edit Schema directly).
 - Need to explore before planning? Use `.union-stack/spike/` (no naming/ritual, ephemeral). Resolve each spike: promote→plan / distill→lesson / discard.
+- Runtime query surface (read-only): a zero-dep MCP server (`scripts/mcp-server.js`, registered via `.mcp.json`) exposes `upward_fetch`, `blast_radius`, `where_to_record`, `zfs_lint`, `list_docs`. Claude Code also has `/upward-fetch`, `/blast-radius`, `/where-to-record`, `/zfs-lint`, `/list-docs`. Writes are NOT exposed — edit files directly (governed by the gates).

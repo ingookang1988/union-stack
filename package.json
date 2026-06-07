@@ -1,15 +1,16 @@
 {
   "name": "union-stack",
-  "version": "5.8.0",
+  "version": "5.9.0",
   "description": "Document-based control-plane template for AI-agent system coding",
   "scripts": {
     "init": "node scripts/init.js",
     "lint": "node scripts/zfs-linter.js && node scripts/history-linter.js",
     "lint:leakage": "node scripts/leakage-guard.js",
-    "test": "node scripts/zfs_util.test.js && node scripts/zfs_index.test.js && node scripts/leakage-guard.test.js && node scripts/history-linter.test.js && node scripts/permission-guard.test.js && node scripts/init.test.js",
+    "test": "node scripts/zfs_util.test.js && node scripts/zfs_index.test.js && node scripts/leakage-guard.test.js && node scripts/history-linter.test.js && node scripts/permission-guard.test.js && node scripts/init.test.js && node scripts/query.test.js && node scripts/mcp-server.test.js",
     "fetch": "node scripts/upward-fetch.js",
     "blast": "node scripts/blast-radius.js",
-    "guard": "node scripts/permission-guard.js"
+    "guard": "node scripts/permission-guard.js",
+    "mcp": "node scripts/mcp-server.js"
   },
   "license": "MIT"
 }

@@ -135,6 +135,8 @@ node scripts/zfs-linter.js
 
 > Need to explore before you can plan? Use the **`.union-stack/spike/`** sandbox — no ZFS naming, no ritual, ephemeral. Resolve each spike via one of three exits (promote to a plan / distill to a lesson / discard). See `.union-stack/spike/_GUIDE.md`.
 
+**Runtime query surface (read-only).** A **zero-dependency MCP server** (`scripts/mcp-server.js`, registered via `.mcp.json`) lets agents query the plane at runtime: `upward_fetch`, `blast_radius`, `where_to_record`, `zfs_lint`, `list_docs`. Claude Code also gets slash commands (`/upward-fetch`, `/blast-radius`, …). Only *reads* are exposed — writes stay on the governed file-edit path. (Other tools: point them at the same server; Cursor uses `.cursor/mcp.json`.)
+
 Your AI agent reads **`AGENTS.md`** at the repo root automatically (the cross-tool standard). It pins the deterministic rules and points into `.union-stack/`. For tools that only read their own file, a one-line stub (e.g. `CLAUDE.md`) points back to `AGENTS.md` — keep one source of truth, never duplicate rules.
 
 See each directory's `_GUIDE.md` for details.
