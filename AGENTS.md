@@ -48,6 +48,14 @@ Before doing any work, follow the rules below. They are **mandatory and determin
 When the session **ends**, update `.union-stack/sprint/HANDOFF.md` with the 5 required parts:
 summary · changed-location IDs · next task (single entry point) · open issues/cautions · verification status.
 
+### 🗂️ Where to record (route every past/decision by *kind* — don't pile into one place)
+- Volatile session progress → `sprint/HANDOFF.md` (latest only)
+- A failure seen 2–3× in a lineage → `reference/lessons/LSN-*`
+- A proposed harness-rule change → `proposals/PRO-*`
+- A tactical decision (ADR, task/ZFS-scoped) → `archive_ledger.md` (append-only)
+- A strategic turning point (pivot, dependency adopt/drop) → `project/HISTORY.md` (fact + reason)
+> A tactical ADR that gains strategic weight is *promoted* (compressed) into HISTORY. Full rationale: `DESIGN_RATIONALE.md` §7.
+
 ---
 
 ## 🧭 Work-entry ritual — Upward Fetching (before writing ANY code)
@@ -75,6 +83,6 @@ Read the relevant `_GUIDE.md` before acting in that area. Do not rely on this fi
 this file only pins the deterministic core. The detail lives in the structure.
 
 - Naming spec & verified logic: `.union-stack/architecture/ARCH-00_zfs_naming.md`, `scripts/`
-- Enforced gates (`node scripts/zfs-linter.js`, `node scripts/history-linter.js`): naming + HISTORY fact-with-reason. A non-zero exit means stop.
+- Enforced gates (a non-zero exit means stop): `node scripts/zfs-linter.js` (naming), `node scripts/history-linter.js` (HISTORY fact-with-reason), `node scripts/permission-guard.js` (append-only integrity; `--strict` also checks Schema edits carry an `Approved-by:` trailer).
 - Full design rationale: `DESIGN_RATIONALE.md`
 - Self-evolution: propose harness-rule changes in `.union-stack/proposals/` (never edit Schema directly).
