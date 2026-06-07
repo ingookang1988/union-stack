@@ -86,3 +86,4 @@ this file only pins the deterministic core. The detail lives in the structure.
 - Enforced gates (a non-zero exit means stop): `node scripts/zfs-linter.js` (naming), `node scripts/history-linter.js` (HISTORY fact-with-reason), `node scripts/permission-guard.js` (append-only integrity; `--strict` also checks Schema edits carry an `Approved-by:` trailer).
 - Full design rationale: `DESIGN_RATIONALE.md`
 - Self-evolution: propose harness-rule changes in `.union-stack/proposals/` (never edit Schema directly).
+- Need to explore before planning? Use `.union-stack/spike/` (no naming/ritual, ephemeral). Resolve each spike: promote→plan / distill→lesson / discard.

@@ -122,18 +122,18 @@ When a session **ends**, the agent updates `HANDOFF.md` (5 required parts: summa
 # 1. Clone the template
 git clone <this-repo> my-project && cd my-project
 
-# 2. Fill in identity — replace dummies with your project
-#    .union-stack/project/IDENTITY_example.md -> real content
+# 2. Scaffold — seed identity, strip dummies, reset manifests (preview first, then apply)
+node scripts/init.js --name "My Project"            # dry-run: shows the plan
+node scripts/init.js --name "My Project" --apply    # apply (add --drop-template-bits to also remove template-only assets)
 
-# 3. Define architecture norms
-#    edit the dummy norms in .union-stack/architecture/ to fit your stack
+# 3. Fill the IDENTITY TODOs, define architecture norms in .union-stack/architecture/,
+#    and write your first plan in .union-stack/plan/
 
-# 4. Write your first plan
-#    copy .union-stack/plan/PLAN-01_example_feature.md and write a real feature plan
-
-# 5. Validate with the naming linter
+# 4. Validate with the naming linter
 node scripts/zfs-linter.js
 ```
+
+> Need to explore before you can plan? Use the **`.union-stack/spike/`** sandbox — no ZFS naming, no ritual, ephemeral. Resolve each spike via one of three exits (promote to a plan / distill to a lesson / discard). See `.union-stack/spike/_GUIDE.md`.
 
 Your AI agent reads **`AGENTS.md`** at the repo root automatically (the cross-tool standard). It pins the deterministic rules and points into `.union-stack/`. For tools that only read their own file, a one-line stub (e.g. `CLAUDE.md`) points back to `AGENTS.md` — keep one source of truth, never duplicate rules.
 

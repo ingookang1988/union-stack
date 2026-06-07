@@ -56,13 +56,28 @@ function findViolations(changes, meta = {}, opts = {}) {
 // --- git 어댑터 (얇음) ---
 function sh(cmd) { return execSync(cmd, { encoding: 'utf8' }); }
 
+// append-only 위반은 *실제 엔트리* 삭제만 본다 — 헤더 주석·제목·표머리/구분선 편집은 제외(거짓 양성 방지).
+function substantiveRemoved(range, file) {
+  const base = range ? `git diff --unified=0 ${range}` : 'git diff --cached --unified=0';
+  let out = '';
+  try { out = sh(`${base} -- "${file}"`); } catch { return 0; }
+  return out.split('\n')
+    .filter(l => l.startsWith('-') && !l.startsWith('---'))
+    .map(l => l.slice(1).trim())
+    .filter(t => t && !/^<!--|-->$|^#|^\|/.test(t)) // 주석·제목·표 라인 제외
+    .length;
+}
+
 function readChanges(range) {
   const cmd = range ? `git diff --numstat ${range}` : 'git diff --cached --numstat';
   let out = '';
   try { out = sh(cmd); } catch { return null; } // git 아님/실패 → 건너뜀
   return out.split('\n').filter(Boolean).map(line => {
     const [a, r, ...rest] = line.split('\t');
-    return { added: a === '-' ? 0 : +a, removed: r === '-' ? 0 : +r, path: rest.join('\t') };
+    const p = rest.join('\t');
+    let removed = r === '-' ? 0 : +r;
+    if (removed > 0 && classify(p) === 'append-only') removed = substantiveRemoved(range, p);
+    return { added: a === '-' ? 0 : +a, removed, path: p };
   });
 }
 

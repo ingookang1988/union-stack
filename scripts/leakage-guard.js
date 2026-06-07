@@ -19,6 +19,7 @@ const CONTENT_DIRS = [
   '.union-stack/project', '.union-stack/architecture', '.union-stack/plan',
   '.union-stack/feature', '.union-stack/reference',
   '.union-stack/sprint', '.union-stack/mechanism', '.union-stack/proposals',
+  '.union-stack/spike',
 ];
 // 콘텐츠를 담는 매니페스트(디렉터리 밖이지만 스캔 대상).
 const ROOT_MANIFESTS = ['.union-stack/archive_ledger.md'];

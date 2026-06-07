@@ -122,18 +122,18 @@ LLM 에이전트는 컨텍스트 윈도우와 추론력이 커질수록 *능력*
 # 1. 템플릿 복제
 git clone <this-repo> my-project && cd my-project
 
-# 2. 정체성 채우기 — 더미를 당신 프로젝트로 교체
-#    .union-stack/project/IDENTITY_example.md → 실제 내용으로
+# 2. 스캐폴딩 — 정체성 시딩·더미 제거·매니페스트 초기화 (미리보기 후 적용)
+node scripts/init.js --name "My Project"            # dry-run: 계획만 출력
+node scripts/init.js --name "My Project" --apply    # 적용 (--drop-template-bits 추가 시 템플릿 전용 자산까지 제거)
 
-# 3. 아키텍처 규범 정의
-#    .union-stack/architecture/ 의 더미 규범을 당신 스택에 맞게 수정
+# 3. IDENTITY의 TODO를 채우고, .union-stack/architecture/ 에 아키텍처 규범을,
+#    .union-stack/plan/ 에 첫 기획을 작성
 
-# 4. 첫 기획 작성
-#    .union-stack/plan/PLAN-01_example_feature.md 를 복제해 실제 기능 기획 작성
-
-# 5. 네이밍 린터로 검증
+# 4. 네이밍 린터로 검증
 node scripts/zfs-linter.js
 ```
+
+> 기획 전에 탐색이 필요하면? **`.union-stack/spike/`** 샌드박스를 쓰라 — ZFS 네이밍·의례 없이 자유롭게, 휘발성. 각 스파이크는 세 출구 중 하나로 종료(plan 승격 / lesson 증류 / 폐기). 상세는 `.union-stack/spike/_GUIDE.md`.
 
 AI 에이전트는 레포 루트의 **`AGENTS.md`**를 자동으로 읽는다(범용 표준). 이 파일이 결정론적 규율을 못 박고 `.union-stack/`으로 안내한다. 자기 전용 파일만 읽는 도구를 위해 한 줄 스텁(예: `CLAUDE.md`)이 `AGENTS.md`를 가리킨다 — 진실의 출처는 하나로 두고 규칙을 중복시키지 않는다.
 

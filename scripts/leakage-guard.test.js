@@ -21,8 +21,13 @@ check('ARCH-00 면제',     isSanitized('.union-stack/architecture/ARCH-00_zfs_n
 check('마커 없는 실내용',  isSanitized('.union-stack/plan/PLAN-02_real.md', '# 사내 결제 모듈 요구사항'), false);
 check('마커 없는 매니페스트', isSanitized('.union-stack/archive_ledger.md', '[ADR-09] 실제 결정'), false);
 
-// --- 통합: 현재 레포는 위반 0건이어야 ---
-check('현재 레포 통과', run(), 0);
+// --- 통합: 템플릿 모드(더미 존재)에서만 위반 0건을 단언. init 후 실제 프로젝트에선 건너뜀. ---
+const fs = require('fs');
+const path = require('path');
+const TEMPLATE = fs.existsSync(path.resolve(__dirname, '..',
+  '.union-stack/reference/lessons/LSN-01a_example_pitfall.md'));
+if (TEMPLATE) check('현재 레포 통과', run(), 0);
+else console.log('(non-template repo: 누설 통합검사 건너뜀)');
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
