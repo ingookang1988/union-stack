@@ -27,10 +27,15 @@ check('naming FAIL', bad.dims.find(d => d.name === 'naming gate').status === 'FA
 const many = computeHealth({ index, domainsDefined: [...defined, 'A', 'B', 'C', 'D', 'E', 'F'], guideCount: 1, namingViolations: 0, historyViolations: 0, leakageViolations: 0 });
 check('domain util WARN when many unused', many.dims.find(d => d.name === 'domain utilization').status === 'WARN');
 
+// 파일 크기 + 참조 차원
+const sz = computeHealth({ index, domainsDefined: defined, guideCount: 5, namingViolations: 0, historyViolations: 0, leakageViolations: 0, oversize: [{ file: 'x.md', kb: 47 }], brokenRefs: 3 });
+check('file size WARN', sz.dims.find(d => d.name === 'file size').status === 'WARN');
+check('ref integrity INFO', sz.dims.find(d => d.name === 'ref integrity').value.includes('3'));
+
 // gather(): 실제 레포 스모크 — 구조 정상이면 fails 0
 const g = gather();
 check('gather healthy(현재 레포)', g.healthy === true);
-check('gather dims 6', g.dims.length === 6);
+check('gather dims 8', g.dims.length === 8);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

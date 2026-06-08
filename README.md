@@ -90,12 +90,13 @@ Parent/child/sibling relations are inferred from filenames alone, borrowing Nikl
 [DOMAIN]-[LUHMANN_ID]_[slug].md      e.g. PLAN-01a1_example_oauth.md
 ```
 
-- **DOMAIN**: 2–6 uppercase letters, from a **closed whitelist** enforced by `VALID_DOMAINS` in `scripts/zfs_util.js`: `ARCH INF PHASE CON PLAN MTG FLOW WO WF LSN EVD ADR PRO`.
+- **DOMAIN**: 2–6 uppercase letters, from a **closed whitelist** enforced by `VALID_DOMAINS` in `scripts/zfs_util.js`: `ARCH INF PHASE CON PLAN MTG FLOW WO WF LSN DOM EVD ADR PRO`.
 - **LUHMANN_ID**: starts with a digit; digits and letters alternate. Letters **exclude `l`/`o`** (confusable with digits 1/0). Terminal tasks end with `-N`.
   - `01` -> `01a` -> `01a1` -> `WO-01a1-1`
 - **slug**: lowercase snake_case. No spaces, hyphens, or uppercase.
 
 > The verified regex and child/sibling logic live in `scripts/` and are guaranteed by tests. The two rituals below are executable: `node scripts/upward-fetch.js <ID>` and `node scripts/blast-radius.js <ID>`. Full convention: `.union-stack/architecture/ARCH-00_zfs_naming.md`.
+> **Already use Zettelkasten/Folgezettel or hierarchical plan IDs?** They map to ZFS lineage 1:1 — no conversion. **Migrating an existing project?** See [`MIGRATION.md`](./MIGRATION.md).
 
 ### Work-entry ritual (Upward Fetching)
 

@@ -19,6 +19,12 @@
 - Not for permanent retention. Once the next session reads it, its role is done.
 - Lasting lessons are promoted separately to .union-stack/reference/lessons/, decision records to archive_ledger.
 
+### Session history — where it lives (don't accumulate a giant log)
+- **git history is the session archive.** HANDOFF/prev are a 1-deep rolling window, not a log — past
+  sessions are recovered from commits, so HANDOFF stays small (avoids the 70KB-sessions.md trap).
+- Want a human-readable running log? Append session summaries to `.union-stack/mechanism/raw/` (append-only),
+  NOT to HANDOFF. Promote anything lasting to lessons/archive_ledger.
+
 ### Authoring discipline (the agent must follow)
 1. **A format a machine can pick up.** No prose diary. Structured items stamped with ZFS IDs.
 2. **Changed locations as an ID list.** Not prose but `[WO-01a-2] [FLOW-01a]` style.

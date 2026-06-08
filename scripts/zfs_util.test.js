@@ -21,6 +21,7 @@ const nameCases = [
   ['PRO-01_example_proposal.md', true], // proposals 도메인
   ['MTG-01a_example_kickoff.md', true], // plan/meetings 도메인
   ['INF-01_example_deploy.md', true],   // architecture/infra 도메인
+  ['DOM-01_example_model.md', true],    // reference/domain 도메인
   ['PLAN-01al_typo.md', false],     // l 금지
   ['PLAN-01o_typo.md', false],      // o 금지
   ['plan-01a_lower_domain.md', false],

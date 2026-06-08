@@ -10,7 +10,7 @@ const { ZFS_REGEX, isValidDomain, isValidName, VALID_DOMAINS } = require('./zfs_
 const BASE = '.union-stack';
 const TARGET_DIRS = [
   'plan', 'feature/flow', 'sprint', 'architecture', 'mechanism',
-  'reference/contracts', 'reference/lessons', 'project/roadmap', 'proposals',
+  'reference/contracts', 'reference/lessons', 'reference/domain', 'project/roadmap', 'proposals',
 ].map(d => `${BASE}/${d}`);
 
 // ZFS 규약에서 면제되는 고정 매니페스트/가이드 파일

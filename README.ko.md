@@ -90,12 +90,13 @@ LLM 에이전트는 컨텍스트 윈도우와 추론력이 커질수록 *능력*
 [DOMAIN]-[LUHMANN_ID]_[slug].md      예: PLAN-01a1_example_oauth.md
 ```
 
-- **DOMAIN**: 대문자 2~6자. `scripts/zfs_util.js`의 `VALID_DOMAINS`가 강제하는 **닫힌 화이트리스트**: `ARCH INF PHASE CON PLAN MTG FLOW WO WF LSN EVD ADR PRO`.
+- **DOMAIN**: 대문자 2~6자. `scripts/zfs_util.js`의 `VALID_DOMAINS`가 강제하는 **닫힌 화이트리스트**: `ARCH INF PHASE CON PLAN MTG FLOW WO WF LSN DOM EVD ADR PRO`.
 - **LUHMANN_ID**: 숫자로 시작, 숫자·알파벳 교차 확장. 알파벳에 **`l`/`o` 금지**(숫자 1·0과 혼동). 단말 작업은 끝에 `-N`.
   - `01` → `01a` → `01a1` → `WO-01a1-1`
 - **slug**: 소문자 스네이크. 공백·하이픈·대문자 금지.
 
 > 검증된 정규식과 자식/형제 판정 로직은 `scripts/`에 있고 테스트로 보증된다. 아래 두 의식은 실행 가능하다: `node scripts/upward-fetch.js <ID>`, `node scripts/blast-radius.js <ID>`. 자세한 규약은 `.union-stack/architecture/ARCH-00_zfs_naming.md`.
+> **이미 Zettelkasten/Folgezettel이나 계층형 plan ID를 쓰고 있다면?** ZFS 계보와 1:1 매핑 — 변환 불필요. **기존 프로젝트 이관은?** [`MIGRATION.md`](./MIGRATION.md) 참조.
 
 ### 작업 진입 의식 (Upward Fetching)
 

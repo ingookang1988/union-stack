@@ -10,11 +10,13 @@ const { buildIndex } = require('./zfs_index');
 const { lint } = require('./zfs-linter');
 const { findViolations: historyViolationsOf } = require('./history-linter');
 const { collectFiles, isSanitized } = require('./leakage-guard');
+const { gather: gatherBrokenRefs } = require('./ref-linter');
 
 const LOCKED = ['Verifying', 'Live'];
+const SIZE_CAP_KB = 30; // soft cap — 초과 시 분할/로테이션 권고
 
 /** 순수 계산: 1차 지표 → 차원별 평가 리포트. (FS 비의존 → 테스트 용이) */
-function computeHealth({ index, domainsDefined, guideCount, namingViolations, historyViolations, leakageViolations }) {
+function computeHealth({ index, domainsDefined, guideCount, namingViolations, historyViolations, leakageViolations, oversize = [], brokenRefs = 0 }) {
   const used = new Set(index.map(d => d.domain));
   const unused = domainsDefined.filter(d => !used.has(d));
   const locked = index.filter(d => LOCKED.includes(d.status));
@@ -28,6 +30,9 @@ function computeHealth({ index, domainsDefined, guideCount, namingViolations, hi
     { name: 'domain utilization', status: unused.length > 6 ? 'WARN' : 'OK',
       value: `${used.size}/${domainsDefined.length} used`, note: unused.length ? `unused: ${unused.join(' ')}` : '' },
     { name: 'doc/guide ratio', status: 'INFO', value: `${index.length} ZFS docs / ${guideCount} guides` },
+    { name: 'file size', status: oversize.length ? 'WARN' : 'OK',
+      value: `${oversize.length} > ${SIZE_CAP_KB}KB`, note: oversize.map(o => `${o.file}:${o.kb}KB`).join(' ') },
+    { name: 'ref integrity', status: 'INFO', value: `${brokenRefs} unresolved bracket refs (advisory)` },
     { name: 'lock exposure', status: locked.length ? 'WARN' : 'OK',
       value: `${locked.length} Verifying/Live`, note: locked.map(l => `${l.domain}-${l.id}`).join(' ') },
   ];
@@ -58,9 +63,23 @@ function gather(root = path.resolve(__dirname, '..')) {
   const historyViolations = fs.existsSync(hp) ? historyViolationsOf(fs.readFileSync(hp, 'utf8')).length : 0;
   const leakageViolations = collectFiles(root)
     .filter(rel => !isSanitized(rel, fs.readFileSync(path.join(root, rel), 'utf8'))).length;
+  const oversize = [];
+  (function walk(dir) {
+    const abs = path.join(root, dir);
+    if (!fs.existsSync(abs)) return;
+    for (const e of fs.readdirSync(abs)) {
+      const rel = `${dir}/${e}`;
+      const full = path.join(root, rel);
+      if (fs.statSync(full).isDirectory()) { walk(rel); continue; }
+      if (!e.endsWith('.md')) continue;
+      const kb = Math.round(fs.statSync(full).size / 1024);
+      if (kb > SIZE_CAP_KB) oversize.push({ file: rel, kb });
+    }
+  })('.union-stack');
+  const brokenRefs = gatherBrokenRefs(root).length;
   return computeHealth({
     index, domainsDefined: [...VALID_DOMAINS], guideCount: countGuides(root),
-    namingViolations, historyViolations, leakageViolations,
+    namingViolations, historyViolations, leakageViolations, oversize, brokenRefs,
   });
 }
 

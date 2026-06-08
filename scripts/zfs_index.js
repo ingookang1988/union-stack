@@ -9,7 +9,7 @@ const { parse } = require('./zfs_util');
 const BASE = '.union-stack';
 const SCAN_DIRS = [
   'plan', 'feature/flow', 'sprint', 'architecture', 'mechanism',
-  'reference/contracts', 'reference/lessons', 'project/roadmap', 'proposals',
+  'reference/contracts', 'reference/lessons', 'reference/domain', 'project/roadmap', 'proposals',
 ].map(d => `${BASE}/${d}`);
 
 // frontmatter에서 status 한 줄만 의존성 없이 추출. 없으면 null.
