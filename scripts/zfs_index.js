@@ -8,7 +8,7 @@ const { parse } = require('./zfs_util');
 // ZFS ID를 갖는 원자적 문서가 사는 디렉터리(.union-stack/ 격리 구조, 린터와 동일 집합).
 const BASE = '.union-stack';
 const SCAN_DIRS = [
-  'plan', 'feature/flow', 'sprint', 'architecture', 'mechanism',
+  'plan', 'feature/flow', 'sprint', 'architecture', 'verification',
   'reference/contracts', 'reference/lessons', 'reference/domain', 'project/roadmap', 'proposals',
 ].map(d => `${BASE}/${d}`);
 

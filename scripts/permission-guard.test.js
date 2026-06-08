@@ -15,7 +15,7 @@ check('schema(plan 본체)', classify('.union-stack/plan/PLAN-01_x.md'), 'schema
 check('schema(contracts)', classify('.union-stack/reference/contracts/CON-01_x.md'), 'schema');
 check('append(meetings)', classify('.union-stack/plan/meetings/MTG-01a_x.md'), 'append-only');
 check('append(ledger)', classify('.union-stack/archive_ledger.md'), 'append-only');
-check('append(raw)', classify('.union-stack/mechanism/raw/evidence.md'), 'append-only');
+check('append(raw)', classify('.union-stack/verification/raw/evidence.md'), 'append-only');
 check('other(feature)', classify('.union-stack/feature/live.md'), 'other');
 check('other(scripts)', classify('scripts/zfs_util.js'), 'other');
 

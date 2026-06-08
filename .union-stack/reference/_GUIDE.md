@@ -2,7 +2,7 @@
 
 > **What it is:** not a single pillar, but a **grouping** of two pillars that share one identity —
 > *accumulated knowledge you consult **before** producing something, to prevent redundant or repeated work.*
-> Parallels `mechanism/` (which groups `raw/` + `derived/`); here we group `contracts/` + `lessons/`.
+> Parallels `verification/` (which groups `raw/` + `derived/`); here we group `contracts/` + `lessons/`.
 
 ## Why these two are grouped (the Reference axis)
 Both answer "what already exists / already happened that I must check first?" — they are the
@@ -30,5 +30,5 @@ Do not infer a shared tier from the shared folder. See each member's `_GUIDE.md`
 ## Extending reference/ (when to add a member)
 A new `reference/` subdir qualifies **only if** it holds *settled, consult-before-act knowledge*
 (like the three above). Route non-reference content elsewhere — governance → `AGENTS.md`,
-architecture norms → `architecture/`, current state → `mechanism/`, work → `sprint/`.
+architecture norms → `architecture/`, current state → `verification/`, work → `sprint/`.
 Don't add a subdir for mutable/process content. Each member declares its own permission tier.

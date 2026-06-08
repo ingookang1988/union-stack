@@ -1,4 +1,4 @@
-# mechanism/ — arrow (verification) guide
+# verification/ — arrow (verification) guide
 > **Layer:** not a cell, but a dynamic verification plane connecting cell to cell.
 > **Definition:** *take in* external reality (input), re-examine cross-cell consistency (process),
 >   record only the divergences (output). It *does not generate or persist* reality.

@@ -10,7 +10,7 @@
 
 ## What stays out
 - Concrete types/signatures → `.union-stack/reference/contracts/` (contract).
-- The actual current code structure → `.union-stack/mechanism/derived/state`.
+- The actual current code structure → `.union-stack/verification/derived/state`.
 - Anything that is "this is how it is" rather than "this is how it ought to be" belongs elsewhere.
 
 ## Core distinction
@@ -19,7 +19,7 @@
 
 ## Subfolder — infra/ (infrastructure NORMS only)
 - `infra/` holds `INF-*`: deployment/DB/test-infra *decisions & rationale* (ought). Schema tier.
-- ⚠️ Norms only — tooling call-conventions → `reference/contracts`, current state → `mechanism/derived/state`. See `infra/_GUIDE.md`.
+- ⚠️ Norms only — tooling call-conventions → `reference/contracts`, current state → `verification/derived/state`. See `infra/_GUIDE.md`.
 
 ## Files
 - `ARCH-00_zfs_naming.md` — the ZFS naming convention (this template's core norm)

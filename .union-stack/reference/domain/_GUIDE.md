@@ -14,7 +14,7 @@
 - How to build/run the project (governance) → `AGENTS.md`
 - Code-structure rules (ought) → `.union-stack/architecture/`
 - Shared types / interfaces / enums (contract) → `.union-stack/reference/contracts/`
-- Current observed state → `.union-stack/mechanism/derived/state`
+- Current observed state → `.union-stack/verification/derived/state`
 
 > This fills the grid's missing "domain knowledge" cell: it is neither ought, nor a type contract,
 > nor process — it is *settled subject-matter truth you consult*, hence a reference member.

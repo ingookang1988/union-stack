@@ -60,11 +60,11 @@ The pillars are not flat. They operate at three distinct layers. **All of them l
   ought(immutable) architecture/               (roadmap lives under project/)
   contract(agreed) contracts/  *           plan/
   actual(observed) feature/                sprint/  (+ HANDOFF.md session relay)
-  time-axis(repeat)lessons/    *           (the time-axis counterpart of mechanism)
+  time-axis(repeat)lessons/    *           (the time-axis counterpart of verification)
 
 [ ARROWS / verification ] dynamic planes measuring whether cells diverge — not pillars.
-  mechanism/raw/       inbound signals (CI/compiler-generated, agent read-only)
-  mechanism/derived/   verification output: gap(norm<->reality), state(structure observed)
+  verification/raw/       inbound signals (CI/compiler-generated, agent read-only)
+  verification/derived/   verification output: gap(norm<->reality), state(structure observed)
 
 [ META / self-evolution ]
   proposals/         proposed harness-rule changes -> human approve/reject -> reasons preserved (= retrospective)
@@ -76,7 +76,7 @@ The pillars are not flat. They operate at three distinct layers. **All of them l
 - `.union-stack/reference/contracts/` — shared static specs (types/interfaces) and a **test-tooling catalog**. "Things the agent should find and reuse, not recreate."
 - `.union-stack/reference/lessons/` — accumulated repeated failures (a mistake log). Injected as a *pre-warning* when entering work.
 
-> Both `*` planes are grouped under `.union-stack/reference/` — *consult-before-act knowledge* (reuse + pre-warning), mirroring how `mechanism/` groups `raw/`+`derived/`. Permission tiers stay per-member: `contracts` = Schema, `lessons` = Wiki.
+> Both `*` planes are grouped under `.union-stack/reference/` — *consult-before-act knowledge* (reuse + pre-warning), mirroring how `verification/` groups `raw/`+`derived/`. Permission tiers stay per-member: `contracts` = Schema, `lessons` = Wiki.
 
 Each directory's `_GUIDE.md` states "what to put in, what to keep out."
 

@@ -27,7 +27,7 @@ Copy this, fill the right column, then move files.
 | current sprint / work orders | `.union-stack/sprint/` (next.md, WO-*/WF-*) | Wiki |
 | session log / handoff | `.union-stack/sprint/HANDOFF.md` (latest), git = archive | Wiki |
 | tactical decisions (ADRs) | `.union-stack/archive_ledger.md` | Raw (append) |
-| CI logs / test output / drift notes | `.union-stack/mechanism/` (raw/ in, derived/ out) | Raw / Wiki |
+| CI logs / test output / drift notes | `.union-stack/verification/` (raw/ in, derived/ out) | Raw / Wiki |
 | harness-rule change proposals | `.union-stack/proposals/PRO-*` | Proposal |
 | throwaway experiments | `.union-stack/spike/` (no ZFS, ephemeral) | Wiki |
 
@@ -38,11 +38,21 @@ Copy this, fill the right column, then move files.
 
 ## Compatibility notes (what carries over for free)
 - **ZFS Luhmann IDs ↔ existing PLAN/ID lineage**: if you already number plans hierarchically, the IDs map 1:1 — no conversion needed. Existing Zettelkasten/Folgezettel users inherit lineage directly.
-- **Drift/gap docs map directly**: an existing `gap.md` / drift log → `.union-stack/mechanism/derived/gap.md` with no reshaping.
+- **Drift/gap docs map directly**: an existing `gap.md` / drift log → `.union-stack/verification/derived/gap.md` with no reshaping.
 - **3-tier permission as a role clarifier**: deciding "is this Schema or Wiki?" for each file is, in practice, a fast and clarifying way to assign each doc its role during migration.
 
 ## Large docs
 union-stack files are small skeletons; real docs grow. When a doc exceeds ~30KB (`node scripts/health.js` warns), split it along its ZFS lineage and/or rotate older entries — see `DESIGN_RATIONALE.md` (§7, rotation protocol).
+
+## Upgrading from an older union-stack
+Two directories were renamed for clarity (folder name now matches its meaning):
+
+| Old (pre-v5.x) | Current | Why |
+|---|---|---|
+| `topology/` | `architecture/` | matches the `ARCH` domain; "architecture norms" is clearer |
+| `mechanism/` | `verification/` | "mechanism" collides with "architectural mechanism"; this plane verifies |
+
+Move the folders and update any bracket-ID/text references; IDs themselves are unchanged.
 
 ## Validate
 ```bash

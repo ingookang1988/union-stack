@@ -1,5 +1,5 @@
 # lessons/ — time-axis learning plane (the product mistake log) guide  ★new plane
-> **Position:** the *time-axis counterpart* of mechanism. If mechanism is after-the-fact
+> **Position:** the *time-axis counterpart* of verification. If verification is after-the-fact
 >   space-axis verification, this plane is *pre-emptive time-axis warning*.
 >   **Permission:** Wiki + proposal-based lifecycle.
 

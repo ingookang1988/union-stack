@@ -1,5 +1,5 @@
 <!-- [Schema/당위] 인프라 규범 더미 예시. 당신의 인프라 결정으로 교체.
-     규범·결정만 — 현재 상태는 mechanism/state, 도구 호출법은 reference/contracts. -->
+     규범·결정만 — 현재 상태는 verification/state, 도구 호출법은 reference/contracts. -->
 ---
 id: INF-01
 title: (예시) 배포 인프라 규범
@@ -17,7 +17,7 @@ version: 1.0
 - (예시) Postgres 채택. 근거: 트랜잭션 보장 + 팀 숙련도. (스키마/타입 = `[CON-01]`)
 
 ## 경계 (무엇이 여기 *안* 들어오나)
-- 현재 배포 상태·마이그레이션 현황 → `mechanism/derived/state`.
+- 현재 배포 상태·마이그레이션 현황 → `verification/derived/state`.
 - 러너·fixture·mock 호출법 → `reference/contracts/[CON-00]`.
 
 > 전부 가공 예시. 실제 인프라 *규범*으로 교체하라(상태·도구는 다른 평면).

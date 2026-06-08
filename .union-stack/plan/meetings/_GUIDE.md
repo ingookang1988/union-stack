@@ -1,6 +1,6 @@
 # plan/meetings/ — raw deliberation that precedes a plan (append-only)
 
-> **Position:** the *raw input* of `plan`. meeting : plan = raw : derived (same shape as `mechanism/`).
+> **Position:** the *raw input* of `plan`. meeting : plan = raw : derived (same shape as `verification/`).
 >   A plan is the **settled** intent; a meeting is the **un-settled deliberation** that produces it.
 > **Permission:** **append-only** — never rewrite a past meeting record (human OR agent may add new ones).
 >   This differs from `plan/` itself (Schema). Grouping under plan does NOT make meetings Schema.

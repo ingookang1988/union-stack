@@ -60,11 +60,11 @@ LLM 에이전트는 컨텍스트 윈도우와 추론력이 커질수록 *능력*
   당위(불변)       architecture/               (roadmap은 project/ 하위)
   계약(약속)       contracts/  ★           plan/
   실제(관찰)       feature/                sprint/  (+ HANDOFF.md 세션 이어달리기)
-  시간축(반복)     lessons/    ★           (mechanism의 시간축 짝)
+  시간축(반복)     lessons/    ★           (verification의 시간축 짝)
 
 [ 화살표 / 검증 ] 칸과 칸이 어긋났는지 재는 동적 평면 — 기둥이 아니다.
-  mechanism/raw/       외부 신호 수신 (CI·컴파일러 생성, 에이전트 read-only)
-  mechanism/derived/   검증 출력: gap(규범↔현실), state(구조 관찰)
+  verification/raw/       외부 신호 수신 (CI·컴파일러 생성, 에이전트 read-only)
+  verification/derived/   검증 출력: gap(규범↔현실), state(구조 관찰)
 
 [ 메타 / 자기 진화 ]
   proposals/         하네스 규칙 변경 제안 → 인간 승인/거부 → 사유 보존 (= 회고)
@@ -76,7 +76,7 @@ LLM 에이전트는 컨텍스트 윈도우와 추론력이 커질수록 *능력*
 - `.union-stack/reference/contracts/` — 공유 정적 명세(타입·인터페이스)와 **테스트 도구 카탈로그**. "에이전트가 새로 만들지 말고 찾아 쓸 것들."
 - `.union-stack/reference/lessons/` — 반복된 실패의 누적(오답노트). 작업 진입 시 *사전 경고*로 주입.
 
-> 위 두 ★평면은 `.union-stack/reference/` 아래 묶인다 — *쓰기 전에 조회하는 지식*(재사용 + 사전경고). `mechanism/`이 `raw/`+`derived/`를 묶는 것과 대칭. 권한 tier는 하위별 유지: `contracts`=Schema, `lessons`=Wiki.
+> 위 두 ★평면은 `.union-stack/reference/` 아래 묶인다 — *쓰기 전에 조회하는 지식*(재사용 + 사전경고). `verification/`이 `raw/`+`derived/`를 묶는 것과 대칭. 권한 tier는 하위별 유지: `contracts`=Schema, `lessons`=Wiki.
 
 각 디렉터리의 `_GUIDE.md`에 "무엇을 싣고 무엇을 빼는가"가 적혀 있다.
 

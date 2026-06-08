@@ -22,7 +22,7 @@
 ### Session history — where it lives (don't accumulate a giant log)
 - **git history is the session archive.** HANDOFF/prev are a 1-deep rolling window, not a log — past
   sessions are recovered from commits, so HANDOFF stays small (avoids the 70KB-sessions.md trap).
-- Want a human-readable running log? Append session summaries to `.union-stack/mechanism/raw/` (append-only),
+- Want a human-readable running log? Append session summaries to `.union-stack/verification/raw/` (append-only),
   NOT to HANDOFF. Promote anything lasting to lessons/archive_ledger.
 
 ### Authoring discipline (the agent must follow)

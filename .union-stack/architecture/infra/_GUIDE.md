@@ -11,7 +11,7 @@
 ## ⚠️ What stays out (route to its real home — do not duplicate here)
 - Test runner/fixture/mock **calling conventions** → `.union-stack/reference/contracts/` (CON-00 catalog). Already has a home.
 - Concrete DB **schema/types** (a contract) → `.union-stack/reference/contracts/`.
-- **Current** deployed state · DB migration status (observed reality) → `.union-stack/mechanism/derived/state`.
+- **Current** deployed state · DB migration status (observed reality) → `.union-stack/verification/derived/state`.
 
 > The split mirrors the whole template: ought(norms) ≠ contract(interfaces) ≠ actual(state).
 > Folding all "infra" into one place would re-merge those three — exactly what the grid avoids.

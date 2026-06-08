@@ -18,8 +18,8 @@ const EXPLICIT_DUMMIES = new Set([
 ]);
 const RESET_TARGETS = new Set([
   '.union-stack/feature/live.md', '.union-stack/sprint/next.md', '.union-stack/sprint/HANDOFF.md',
-  '.union-stack/mechanism/derived/gap.md', '.union-stack/mechanism/derived/state.md',
-  '.union-stack/mechanism/raw/evidence.md', '.union-stack/project/HISTORY.md',
+  '.union-stack/verification/derived/gap.md', '.union-stack/verification/derived/state.md',
+  '.union-stack/verification/raw/evidence.md', '.union-stack/project/HISTORY.md',
   '.union-stack/archive_ledger.md',
 ]);
 const TEMPLATE_BITS = [
@@ -78,9 +78,9 @@ const RESET_TEMPLATES = {
   '.union-stack/feature/live.md': '<!-- [Wiki] 라이브 제품 표면. 에이전트가 행 단위로 갱신. -->\n# Live Features\n| Feature | ZFS Ref | Status |\n|---|---|---|\n',
   '.union-stack/sprint/next.md': '<!-- [Wiki] 활성 작업대. -->\n# Sprint — Active\n| WO | ZFS Ref | State |\n|---|---|---|\n',
   '.union-stack/sprint/HANDOFF.md': '<!-- [Wiki] 세션 이어달리기. 세션을 마치는 에이전트가 덮어쓴다. -->\n# Handoff → next session\n\n## 1. Summary\n## 2. Changed locations (ID list)\n## 3. Next task (single entry point)\n## 4. Open / cautions\n## 5. Verification status\n',
-  '.union-stack/mechanism/derived/gap.md': '<!-- [Wiki] 규범↔현실 괴리. 에이전트가 검증 후 기록. -->\n# Drift / Gap Log\n',
-  '.union-stack/mechanism/derived/state.md': '<!-- [Wiki] 관찰된 현재 코드 구조. -->\n# Observed Structure\n',
-  '.union-stack/mechanism/raw/evidence.md': '<!-- [Raw] 시스템만 Append. 에이전트 read-only. -->\n# Evidence Log (CI/CD 자동 기록)\n',
+  '.union-stack/verification/derived/gap.md': '<!-- [Wiki] 규범↔현실 괴리. 에이전트가 검증 후 기록. -->\n# Drift / Gap Log\n',
+  '.union-stack/verification/derived/state.md': '<!-- [Wiki] 관찰된 현재 코드 구조. -->\n# Observed Structure\n',
+  '.union-stack/verification/raw/evidence.md': '<!-- [Raw] 시스템만 Append. 에이전트 read-only. -->\n# Evidence Log (CI/CD 자동 기록)\n',
   '.union-stack/project/HISTORY.md': '<!-- [Schema/Raw] 프로젝트 전략적 분기점. 사실+근거는 한 쌍(근거 없는 사실 등재 불가). -->\n# Project History — strategic turning points\n\n| Date | Turning point (fact) | Reason (why) | Implication |\n|---|---|---|---|\n',
   '.union-stack/archive_ledger.md': '<!-- [Raw] 결정화된 ADR 영구 원장. Append-only. 전술 결정만(전략은 HISTORY). -->\n# Architecture Decision Ledger\n',
 };
