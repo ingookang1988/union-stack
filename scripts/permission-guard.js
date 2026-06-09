@@ -3,7 +3,7 @@
 // 권한 규율 강제 게이트 — 선언으로만 있던 권한 tier를 코드로 검사한다(git diff 기반).
 //
 //  Check A (항상): append-only 무결성 — Raw/append 평면에서 기존 줄 삭제 금지(추가만).
-//                  archive_ledger.md · verification/raw/ · plan/meetings/ . 보편 안전(false-positive 없음).
+//                  archive_ledger.md · verification/raw/ · plan/meetings/ · plan/analytics/ . 보편 안전(false-positive 없음).
 //  Check B (--strict): Schema 무단 편집 — 에이전트 작성 변경이 Schema 평면을 건드리면
 //                  커밋에 `Approved-by:` 트레일러 필수. 정책 의존이라 strict에서만(정직한 한계).
 //
@@ -17,13 +17,14 @@ const { execSync } = require('child_process');
 const SCHEMA = [
   /^\.union-stack\/project\//,
   /^\.union-stack\/architecture\//,
-  /^\.union-stack\/plan\/(?!meetings\/)/, // plan 본체는 Schema, plan/meetings는 append-only(아래)
+  /^\.union-stack\/plan\/(?!meetings\/|analytics\/)/, // plan 본체는 Schema, meetings·analytics는 append-only(아래)
   /^\.union-stack\/reference\/contracts\//,
 ];
 const APPEND_ONLY = [
   /^\.union-stack\/archive_ledger\.md$/,
   /^\.union-stack\/verification\/raw\//,
   /^\.union-stack\/plan\/meetings\//,
+  /^\.union-stack\/plan\/analytics\//,
 ];
 
 /** 변경 경로의 권한 성격 분류(순수). */

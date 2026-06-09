@@ -13,7 +13,7 @@ version: 1.0
 
 ## Rules
 1. **DOMAIN**: 2–6 uppercase letters. A **closed whitelist** (enforced by `VALID_DOMAINS` in `scripts/zfs_util.js`):
-   `ARCH INF PHASE CON PLAN MTG FLOW WO WF LSN DOM EVD ADR PRO`. New domains are added to both code and docs only after `.union-stack/proposals` approval.
+   `ARCH INF PHASE CON PLAN MTG ANL FLOW WO WF LSN DOM EVD ADR PRO`. New domains are added to both code and docs only after `.union-stack/proposals` approval.
 2. **LUHMANN_ID**: starts with a digit. Digit blocks and letter blocks alternate as it grows.
    Letters exclude **`l`/`o`** → `[a-km-np-z]` (blocks confusion with digits 1/0).
    A terminal task ends with `-[0-9]+`.

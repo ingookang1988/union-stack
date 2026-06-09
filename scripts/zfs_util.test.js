@@ -20,6 +20,7 @@ const nameCases = [
   ['PHASE-01_example_mvp.md', true],  // project/roadmap 도메인
   ['PRO-01_example_proposal.md', true], // proposals 도메인
   ['MTG-01a_example_kickoff.md', true], // plan/meetings 도메인
+  ['ANL-01a_example_provider_usage.md', true], // plan/analytics 도메인
   ['INF-01_example_deploy.md', true],   // architecture/infra 도메인
   ['DOM-01_example_model.md', true],    // reference/domain 도메인
   ['PLAN-01al_typo.md', false],     // l 금지

@@ -14,6 +14,8 @@
 ##   plan/ root stays lean; archived plans keep their ZFS ID and remain indexed. See `archived/_GUIDE.md`.
 ## Files: PLAN-* (ZFS). Layer planning via parent-child relations.
 
-## Subfolder — meetings/ (the raw deliberation that precedes a plan)
-- `meetings/` holds `MTG-*`: pre-planning discussion, append-only, lineage-shared with the PLAN it produces.
-- meeting : plan = raw : derived. It is **append-only (not Schema)** — see `meetings/_GUIDE.md`.
+## Subfolders — the two raw inputs that precede a plan (both append-only, not Schema)
+- `meetings/` holds `MTG-*`: pre-planning *deliberation* (who-argued-what), lineage-shared with the PLAN.
+- `analytics/` holds `ANL-*`: evidence-based *analysis* (what the data/root-cause says) that backs the PLAN.
+- meeting ∥ analytics : plan = raw : derived. Deliberation and analysis are **parallel** raw inputs, not
+  nested — analysis often backs a plan with no meeting. See `meetings/_GUIDE.md`, `analytics/_GUIDE.md`.

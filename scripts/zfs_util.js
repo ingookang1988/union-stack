@@ -22,6 +22,7 @@ const VALID_DOMAINS = new Set([
   'CON',   // contracts   계약·상태
   'PLAN',  // plan        계약·행위
   'MTG',   // plan/meetings  기획 전 raw 심의(append-only)
+  'ANL',   // plan/analytics  plan을 먹이는 근거기반 분석(append-only)
   'FLOW',  // feature     실제·상태(데이터 리니지)
   'WO',    // sprint      실제·행위(작업 오더)
   'WF',    // sprint      실제·행위(워크플로우)

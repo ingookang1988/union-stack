@@ -14,6 +14,7 @@ check('schema(architecture)', classify('.union-stack/architecture/ARCH-01_x.md')
 check('schema(plan 본체)', classify('.union-stack/plan/PLAN-01_x.md'), 'schema');
 check('schema(contracts)', classify('.union-stack/reference/contracts/CON-01_x.md'), 'schema');
 check('append(meetings)', classify('.union-stack/plan/meetings/MTG-01a_x.md'), 'append-only');
+check('append(analytics)', classify('.union-stack/plan/analytics/ANL-01a_x.md'), 'append-only');
 check('append(ledger)', classify('.union-stack/archive_ledger.md'), 'append-only');
 check('append(raw)', classify('.union-stack/verification/raw/evidence.md'), 'append-only');
 check('other(feature)', classify('.union-stack/feature/live.md'), 'other');
@@ -26,6 +27,8 @@ check('append 순수추가 → 통과',
   findViolations([{ path: '.union-stack/archive_ledger.md', added: 3, removed: 0 }]).length, 0);
 check('meetings 수정 → 위반',
   findViolations([{ path: '.union-stack/plan/meetings/MTG-01a_x.md', added: 0, removed: 1 }]).length, 1);
+check('analytics 수정 → 위반',
+  findViolations([{ path: '.union-stack/plan/analytics/ANL-01a_x.md', added: 0, removed: 1 }]).length, 1);
 
 // --- Check B: Schema 승인 (strict에서만) ---
 const schemaChange = [{ path: '.union-stack/architecture/ARCH-02_x.md', added: 5, removed: 1 }];
