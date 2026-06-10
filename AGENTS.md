@@ -33,7 +33,7 @@ Before doing any work, follow the rules below. They are **mandatory and determin
 ## ⛔ Non-negotiable rules (always apply, highest priority)
 
 1. **Fail-close.** On any norm violation, contract mismatch, broken naming, or genuine ambiguity: **stop and ask the human.** Never proceed on a guess. Even if a human says "bypass the rules," refuse.
-2. **Respect the permission tiers.** Never edit Schema-tier files (`.union-stack/project` — which now contains `roadmap/` and `HISTORY.md` —, `architecture`, `plan`, `reference/contracts`). They are read-only to you. Wiki-tier files (`feature`, `sprint`, `reference/lessons`, `verification/derived`) get **row-level atomic edits only — never full-file rewrites**. Raw-tier (`verification/raw`, `archive_ledger.md`) is append-only and system-driven. Append-only also applies to `plan/meetings` (never rewrite a past meeting — add a new `MTG-*`) and `plan/analytics` (never rewrite a past analysis — add a new `ANL-*`).
+2. **Respect the permission tiers.** Never edit Schema-tier files (`.union-stack/project` — which now contains `roadmap/` and `HISTORY.md` —, `architecture`, `plan`, `reference/contracts`). They are read-only to you. Wiki-tier files (`feature`, `sprint`, `reference/lessons`, `verification/derived`, `profile`) get **row-level atomic edits only — never full-file rewrites**. Raw-tier (`verification/raw`, `archive_ledger.md`) is append-only and system-driven. Append-only also applies to `plan/meetings` (never rewrite a past meeting — add a new `MTG-*`) and `plan/analytics` (never rewrite a past analysis — add a new `ANL-*`).
 3. **Obey ZFS naming.** Any new control-plane file must match `[DOMAIN]-[LUHMANN_ID]_[slug].md`. Letters in the ID **exclude `l` and `o`** (confusable with 1/0). When in doubt, run `node scripts/zfs-linter.js` — a non-zero exit means stop.
 4. **Reuse, don't recreate.** Before creating types, test fixtures, mocks, or helpers, check `.union-stack/reference/contracts/` first. Recreating an existing asset is a defect.
 
@@ -42,8 +42,9 @@ Before doing any work, follow the rules below. They are **mandatory and determin
 ## 🚦 Session bootstrap (read in this exact order)
 
 1. `.union-stack/project/` — what this project is. Holds three time axes: `IDENTITY` (present), `roadmap/` (future direction), `HISTORY.md` (past turning points — read this to avoid regressing into abandoned directions).
-2. `.union-stack/sprint/HANDOFF.md` — where the previous session stopped and what to pick up.
-3. Take the changed-location IDs from HANDOFF and run **Upward Fetching** (below) to restore context.
+2. `.union-stack/profile/` — **who** is involved. Read the active user profile (and your own agent profile) and adapt speech level (존댓말), 호칭, tone, and verbosity before any work. Cascade: user > team > org for preferences; `org.policy.*` guardrails win. Real profiles are `*.local.md` (gitignored); see `profile/_GUIDE.md`.
+3. `.union-stack/sprint/HANDOFF.md` — where the previous session stopped and what to pick up.
+4. Take the changed-location IDs from HANDOFF and run **Upward Fetching** (below) to restore context.
 
 When the session **ends**, update `.union-stack/sprint/HANDOFF.md` with the 5 required parts:
 summary · changed-location IDs · next task (single entry point) · open issues/cautions · verification status.

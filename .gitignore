@@ -1,3 +1,5 @@
 node_modules/
 *.log
 .claude/settings.local.json
+# real (PII) profiles — only *example* dummies are committed (AGENTS.local.md convention)
+.union-stack/profile/**/*.local.md

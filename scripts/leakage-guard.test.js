@@ -19,6 +19,8 @@ check('_GUIDE 면제',      isSanitized('.union-stack/sprint/_GUIDE.md', '마커
 check('ARCH-00 면제',     isSanitized('.union-stack/architecture/ARCH-00_zfs_naming.md', '마커 없음'), true);
 // 위반: 마커도 allowlist도 아님 = 실제 내용으로 의심
 check('마커 없는 실내용',  isSanitized('.union-stack/plan/PLAN-02_real.md', '# 사내 결제 모듈 요구사항'), false);
+check('마커 없는 profile', isSanitized('.union-stack/profile/human/user_real.md', '# 실명 홍길동 프로필'), false);
+check('profile 더미',      isSanitized('.union-stack/profile/human/user_example.md', '내용'), true);
 check('마커 없는 매니페스트', isSanitized('.union-stack/archive_ledger.md', '[ADR-09] 실제 결정'), false);
 
 // --- 통합: 템플릿 모드(더미 존재)에서만 위반 0건을 단언. init 후 실제 프로젝트에선 건너뜀. ---
