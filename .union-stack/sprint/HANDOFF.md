@@ -26,11 +26,12 @@ version: 1.0
   `package.json`(eval·budget 스크립트 + 신규 테스트 3종), `.github/workflows/harness.yml`(ref --strict + npm test)
 
 ## 3. 다음 작업 (단일 진입점)
-- → **[E2] 발견 메커니즘** (또는 [E3] enforce 도그푸딩 / [E1-H3] 토큰 회계). **E1·E4 완료**:
-  E1(1~4회차) 순수 비국소 측정 시 세 가치 전부 **+1.0, 분산 0**; E4 캘리브레이션 모델(실현델타 =
-  비국소성계수 × 표면존재)을 `scripts/eval.js`에 코드화·E1 4점 재현(`eval/CALIBRATION.md`). 확정 법칙:
-  *효능 ∝ 지식 비국소성, 모델 강도와 무관*. [E2]: 50~100노드 평면에서 upward-fetch precision/recall +
-  예산 준수 측정(신규 `scripts/fetch-eval.js`). [E1-H3] 토큰 순이득은 E4 모델 확장으로 후속.
+- → **[E3] enforce 도그푸딩** (또는 [E1-H3] 토큰 회계). **E1·E2·E4 완료** — PHASE-02 남은 건 E3·H3 둘뿐:
+  · E1(1~4회차): 순수 비국소 측정 시 세 가치 전부 **+1.0 분산0**. · E4: 캘리브레이션 모델 `scripts/eval.js`
+  코드화·E1 4점 재현(`eval/CALIBRATION.md`). · E2: `scripts/fetch-eval.js`로 적대적 100노드 평면에서
+  **precision=recall=1.00·주입수 불변**(O(depth)). [E3]: `.claude/settings.json`에 훅 켜고 enforce 운용해
+  정당편집 차단 FP율 수집(+CI 재착륙, 워크플로 스코프 필요). [E1-H3]: on 선주입 vs off 재작업 토큰 계량.
+  둘 다 완료 시 **v6.0 "Empirical Harness"** 승격 검토.
 
 ## 4. 미해결 / 주의
 - **hooks 활성화는 사용자 행위**: 보안상 에이전트가 `.claude/settings.json`을 자동 설치하지 않는다.
