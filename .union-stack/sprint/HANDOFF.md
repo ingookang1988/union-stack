@@ -26,10 +26,10 @@ version: 1.0
   `package.json`(eval·budget 스크립트 + 신규 테스트 3종), `.github/workflows/harness.yml`(ref --strict + npm test)
 
 ## 3. 다음 작업 (단일 진입점)
-- → **A/B 2회차: 비국소화 가설 검증.** `eval/RESULTS.md`의 1회차 결과(on 3/3 vs off 1/3, +67%p)에서
-  T2(계약)만 델타 0이었다 — 계약이 *같은 파일에 인라인*이라 하네스 한계기여가 0. 가설: 계약을 다른
-  모듈/세션으로 떼면(비국소화) T2 델타>0. 이를 N=5로 재현하면 "하네스는 지식이 비국소일 때 페이오프"가
-  통계적으로 굳는다. 진입점: `eval/reference-instance/` 확장 + `eval/PROTOCOL.md` §1.
+- → **E1 잔여(H2·H4) 실행.** `[PHASE-02]` 착수 완료: E1-H1(비국소성) **검증됨** — 비국소 계약 델타 +1.0
+  (on 3/3 vs off 0/3), 국소 계약(1회차 T2)은 0. 법칙 도출: *하네스 효능 ∝ 지식 비국소성*(`eval/RESULTS.md`
+  2회차). 다음: **H2(N=5 안정성)·H4(다모델 sonnet/haiku/opus)** 로 통계적 확정 → 이후 E4 캘리브레이션.
+  진입점: `eval/reference-instance/` + `eval/PROTOCOL.md`. 병렬로 E3 도그푸딩(enforce FP 수집) 시작 가능.
 
 ## 4. 미해결 / 주의
 - **hooks 활성화는 사용자 행위**: 보안상 에이전트가 `.claude/settings.json`을 자동 설치하지 않는다.
