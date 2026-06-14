@@ -35,7 +35,7 @@ check('ref integrity INFO', sz.dims.find(d => d.name === 'ref integrity').value.
 // gather(): 실제 레포 스모크 — 구조 정상이면 fails 0
 const g = gather();
 check('gather healthy(현재 레포)', g.healthy === true);
-check('gather dims 8', g.dims.length === 8);
+check('gather dims 9', g.dims.length === 9);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

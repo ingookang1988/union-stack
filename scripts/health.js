@@ -11,12 +11,13 @@ const { lint } = require('./zfs-linter');
 const { findViolations: historyViolationsOf } = require('./history-linter');
 const { collectFiles, isSanitized } = require('./leakage-guard');
 const { gather: gatherBrokenRefs } = require('./ref-linter');
+const { gather: gatherBudget } = require('./context-budget');
 
 const LOCKED = ['Verifying', 'Live'];
 const SIZE_CAP_KB = 30; // soft cap — 초과 시 분할/로테이션 권고
 
 /** 순수 계산: 1차 지표 → 차원별 평가 리포트. (FS 비의존 → 테스트 용이) */
-function computeHealth({ index, domainsDefined, guideCount, namingViolations, historyViolations, leakageViolations, oversize = [], brokenRefs = 0 }) {
+function computeHealth({ index, domainsDefined, guideCount, namingViolations, historyViolations, leakageViolations, oversize = [], brokenRefs = 0, budget = null }) {
   const used = new Set(index.map(d => d.domain));
   const unused = domainsDefined.filter(d => !used.has(d));
   const locked = index.filter(d => LOCKED.includes(d.status));
@@ -33,6 +34,9 @@ function computeHealth({ index, domainsDefined, guideCount, namingViolations, hi
     { name: 'file size', status: oversize.length ? 'WARN' : 'OK',
       value: `${oversize.length} > ${SIZE_CAP_KB}KB`, note: oversize.map(o => `${o.file}:${o.kb}KB`).join(' ') },
     { name: 'ref integrity', status: 'INFO', value: `${brokenRefs} unresolved bracket refs (advisory)` },
+    { name: 'context budget', status: budget && budget.over ? 'WARN' : 'OK',
+      value: budget ? `${budget.total}/${budget.totalCap} tok bootstrap` : 'n/a',
+      note: budget && budget.over ? budget.rows.filter(r => r.status === 'OVER').map(r => `${r.name}:${r.tokens}>${r.budget}`).join(' ') : '' },
     { name: 'lock exposure', status: locked.length ? 'WARN' : 'OK',
       value: `${locked.length} Verifying/Live`, note: locked.map(l => `${l.domain}-${l.id}`).join(' ') },
   ];
@@ -77,9 +81,10 @@ function gather(root = path.resolve(__dirname, '..')) {
     }
   })('.union-stack');
   const brokenRefs = gatherBrokenRefs(root).length;
+  const budget = gatherBudget(root);
   return computeHealth({
     index, domainsDefined: [...VALID_DOMAINS], guideCount: countGuides(root),
-    namingViolations, historyViolations, leakageViolations, oversize, brokenRefs,
+    namingViolations, historyViolations, leakageViolations, oversize, brokenRefs, budget,
   });
 }
 

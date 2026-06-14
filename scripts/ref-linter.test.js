@@ -1,6 +1,6 @@
 // scripts/ref-linter.test.js
-// 순수 함수(extractRefs, findBroken) 단위 + gather 스모크. 실행: node scripts/ref-linter.test.js
-const { extractRefs, findBroken, gather } = require('./ref-linter');
+// 순수 함수(extractRefs, findBroken) 단위 + gather/gatherGating 스모크. 실행: node scripts/ref-linter.test.js
+const { extractRefs, findBroken, gather, gatherGating } = require('./ref-linter');
 
 let pass = 0, fail = 0;
 function check(label, cond) { if (cond) pass++; else { fail++; console.error(`FAIL ${label}`); } }
@@ -11,15 +11,24 @@ check('extract count', refs.length === 3);
 check('extract raws', JSON.stringify(refs.map(r => r.raw)) === JSON.stringify(['PLAN-01a', 'CON-01', 'WO-01a-2']));
 check('no false [TODO]', !refs.some(r => r.domain === 'TODO'));
 
+// forward 마커
+const fwd = extractRefs('[PLAN-09z?] future and [PLAN-01a] now');
+check('forward flagged', fwd.find(r => r.raw === 'PLAN-09z').forward === true);
+check('non-forward flagged', fwd.find(r => r.raw === 'PLAN-01a').forward === false);
+
 // findBroken
 const known = new Set(['PLAN-01a', 'CON-01']);
 const broken = findBroken(extractRefs('[PLAN-01a] [CON-01] [FLOW-09z] [FLOW-09z]'), known);
 check('broken = FLOW-09z (deduped)', broken.length === 1 && broken[0].raw === 'FLOW-09z');
 check('known resolve', findBroken(extractRefs('[PLAN-01a]'), known).length === 0);
+check('forward never broken', findBroken(extractRefs('[FLOW-09z?]'), known).length === 0);
 
-// gather smoke (현재 레포 — 배열 반환, 예외 없이)
+// gather/gatherGating smoke (현재 레포 — 배열, 예외 없이)
 const g = gather();
 check('gather returns array', Array.isArray(g));
+// 게이팅 대상은 정화-면제(예시/가이드/방법론) 제외 → 현재 템플릿은 0이어야 한다(strict 통과 보장).
+const gg = gatherGating();
+check('gating empty on template', Array.isArray(gg) && gg.length === 0);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

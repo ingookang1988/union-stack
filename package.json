@@ -1,6 +1,6 @@
 {
   "name": "union-stack",
-  "version": "5.14.0",
+  "version": "5.15.0",
   "description": "Document-based control-plane template for AI-agent system coding",
   "scripts": {
     "init": "node scripts/init.js",
@@ -8,7 +8,9 @@
     "lint:leakage": "node scripts/leakage-guard.js",
     "lint:refs": "node scripts/ref-linter.js",
     "health": "node scripts/health.js",
-    "test": "node scripts/zfs_util.test.js && node scripts/zfs_index.test.js && node scripts/leakage-guard.test.js && node scripts/history-linter.test.js && node scripts/permission-guard.test.js && node scripts/init.test.js && node scripts/query.test.js && node scripts/mcp-server.test.js && node scripts/health.test.js && node scripts/ref-linter.test.js",
+    "eval": "node scripts/eval.js",
+    "budget": "node scripts/context-budget.js",
+    "test": "node scripts/zfs_util.test.js && node scripts/zfs_index.test.js && node scripts/leakage-guard.test.js && node scripts/history-linter.test.js && node scripts/permission-guard.test.js && node scripts/init.test.js && node scripts/query.test.js && node scripts/mcp-server.test.js && node scripts/health.test.js && node scripts/ref-linter.test.js && node scripts/hooks.test.js && node scripts/context-budget.test.js && node scripts/eval.test.js",
     "fetch": "node scripts/upward-fetch.js",
     "blast": "node scripts/blast-radius.js",
     "guard": "node scripts/permission-guard.js",

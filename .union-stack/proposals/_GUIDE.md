@@ -12,3 +12,11 @@
 
 ## Publishing strategy: an external community's issues/PRs *are* the externalized proposal tier.
 ## Files: PRO-* . status: Proposed | Approved | Rejected (rationale required)
+
+## ⚖️ New-pillar / new-domain proposals MUST carry a split-principle justification (anti-bloat self-discipline).
+##   A pillar accretes only if it passes BOTH tests (DESIGN_RATIONALE §1.5, §8.3):
+##     (a) "no system lacks X"  AND  (b) "X fits in no existing cell."
+##   Failing (b) → it is an OVERLAY (tag/frontmatter), not a pillar. See [PRO-04] (a rejected pillar = the reference case).
+##   Required section in any such proposal: "## Split-principle check" stating (a)/(b) explicitly.
+##   Rationale: pillars must not grow faster than evidence justifies (YAGNI). `health.js` domain-utilization
+##   surfaces the symptom (many unused domains = over-eager grid); this gate stops it at the source.

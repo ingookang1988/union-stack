@@ -49,6 +49,8 @@ Before doing any work, follow the rules below. They are **mandatory and determin
 When the session **ends**, update `.union-stack/sprint/HANDOFF.md` with the 5 required parts:
 summary · changed-location IDs · next task (single entry point) · open issues/cautions · verification status.
 
+> **Context budget (smallest high-signal set).** The bootstrap injects `project` + active `profile` + `HANDOFF`; per-task it adds Upward Fetching output. Keep the static bootstrap lean — soft ceilings: project ≤ 2000, profile ≤ 800, handoff ≤ 1500 tokens (total ≤ 4000). If a section exceeds it, do not pad the prompt — apply *extreme compression*: split by ZFS lineage, summarize, or replace prose with bracket-ID links (`[PLAN-01a]`) for on-demand fetch. Self-check: `node scripts/context-budget.js` (also a `context budget` dimension in `scripts/health.js`). This keeps the harness from self-inducing the context-rot it exists to prevent.
+
 ### 🗂️ Where to record (route every past/decision by *kind* — don't pile into one place)
 - Volatile session progress → `sprint/HANDOFF.md` (latest only)
 - A failure seen 2–3× in a lineage → `reference/lessons/LSN-*`
