@@ -26,11 +26,11 @@ version: 1.0
   `package.json`(eval·budget 스크립트 + 신규 테스트 3종), `.github/workflows/harness.yml`(ref --strict + npm test)
 
 ## 3. 다음 작업 (단일 진입점)
-- → **[E4] 프록시↔효능 캘리브레이션** (또는 [E2] 발견 메커니즘 / [E3] enforce 도그푸딩). **E1 완료**
-  (`eval/RESULTS.md` 1~4회차): instrument v2 N=5까지 마쳐, 순수 비국소 측정 시 세 가치(계약 T4·pitfall T1v2·
-  회귀 T3v2) 전부 **+1.0, 분산 0**. 확정 법칙: *효능 ∝ 지식 비국소성, 모델 강도와 무관*. E4 1차 모델:
-  실현델타 = (비국소성 계수 0~1) × 프록시 상한. 미측정은 [E1-H3] 토큰 순이득(토큰 회계 필요) — E4와 함께.
-  진입점: `eval/RESULTS.md` "E1 최종 종합" + `scripts/eval.js`(프록시).
+- → **[E2] 발견 메커니즘** (또는 [E3] enforce 도그푸딩 / [E1-H3] 토큰 회계). **E1·E4 완료**:
+  E1(1~4회차) 순수 비국소 측정 시 세 가치 전부 **+1.0, 분산 0**; E4 캘리브레이션 모델(실현델타 =
+  비국소성계수 × 표면존재)을 `scripts/eval.js`에 코드화·E1 4점 재현(`eval/CALIBRATION.md`). 확정 법칙:
+  *효능 ∝ 지식 비국소성, 모델 강도와 무관*. [E2]: 50~100노드 평면에서 upward-fetch precision/recall +
+  예산 준수 측정(신규 `scripts/fetch-eval.js`). [E1-H3] 토큰 순이득은 E4 모델 확장으로 후속.
 
 ## 4. 미해결 / 주의
 - **hooks 활성화는 사용자 행위**: 보안상 에이전트가 `.claude/settings.json`을 자동 설치하지 않는다.
