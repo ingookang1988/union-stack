@@ -26,12 +26,12 @@ version: 1.0
   `package.json`(eval·budget 스크립트 + 신규 테스트 3종), `.github/workflows/harness.yml`(ref --strict + npm test)
 
 ## 3. 다음 작업 (단일 진입점)
-- → **[E3] enforce 도그푸딩** (또는 [E1-H3] 토큰 회계). **E1·E2·E4 완료** — PHASE-02 남은 건 E3·H3 둘뿐:
-  · E1(1~4회차): 순수 비국소 측정 시 세 가치 전부 **+1.0 분산0**. · E4: 캘리브레이션 모델 `scripts/eval.js`
-  코드화·E1 4점 재현(`eval/CALIBRATION.md`). · E2: `scripts/fetch-eval.js`로 적대적 100노드 평면에서
-  **precision=recall=1.00·주입수 불변**(O(depth)). [E3]: `.claude/settings.json`에 훅 켜고 enforce 운용해
-  정당편집 차단 FP율 수집(+CI 재착륙, 워크플로 스코프 필요). [E1-H3]: on 선주입 vs off 재작업 토큰 계량.
-  둘 다 완료 시 **v6.0 "Empirical Harness"** 승격 검토.
+- → **[E3] enforce 도그푸딩 = PHASE-02 마지막 1개.** E1·E2·E4 **전부 완료**(`eval/RESULTS.md` + `CALIBRATION.md`):
+  · E1(H1~H4): 순수 비국소 측정 시 세 가치 **+1.0 분산0**, 모델-무관, **토큰 ROI ≈82×**(주입 208 tok, 손익분기 1.2%).
+  · E4: 캘리브레이션 모델 `scripts/eval.js` 코드화·E1 4점 재현. · E2: `scripts/fetch-eval.js` 100노드 평면
+  **precision=recall=1.00·주입 불변**. [E3]만 남음 — 본질적 *종단* 작업이라 부분 가림: ①훅 활성화는 사용자가
+  `.claude/settings.json`에 `scripts/HOOKS.md` 스니펫 복사(에이전트 자동설치 분류기 차단), ②CI 재착륙은
+  워크플로 스코프 필요, ③enforce FP율은 실사용 누적 필요. E3 완료 시 **v6.0 승격**.
 
 ## 4. 미해결 / 주의
 - **hooks 활성화는 사용자 행위**: 보안상 에이전트가 `.claude/settings.json`을 자동 설치하지 않는다.
