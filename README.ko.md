@@ -23,6 +23,8 @@ LLM 에이전트는 컨텍스트 윈도우와 추론력이 커질수록 *능력*
 
 이 하네스가 매일 하는 일은 하나다 — **인간의 모호한 의도를 좌표계 위에 강제로 올려놓는 것.** "로그인 좀 고쳐줘"가 `[PLAN-01a1]`이라는 좌표를 갖는 순간, 에이전트의 어텐션은 닻을 내릴 곳을 얻는다. 현존하는 모든 에이전트가 트랜스포머 기반이므로, 고유 식별자로 잘 토큰화된 프로젝트는 어텐션이 날카롭게 걸린다.
 
+> **측정됨 (v6.0 — [`eval/RESULTS.md`](./eval/RESULTS.md)).** 통제된 A/B(하네스 on vs off, 같은 모델·같은 과제)로 하나의 법칙을 확인했다: **하네스 효능은 요구 지식의 *비국소성*에 비례하고, 모델 강도와 무관하다.** 어떤 코드 스냅샷에도 없는 지식(반복된 함정·폐기된 방향·다른 모듈의 계약)에 대해 on이 off보다 **+1.0**(항상) 더 맞혔고, 이미 코드에 보이는 지식엔 효과 ≈0이었다. 결정적으로 이 효과가 haiku·Sonnet·**Opus**에서 동일했다 — 가장 센 모델조차 컨텍스트 밖은 못 본다. 이는 "약한 모델용 목발" 가설을 *반증*하고 핸들 주장을 *확증*한다. 발견은 규모에서도 정확하고(100노드 평면에서 precision=recall=1.00, 주입량은 계보 깊이에만 묶임), 주입 비용 ≈208토큰 대 회피한 재작업 ≈82배. 방법·정직한 한계: [`eval/PROTOCOL.md`](./eval/PROTOCOL.md), [`eval/CALIBRATION.md`](./eval/CALIBRATION.md).
+
 ---
 
 ## 1. 3계층 권한 모델 (가장 먼저 이해할 것)
@@ -137,6 +139,10 @@ node scripts/zfs-linter.js
 > 기획 전에 탐색이 필요하면? **`.union-stack/spike/`** 샌드박스를 쓰라 — ZFS 네이밍·의례 없이 자유롭게, 휘발성. 각 스파이크는 세 출구 중 하나로 종료(plan 승격 / lesson 증류 / 폐기). 상세는 `.union-stack/spike/_GUIDE.md`.
 
 **런타임 질의 표면 (읽기 전용).** **의존성 0 MCP 서버**(`scripts/mcp-server.js`, `.mcp.json`로 등록)로 에이전트가 plane을 런타임에 질의한다: `upward_fetch`·`blast_radius`·`where_to_record`·`zfs_lint`·`list_docs`. Claude Code엔 슬래시 커맨드(`/upward-fetch` 등)도 제공. *읽기*만 노출 — 쓰기는 거버넌스가 적용되는 파일 편집 경로 유지. (다른 도구는 같은 서버를 가리키면 됨; Cursor는 `.cursor/mcp.json`.)
+
+**런타임 강제 (opt-in).** 위 린터들은 *사후*(커밋/CI)에 돈다. 나쁜 편집을 *착륙 전에* 막는 *사전* 강제를 위해, 두 훅 어댑터가 에이전트 행동 직전에 의례를 적용한다: `PreToolUse` 훅(`scripts/hook-pretool.js`)은 Schema 계층 파일 편집과 **blast-radius**에 `Verifying`/`Live` 노드가 걸린 편집을 거부하고, `UserPromptSubmit` 훅(`scripts/hook-userprompt.js`)은 작업 ID가 보이면 **Upward Fetching을 자동 주입**(부모 맥락 + 같은 계보 함정)한다. 명령을 실행하므로 직접 켠다 — [`scripts/HOOKS.md`](./scripts/HOOKS.md)의 스니펫을 `.claude/settings.json`에 복사. 모드는 `UNION_STACK_HOOK=warn`(기본) `| enforce | off`. 로직은 tool-agnostic이라 어떤 도구의 pre-edit / prompt 훅이든 같은 두 스크립트를 가리키면 된다.
+
+**자가 점검·증거.** `node scripts/health.js`는 게이트 상태+구조 지표(실행형 조견표), `node scripts/eval.js`는 하네스 *레버리지*와 예측 효능(캘리브레이션 모델), `node scripts/context-budget.js`는 부트스트랩 주입을 가볍게 유지한다. 가치 주장을 *측정된 결과*로 바꾼 통제 A/B(정직한 한계 포함)는 [`eval/`](./eval/)에 있다: 방법 [`eval/PROTOCOL.md`](./eval/PROTOCOL.md), 결과 [`eval/RESULTS.md`](./eval/RESULTS.md), 프록시↔효능 모델 [`eval/CALIBRATION.md`](./eval/CALIBRATION.md).
 
 AI 에이전트는 레포 루트의 **`AGENTS.md`**를 자동으로 읽는다(범용 표준). 이 파일이 결정론적 규율을 못 박고 `.union-stack/`으로 안내한다. 자기 전용 파일만 읽는 도구를 위해 한 줄 스텁(예: `CLAUDE.md`)이 `AGENTS.md`를 가리킨다 — 진실의 출처는 하나로 두고 규칙을 중복시키지 않는다.
 
