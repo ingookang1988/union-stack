@@ -3,9 +3,12 @@
 id: PHASE-02
 title: Empirical Harness — "그럴듯하게 효과적" → "방어 가능하게 효과적" + "실전 검증"
 status: Active
-version: 1.0
+version: 1.1
 ---
 # [PHASE-02] Empirical Harness (v5.15 → v6.0)
+
+> **v6.0 승격됨(2026-06-14, [ADR-03]).** 경험적 트랙 E1·E2·E4 완료로 *측정된 효능*을 확립. 운영 트랙 E3
+> (enforce 도그푸딩)은 본질적 *종단* 작업이라 잔여 — v6.0은 증거 확립을 표시하지 운영 단련 완료를 주장하지 않는다.
 
 ## 테제
 v5.x는 하네스가 구조적으로 건전(격자 연역·게이트 코드화)하고 자기 일관적(`health` green)이며

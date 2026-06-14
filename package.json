@@ -1,6 +1,6 @@
 {
   "name": "union-stack",
-  "version": "5.15.0",
+  "version": "6.0.0",
   "description": "Document-based control-plane template for AI-agent system coding",
   "scripts": {
     "init": "node scripts/init.js",
