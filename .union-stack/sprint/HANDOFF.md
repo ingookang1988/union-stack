@@ -26,10 +26,11 @@ version: 1.0
   `package.json`(eval·budget 스크립트 + 신규 테스트 3종), `.github/workflows/harness.yml`(ref --strict + npm test)
 
 ## 3. 다음 작업 (단일 진입점)
-- → **E1 잔여(H2·H4) 실행.** `[PHASE-02]` 착수 완료: E1-H1(비국소성) **검증됨** — 비국소 계약 델타 +1.0
-  (on 3/3 vs off 0/3), 국소 계약(1회차 T2)은 0. 법칙 도출: *하네스 효능 ∝ 지식 비국소성*(`eval/RESULTS.md`
-  2회차). 다음: **H2(N=5 안정성)·H4(다모델 sonnet/haiku/opus)** 로 통계적 확정 → 이후 E4 캘리브레이션.
-  진입점: `eval/reference-instance/` + `eval/PROTOCOL.md`. 병렬로 E3 도그푸딩(enforce FP 수집) 시작 가능.
+- → **Instrument v2 후 시간축 N=5 재측정.** E1-H1·H2·H4 완료(`eval/RESULTS.md` 2·3회차): 비국소성 법칙 확인,
+  순수 태스크(T4) 안정성 7/7 vs 0/7 분산0, **효과 모델-무관(+1.0 haiku=sonnet=opus → "crutch for weak" 반증)**.
+  단 3회차에서 **T1·T3 계측 혼입 발견**(isExpired 인라인 가시, zeta 어댑터 부재). 다음: `eval/reference-instance/`를
+  **instrument v2**로 고쳐(T1=isExpired 다른 모듈로 은닉, T3=zeta 레지스트리 등록해 사소 전환) 시간축을 *순수*
+  측정 → N=5 → **[E4] 프록시↔효능 캘리브레이션**. 병렬로 [E3] enforce 도그푸딩 가능.
 
 ## 4. 미해결 / 주의
 - **hooks 활성화는 사용자 행위**: 보안상 에이전트가 `.claude/settings.json`을 자동 설치하지 않는다.
