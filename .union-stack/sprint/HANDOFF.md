@@ -1,46 +1,41 @@
 <!-- [Wiki] 세션 이어달리기. 세션을 마치는 에이전트가 덮어쓴다. 최신 하나만 유효.
      다음 세션 부트스트랩 시 가장 먼저 읽힘. -->
 ---
-session_id: harness-review-followups-2026-06-14
-date: 2026-06-14T00:00:00Z
+session_id: pro-06-agent-team-2026-06-17
+date: 2026-06-17T00:00:00Z
 author: agent
-verification: "전체 게이트 그린 + 테스트 13스위트 전부 통과 (186 passed, 0 failed). npm 래퍼는 git-bash에서 segfault — node 직접 실행으로 검증."
+verification: "전 게이트 그린(naming·leakage·permission·history·ref --strict·context-budget·size·lock·domain) + 테스트 15스위트 0 fail. context budget 1316/4000 불변. npm 래퍼는 git-bash segfault — node --test 직접 실행으로 검증."
 version: 1.0
 ---
 
 # Handoff → 다음 세션
 
 ## 1. 세션 요약 (1~3줄)
-- v5.15(리뷰 7개 보완: hooks·효능eval·컨텍스트예산·ref게이트 + PRO-04·05) → PHASE-02 설계 → **E1·E2·E4
-  완주** → **v6.0 "Empirical Harness" 승격**([ADR-03]). 경험적 트랙 완료, 운영 트랙 E3만 잔여.
-- 측정 확립: *효능 ∝ 지식 비국소성, 모델 무관, 토큰 ROI ≈82×, 100노드 발견 precision=recall=1.0.*
+- 프로젝트 현황 리뷰(v6.0 Empirical Harness, E3만 잔여 확인) → 사용자 요청으로 **sub-agent 레이어 추가**.
+- **[PRO-06] 승인·구현 완료**: agent-team 리소스(SCIM-Group + `lead`) + 계보-파티셔닝 오케스트레이션 의례.
+  [PRO-03] §5 이월 회수, [PRO-05] 동시성 재사용, 신규 도메인·게이트·스크립트 **0**(profile/agent 셀 확장).
 
 ## 2. 변경 위치 (ID 목록 / 파일 — Upward Fetching·탐색 진입점)
-- `[PRO-04]` 횡단 관심사 = pillar 아님, `concern:` 태그 오버레이 (§8.3 종결)
-- `[PRO-05]` 병렬 플릿 동시성 = append union-merge + 계보 파티셔닝 + Wiki OCC (+ `.gitattributes`)
-- 신규 코드(전부 zero-dep·테스트동반): `scripts/hooks.js`·`hook-pretool.js`·`hook-userprompt.js`·`HOOKS.md`,
-  `scripts/context-budget.js`, `scripts/eval.js`, `eval/PROTOCOL.md`
-- 게이트 변경: `scripts/ref-linter.js`(forward 마커 `[ID?]` + `--strict` 게이팅), `scripts/health.js`(+context budget 차원)
-- 엔트리: `AGENTS.md`(부트스트랩 토큰예산 문단), `proposals/_GUIDE.md`(신규 pillar 분할원리 정당화 의무),
-  `package.json`(eval·budget 스크립트 + 신규 테스트 3종), `.github/workflows/harness.yml`(ref --strict + npm test)
+- `[PRO-06]` agent-team 리소스 + 플릿 오케스트레이션 (status: Approved, §7 결정 기록)
+- `profile/agent/team_example.md` **신규** — SCIM-Group 더미(`lead`·`members[]`참조·`overrides{}`·advisory authority)
+- `profile/agent/_GUIDE.md` — "future" 절 → 확정 team 스키마 표 + `lead` 설명
+- `AGENTS.md` §Upward Fetching — **플릿 오케스트레이션 문단**(리드 계보 분해→위임, 서브트리별 ritual, 리드 단독 HANDOFF)
+- `sprint/_GUIDE.md` — HANDOFF 단일-작성자(리드) 규율 1줄
 
 ## 3. 다음 작업 (단일 진입점)
-- → **[E3] enforce 도그푸딩 = PHASE-02 마지막 1개.** E1·E2·E4 **전부 완료**(`eval/RESULTS.md` + `CALIBRATION.md`):
-  · E1(H1~H4): 순수 비국소 측정 시 세 가치 **+1.0 분산0**, 모델-무관, **토큰 ROI ≈82×**(주입 208 tok, 손익분기 1.2%).
-  · E4: 캘리브레이션 모델 `scripts/eval.js` 코드화·E1 4점 재현. · E2: `scripts/fetch-eval.js` 100노드 평면
-  **precision=recall=1.00·주입 불변**. [E3]만 남음 — 본질적 *종단* 작업이라 부분 가림: ①훅 활성화는 사용자가
-  `.claude/settings.json`에 `scripts/HOOKS.md` 스니펫 복사(에이전트 자동설치 분류기 차단), ②CI 재착륙은
-  워크플로 스코프 필요, ③enforce FP율은 실사용 누적 필요. E3 완료 시 **v6.0 승격**.
+- → **[E3] enforce 도그푸딩 = PHASE-02 마지막 1개**(불변). 본질적 *종단*+권한 가림: ①훅 활성화=사용자가
+  `scripts/HOOKS.md` 스니펫을 `.claude/settings.json`에 직접 복사, ②CI 재착륙=워크플로 스코프, ③enforce FP율=실사용 누적.
+- (선택) **PRO-06 실전 검증**: 작은 작업을 2개 계보로 분할해 서브에이전트 위임 시연 — agent-team 모델 도그푸딩.
 
 ## 4. 미해결 / 주의
-- **hooks 활성화는 사용자 행위**: 보안상 에이전트가 `.claude/settings.json`을 자동 설치하지 않는다.
-  `scripts/HOOKS.md`의 스니펫을 사용자가 직접 복사해야 작동(명령 실행 훅이므로 의도된 제약).
-- **이월(PRO-04)**: `health.js`에 `concern:` 태그 분포 INFO 차원 — YAGNI까지 보류.
-- **이월(PRO-05)**: 런타임 분산락은 비범위(정직한 한계). 구조적 회피(계보 분할)가 1차, version OCC가 2차.
-- ref advisory 15건은 전부 예시/가이드/방법론(정화-면제) — strict 게이트엔 0건. 실프로젝트 init 후에만 문다.
-- 토큰 추정은 char/4 근사(실 토크나이저 아님) — 절대값 아닌 추세·예산대비로 읽을 것.
+- **agent-team은 서술적 전용**: 이 평면은 에이전트를 spawn하지 않는다. 실제 기동은 플랫폼(Claude Code `Agent`
+  툴/subagent_type, Workflow) 몫. `lead`·`authority`는 advisory(CODEOWNERS 패턴) — 집행은 플랫폼 hooks/permissions.
+- **플릿 충돌 회피는 락 아닌 계보 분할**(PRO-05): version OCC는 탐지이지 예방 아님. 계보 겹치면 직렬화/인간 에스컬레이트(Fail-close).
+- **hooks 활성화=사용자 행위**(불변): 보안상 에이전트가 `.claude/settings.json` 자동 설치 안 함.
+- **이월**: PRO-04(concern 태그 INFO 차원), PRO-05(런타임 분산락 비범위), PRO-06(팀 health 지표=YAGNI까지 보류).
+- 커밋은 main에 올림(레포 관례). **push 미실행** — main-push는 재승인 필요(메모리 기록).
 
 ## 5. 검증 상태
-- 게이트 전부 그린: naming·history·leakage·permission(append-only)·ref(--strict)·size·lock·**context budget**.
-- 테스트 13스위트 **186 passed, 0 failed**(신규 hooks 11·context-budget 7·eval 9 포함).
-- hooks 실측: Schema 편집 차단(exit 2)·작업ID 맥락 자동주입 확인. `health`: 가이드 21, MTG:2, PRO:5.
+- 게이트 전부 그린: naming·history·leakage·permission(append-only)·ref(--strict)·size·lock·context budget·domain.
+- 테스트 15스위트 **0 failed**. context budget **1316/4000 불변**(오케스트레이션 문단을 정적 부트스트랩이 아닌 작업별 ritual 구역에 배치).
+- 도메인 분포: PRO:5→6. doc/guide 20/21.

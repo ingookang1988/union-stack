@@ -13,6 +13,8 @@
 ### Who / when
 - The **agent ending a session** writes it, organizing its own work (Wiki atomic write).
 - On the next session's bootstrap it is read **first**, right after project (identity).
+- **Fleet ([PRO-06]):** when sub-agents run as a team, the **lead alone** writes HANDOFF — sub-agents
+  return structured results to the lead. HANDOFF is latest-only, so a single author avoids contention.
 
 ### Volatile — only the latest one is valid
 - Overwrite `HANDOFF.md` at the end of each session. The previous one is pushed to `prev.md` (rolling).

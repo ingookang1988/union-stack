@@ -14,10 +14,22 @@
 | `interactionStyle` | own | `{formality, language, verbosity, …}` — how the agent speaks by default |
 | `authority` | CODEOWNERS pattern | advisory scope of what the agent may decide alone |
 
-## Agent teams / orgs (future)
-v1 models grouping via `provider.organization` only (the A2A hook). If real agent-team semantics
-are needed later (membership, team-level overrides), add a SCIM-Group-style resource
-(`displayName` + members by reference) via a new proposal — do not embed.
+## Agent teams (SCIM-Group resource) — [PRO-06]
+Beyond `provider.organization` (the A2A grouping hook), real agent-team semantics live in a
+**SCIM-Group-style resource** (`team_*.md`): members by *reference*, never embedded.
+
+| field | source precedent | meaning |
+|---|---|---|
+| `id`, `displayName` | SCIM Group | stable key · team display name |
+| `lead` | own (orchestration) | the lead agent (one of `members`) — the delegation entry point |
+| `members[]` | SCIM Group | agent card ids, **by reference** (embedding a card is a defect) |
+| `overrides{}` | own | team-level `interactionStyle` defaults — beaten by the member's own value |
+| `authority` | CODEOWNERS pattern | advisory scope (e.g. "lead alone decomposes/delegates") |
+
+`lead` is a *descriptive* entry point only — this plane does NOT spawn agents; the platform
+(Claude Code `Agent` tool / subagent_type / Workflow) does. The fleet **orchestration ritual**
+(lead decomposes work by ZFS lineage → delegates one subtree per sub-agent) lives in `AGENTS.md`
+§Upward Fetching; concurrency/merge semantics are [PRO-05].
 
 ## Interplay with human profiles
 The acting agent reads the active **user** profile and adapts (존댓말 level, 호칭, tone). The agent's

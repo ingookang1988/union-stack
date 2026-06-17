@@ -74,6 +74,15 @@ Given a task like `WO-01a1-2`:
 > Automate steps 1–3: `node scripts/upward-fetch.js <ID>`. Before editing/deleting a node,
 > run `node scripts/blast-radius.js <ID>` — it Fail-closes (exit 1) if a Verifying/Live descendant exists.
 
+> **Fleet orchestration (sub-agent teams — [PRO-06]).** When a **lead** agent runs a team, it
+> partitions work by ZFS lineage — *one sub-agent = one lineage subtree* ([PRO-05] partition key).
+> Each sub-agent runs the ritual above on **its own subtree root** (upward-fetch + blast-radius;
+> a Verifying/Live node means another agent owns it — do not invade). Lineages that overlap and
+> cannot be split → serialize or **escalate to the human (Fail-close)**, never edit concurrently.
+> Sub-agents return structured results to the lead; the **lead alone writes the consolidated
+> `sprint/HANDOFF.md`** (it is latest-only, so a single author avoids multi-writer contention).
+> Team membership/roles are declared in `profile/agent/team_*.md`; concurrency/merge is [PRO-05].
+
 Reference other documents by **bracket ID** (`[PLAN-01a1]`), never by relative path.
 
 ---
