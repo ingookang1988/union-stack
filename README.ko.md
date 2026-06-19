@@ -98,7 +98,7 @@ LLM 에이전트는 컨텍스트 윈도우와 추론력이 커질수록 *능력*
 - **slug**: 소문자 스네이크. 공백·하이픈·대문자 금지.
 
 > 검증된 정규식과 자식/형제 판정 로직은 `scripts/`에 있고 테스트로 보증된다. 아래 두 의식은 실행 가능하다: `node scripts/upward-fetch.js <ID>`, `node scripts/blast-radius.js <ID>`. 자세한 규약은 `.union-stack/architecture/ARCH-00_zfs_naming.md`.
-> **이미 Zettelkasten/Folgezettel이나 계층형 plan ID를 쓰고 있다면?** ZFS 계보와 1:1 매핑 — 변환 불필요. **기존 프로젝트 이관은?** [`MIGRATION.md`](./MIGRATION.md) 참조.
+> **이미 Zettelkasten/Folgezettel이나 계층형 plan ID를 쓰고 있다면?** ZFS 계보와 1:1 매핑 — 변환 불필요. **기존 프로젝트 이관은?** [`MIGRATION.md`](./MIGRATION.md) 참조. **이전 union-stack에서 버전업하나요?** 버전별 변경 내역은 [`CHANGELOG.md`](./CHANGELOG.md)에 있습니다.
 
 ### 작업 진입 의식 (Upward Fetching)
 

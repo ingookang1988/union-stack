@@ -98,7 +98,7 @@ Parent/child/sibling relations are inferred from filenames alone, borrowing Nikl
 - **slug**: lowercase snake_case. No spaces, hyphens, or uppercase.
 
 > The verified regex and child/sibling logic live in `scripts/` and are guaranteed by tests. The two rituals below are executable: `node scripts/upward-fetch.js <ID>` and `node scripts/blast-radius.js <ID>`. Full convention: `.union-stack/architecture/ARCH-00_zfs_naming.md`.
-> **Already use Zettelkasten/Folgezettel or hierarchical plan IDs?** They map to ZFS lineage 1:1 — no conversion. **Migrating an existing project?** See [`MIGRATION.md`](./MIGRATION.md).
+> **Already use Zettelkasten/Folgezettel or hierarchical plan IDs?** They map to ZFS lineage 1:1 — no conversion. **Migrating an existing project?** See [`MIGRATION.md`](./MIGRATION.md). **Upgrading from an older union-stack?** Per-version changes are in [`CHANGELOG.md`](./CHANGELOG.md).
 
 ### Work-entry ritual (Upward Fetching)
 

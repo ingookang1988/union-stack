@@ -45,6 +45,8 @@ Copy this, fill the right column, then move files.
 union-stack files are small skeletons; real docs grow. When a doc exceeds ~30KB (`node scripts/health.js` warns), split it along its ZFS lineage and/or rotate older entries — see `DESIGN_RATIONALE.md` (§7, rotation protocol).
 
 ## Upgrading from an older union-stack
+For the full per-version change list, see [`CHANGELOG.md`](./CHANGELOG.md) (entries marked **⚠** require a migration action). The one structural change so far:
+
 Two directories were renamed for clarity (folder name now matches its meaning):
 
 | Old (pre-v5.x) | Current | Why |
