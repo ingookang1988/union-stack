@@ -7,6 +7,7 @@ const { parseId } = require('./zfs_util');
 const { buildIndex } = require('./zfs_index');
 const { upwardFetch, blastRadius, whereToRecord } = require('./query');
 const { lint } = require('./zfs-linter');
+const { version: VERSION } = require('../package.json'); // 단일 출처 — 버전 드리프트 방지
 
 const TOOLS = [
   { name: 'upward_fetch', description: '작업 진입 맥락: ID의 부모 PLAN/FLOW/CON/ARCH/MTG + 같은 계보 LSN.',
@@ -39,7 +40,7 @@ function handle(req) {
   const isNotification = id === undefined || id === null;
   try {
     if (method === 'initialize')
-      return ok({ protocolVersion: '2024-11-05', capabilities: { tools: {} }, serverInfo: { name: 'union-stack', version: '5.9.0' } });
+      return ok({ protocolVersion: '2024-11-05', capabilities: { tools: {} }, serverInfo: { name: 'union-stack', version: VERSION } });
     if (method === 'notifications/initialized' || method === 'initialized') return null;
     if (method === 'tools/list') return ok({ tools: TOOLS });
     if (method === 'tools/call')

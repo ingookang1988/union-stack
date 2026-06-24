@@ -13,15 +13,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with: { fetch-depth: 0 } # permission-guard 의 diff 범위가 이전 커밋을 보려면 전체 히스토리 필요
       - uses: actions/setup-node@v4
         with: { node-version: '20' }
       - name: ZFS naming linter (Fail-close gate)
         run: node scripts/zfs-linter.js
       - name: HISTORY reason gate (Fail-close; no-op if HISTORY absent)
         run: node scripts/history-linter.js
-      - name: ZFS util tests
-        run: node scripts/zfs_util.test.js
-      - name: ZFS index integration tests
-        run: node scripts/zfs_index.test.js
-      - name: HISTORY linter tests
-        run: node scripts/history-linter.test.js
+      - name: Permission guard (append-only integrity, Fail-close)
+        run: node scripts/permission-guard.js --range ${{ github.event.pull_request.base.sha || github.event.before }}..${{ github.sha }}
+      - name: Full test suite (all gate + query + hook + eval logic)
+        run: npm test
+      - name: Health scorecard (gate status + structural metrics)
+        run: node scripts/health.js
