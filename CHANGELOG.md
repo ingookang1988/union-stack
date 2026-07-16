@@ -24,7 +24,12 @@ action in already-adopted projects.
   [`eval/CALIBRATION.md`](./eval/CALIBRATION.md), [`eval/RESULTS.md`](./eval/RESULTS.md),
   reference instance under `eval/reference-instance/`.
 - Discovery shown exact at scale (precision = recall = 1.00 on a 100-node plane; injection bounded
-  by lineage depth); injected context ~208 tokens vs ~82× that in avoided rework.
+  by lineage depth); injected context ~208 tokens (measured) vs ~82× that in avoided rework
+  (modeled — assumes one 17k-token regeneration per defect).
+- **Scope note:** evidence was established on an engineered reference instance (tasks built to
+  require non-local knowledge; off-arm without exploration tools). **E3 — enforce-mode dogfooding
+  on real work — remains open**; v6.0 marks evidence established, not operational hardening.
+  See `.union-stack/project/roadmap/PHASE-02_empirical_harness.md`.
 - README (EN + KO) synced with runtime hooks + eval surfaces.
 
 ## [5.15] — 2026-06-14
@@ -82,4 +87,5 @@ See [`MIGRATION.md`](./MIGRATION.md) §"Upgrading from an older union-stack".
 ## [5.1] — 2026-06-05
 - Initial public template: document-based control plane for AI-agent system coding.
 
-<!-- Note: v5.5 was skipped (no release). -->
+<!-- Note: v5.5 had no release entry — it landed as a design-only change (grouping contracts+lessons
+     under reference/, commit 2026-06-07). Its rationale is recorded as [v5.5] in DESIGN_RATIONALE.md §7. -->

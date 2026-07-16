@@ -14,6 +14,8 @@ version: 1.0
 - **외부 리뷰 수행**(장점·차별점·보완점 + 2026-07 하네스 트렌드 대조) → 검증된 P0 6건을 즉시 수정.
 - **가드 계층 경화**: 명령 주입 제거(execFile)·한글 경로(quotepath)·표 행 사각지대(permission-guard),
   작업 ID 도메인 화이트리스트 대조(hooks), status frontmatter 스코핑(zfs_index), init 재실행 Fail-close, CI zero-SHA 폴백.
+- **P1 톤·드리프트 해소**: README(EN/KO) 측정 박스에 82× 모델링 단서 + E3 미완 명시, CHANGELOG v6.0 범위 주석,
+  RATIONALE 제목 버전 표기 제거(단일 출처=CHANGELOG), v5.5 모순 해소(설계-전용 변경으로 각주), HISTORY에 실분기점 2건 등재(인간 승인).
 
 ## 2. 변경 위치 (ID 목록 / 파일 — 탐색 진입점)
 - ZFS 평면 문서 변경 **없음** (전부 scripts/ + CI — Wiki/Schema 무접촉)
@@ -24,8 +26,9 @@ version: 1.0
 - `.github/workflows/harness.yml` — permission-guard base가 zero-SHA/부재면 직전 커밋(없으면 빈 트리) 폴백
 
 ## 3. 다음 작업 (단일 진입점)
-- → **리뷰 후속 P1**: README/CHANGELOG 효능 주장 톤 축소(+E3 미완 단서 명시), DESIGN_RATIONALE 제목 "(v5.2)" 갱신,
-  CHANGELOG "v5.5 스킵" ↔ RATIONALE [v5.5] 섹션 모순 해소. (리뷰 리포트는 이 세션 대화에 있음.)
+- → **"해악 팔(harm arm)" 평가 1라운드**: reference-instance에 비국소 지식이 *불필요한* 과제 2~3개 추가,
+  하네스 on/off 성공률·토큰 측정. 목적: arXiv 2602.11988("컨텍스트 파일은 평균 유해") 방어 —
+  "필요할 때 돕고 아닐 때 무해"를 측정으로 완성. E1 인프라 재사용(PROTOCOL/TASKS 확장).
 
 ## 4. 미해결 / 주의
 - **[E3] enforce 도그푸딩 = PHASE-02 마지막 1개**(불변) — 훅 활성화는 사용자 행위, enforce FP율은 실사용 누적.
