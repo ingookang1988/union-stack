@@ -12,11 +12,15 @@ const SCAN_DIRS = [
   'reference/contracts', 'reference/lessons', 'reference/domain', 'project/roadmap', 'proposals',
 ].map(d => `${BASE}/${d}`);
 
-// frontmatter에서 status 한 줄만 의존성 없이 추출. 없으면 null.
+// frontmatter(선두 --- 블록)에서만 status를 추출. 없으면 null.
+// 파일 전체 매칭은 본문 예시(`status: Live` 코드블록 등)를 잠금 상태로 오인해
+// blast-radius 오차단(false Fail-close)을 일으킨다. 선두 HTML 주석은 건너뛴다.
 function readStatus(full) {
   try {
     const txt = fs.readFileSync(full, 'utf8');
-    const m = txt.match(/^\s*status:\s*(.+?)\s*$/m);
+    const fm = txt.match(/^(?:\s|<!--[\s\S]*?-->)*---\r?\n([\s\S]*?)\r?\n---/);
+    if (!fm) return null;
+    const m = fm[1].match(/^\s*status:\s*(.+?)\s*$/m);
     return m ? m[1].trim() : null;
   } catch {
     return null;
@@ -44,4 +48,4 @@ function buildIndex(root = path.resolve(__dirname, '..')) {
   return out;
 }
 
-module.exports = { buildIndex, SCAN_DIRS };
+module.exports = { buildIndex, readStatus, SCAN_DIRS };

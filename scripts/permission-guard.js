@@ -11,7 +11,7 @@
 //   node scripts/permission-guard.js              # staged diff (pre-commit)
 //   node scripts/permission-guard.js --range A..B # 커밋 범위 (CI)
 //   node scripts/permission-guard.js --strict     # Schema 승인 트레일러까지 검사
-const { execSync } = require('child_process');
+const { execFileSync } = require('child_process');
 
 // 경로 → tier 규칙 (AGENTS.md 규칙 2와 동기화).
 const SCHEMA = [
@@ -35,6 +35,18 @@ function classify(p) {
 }
 
 /**
+ * 삭제된 줄이 *실제 엔트리*인지 판정(순수). 헤더 주석·제목·표 구분선만 제외 —
+ * 데이터가 담긴 표 행은 엔트리로 센다(원장·회의록 엔트리가 표 행이므로, `^\|` 일괄 제외는 사각지대).
+ * 표머리 행 편집이 걸리는 false-positive는 감수한다(Fail-close 방향 — 인간이 확인).
+ */
+function isSubstantiveLine(t) {
+  if (!t) return false;
+  if (/^<!--|-->$|^#/.test(t)) return false;   // 주석·제목
+  if (/^\|[\s|:-]*\|?$/.test(t)) return false; // 표 구분선(|---|---|)·빈 표 라인
+  return true;
+}
+
+/**
  * 변경 목록 + 커밋 메타 → 위반 목록(순수, git 비의존 → 테스트 용이).
  * changes: [{path, added, removed}]  meta: {agentAuthored, approvedBy}  opts: {strict}
  */
@@ -55,24 +67,31 @@ function findViolations(changes, meta = {}, opts = {}) {
 }
 
 // --- git 어댑터 (얇음) ---
-function sh(cmd) { return execSync(cmd, { encoding: 'utf8' }); }
+// 인자 배열로만 호출(execFile) — git이 보고한 파일명이 셸을 거치지 않는다(명령 주입 차단).
+// core.quotepath=false: non-ASCII(한글 등) 경로의 octal-quote를 끄지 않으면 경로 매칭이 조용히 실패한다.
+function git(args) {
+  return execFileSync('git', ['-c', 'core.quotepath=false', ...args], { encoding: 'utf8' });
+}
 
-// append-only 위반은 *실제 엔트리* 삭제만 본다 — 헤더 주석·제목·표머리/구분선 편집은 제외(거짓 양성 방지).
+// append-only 위반은 *실제 엔트리* 삭제만 본다(판정은 isSubstantiveLine — 순수, 테스트됨).
 function substantiveRemoved(range, file) {
-  const base = range ? `git diff --unified=0 ${range}` : 'git diff --cached --unified=0';
+  const args = ['diff', '--unified=0'];
+  if (range) args.push(range); else args.push('--cached');
+  args.push('--', file);
   let out = '';
-  try { out = sh(`${base} -- "${file}"`); } catch { return 0; }
+  try { out = git(args); } catch { return 0; }
   return out.split('\n')
     .filter(l => l.startsWith('-') && !l.startsWith('---'))
     .map(l => l.slice(1).trim())
-    .filter(t => t && !/^<!--|-->$|^#|^\|/.test(t)) // 주석·제목·표 라인 제외
+    .filter(isSubstantiveLine)
     .length;
 }
 
 function readChanges(range) {
-  const cmd = range ? `git diff --numstat ${range}` : 'git diff --cached --numstat';
+  const args = ['diff', '--numstat'];
+  if (range) args.push(range); else args.push('--cached');
   let out = '';
-  try { out = sh(cmd); } catch { return null; } // git 아님/실패 → 건너뜀
+  try { out = git(args); } catch { return null; } // git 아님/실패 → 건너뜀
   return out.split('\n').filter(Boolean).map(line => {
     const [a, r, ...rest] = line.split('\t');
     const p = rest.join('\t');
@@ -87,7 +106,7 @@ function readMeta(range) {
   if (!range) return {}; // pre-commit 시점엔 커밋 메시지가 없음
   const tip = range.split('..').pop();
   let body = '';
-  try { body = sh(`git log -1 --format=%B ${tip}`); } catch { return {}; }
+  try { body = git(['log', '-1', '--format=%B', tip]); } catch { return {}; }
   return {
     agentAuthored: /co-authored-by:\s*claude/i.test(body),
     approvedBy: /^\s*approved-by:\s*\S/im.test(body),
@@ -115,6 +134,6 @@ function run(argv = process.argv.slice(2)) {
   return 0;
 }
 
-module.exports = { classify, findViolations, run, SCHEMA, APPEND_ONLY };
+module.exports = { classify, findViolations, isSubstantiveLine, run, SCHEMA, APPEND_ONLY };
 
 if (require.main === module) process.exit(run());

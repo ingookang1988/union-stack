@@ -1,6 +1,6 @@
 // scripts/permission-guard.test.js
 // 순수 함수(classify, findViolations) 단위 테스트. git 비의존. 실행: node scripts/permission-guard.test.js
-const { classify, findViolations } = require('./permission-guard');
+const { classify, findViolations, isSubstantiveLine } = require('./permission-guard');
 
 let pass = 0, fail = 0;
 function check(label, got, exp) {
@@ -29,6 +29,16 @@ check('meetings 수정 → 위반',
   findViolations([{ path: '.union-stack/plan/meetings/MTG-01a_x.md', added: 0, removed: 1 }]).length, 1);
 check('analytics 수정 → 위반',
   findViolations([{ path: '.union-stack/plan/analytics/ANL-01a_x.md', added: 0, removed: 1 }]).length, 1);
+
+// --- isSubstantiveLine: 엔트리 삭제 판정 ---
+check('표 데이터 행 삭제 = 실질(사각지대 회귀 방지)',
+  isSubstantiveLine('| 2026-06-15 | ADR-03 v6.0 승격 | 근거 |'), true);
+check('표 구분선 = 비실질', isSubstantiveLine('|---|---|---|'), false);
+check('정렬 구분선 = 비실질', isSubstantiveLine('| :--- | ---: |'), false);
+check('제목 = 비실질', isSubstantiveLine('# Architecture Decision Ledger'), false);
+check('주석 = 비실질', isSubstantiveLine('<!-- [Raw] append-only -->'), false);
+check('빈 줄 = 비실질', isSubstantiveLine(''), false);
+check('본문 줄 = 실질', isSubstantiveLine('결정: zeta 어댑터 폐기'), true);
 
 // --- Check B: Schema 승인 (strict에서만) ---
 const schemaChange = [{ path: '.union-stack/architecture/ARCH-02_x.md', added: 5, removed: 1 }];

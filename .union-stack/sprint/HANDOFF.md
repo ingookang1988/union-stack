@@ -1,41 +1,40 @@
 <!-- [Wiki] 세션 이어달리기. 세션을 마치는 에이전트가 덮어쓴다. 최신 하나만 유효.
      다음 세션 부트스트랩 시 가장 먼저 읽힘. -->
 ---
-session_id: pro-06-agent-team-2026-06-17
-date: 2026-06-17T00:00:00Z
+session_id: review-p0-hardening-2026-07-15
+date: 2026-07-15T00:00:00Z
 author: agent
-verification: "전 게이트 그린(naming·leakage·permission·history·ref --strict·context-budget·size·lock·domain) + 테스트 15스위트 0 fail. context budget 1316/4000 불변. npm 래퍼는 git-bash segfault — node --test 직접 실행으로 검증."
+verification: "전 게이트 그린 + 테스트 15스위트 230단언 0 fail(신규 회귀 15개 포함). E2E 재현: 표 행 삭제·한글 파일명 삭제 차단, 순수 append 통과. npm 래퍼는 이제 PowerShell에서도 segfault(-1073741819) — node 직접 실행으로 검증."
 version: 1.0
 ---
 
 # Handoff → 다음 세션
 
 ## 1. 세션 요약 (1~3줄)
-- 프로젝트 현황 리뷰(v6.0 Empirical Harness, E3만 잔여 확인) → 사용자 요청으로 **sub-agent 레이어 추가**.
-- **[PRO-06] 승인·구현 완료**: agent-team 리소스(SCIM-Group + `lead`) + 계보-파티셔닝 오케스트레이션 의례.
-  [PRO-03] §5 이월 회수, [PRO-05] 동시성 재사용, 신규 도메인·게이트·스크립트 **0**(profile/agent 셀 확장).
+- **외부 리뷰 수행**(장점·차별점·보완점 + 2026-07 하네스 트렌드 대조) → 검증된 P0 6건을 즉시 수정.
+- **가드 계층 경화**: 명령 주입 제거(execFile)·한글 경로(quotepath)·표 행 사각지대(permission-guard),
+  작업 ID 도메인 화이트리스트 대조(hooks), status frontmatter 스코핑(zfs_index), init 재실행 Fail-close, CI zero-SHA 폴백.
 
-## 2. 변경 위치 (ID 목록 / 파일 — Upward Fetching·탐색 진입점)
-- `[PRO-06]` agent-team 리소스 + 플릿 오케스트레이션 (status: Approved, §7 결정 기록)
-- `profile/agent/team_example.md` **신규** — SCIM-Group 더미(`lead`·`members[]`참조·`overrides{}`·advisory authority)
-- `profile/agent/_GUIDE.md` — "future" 절 → 확정 team 스키마 표 + `lead` 설명
-- `AGENTS.md` §Upward Fetching — **플릿 오케스트레이션 문단**(리드 계보 분해→위임, 서브트리별 ritual, 리드 단독 HANDOFF)
-- `sprint/_GUIDE.md` — HANDOFF 단일-작성자(리드) 규율 1줄
+## 2. 변경 위치 (ID 목록 / 파일 — 탐색 진입점)
+- ZFS 평면 문서 변경 **없음** (전부 scripts/ + CI — Wiki/Schema 무접촉)
+- `scripts/permission-guard.js`(+test) — `git()` execFile 어댑터 + `isSubstantiveLine()` 순수 판정 export
+- `scripts/hooks.js`(+test) — `extractWorkId`·`decideEdit` 둘 다 `isValidDomain` 대조(UTF-8→`8` 오인 차단)
+- `scripts/zfs_index.js`(+test) — `readStatus` frontmatter 블록 한정(본문 `status: Live` 오차단 방지), export 추가
+- `scripts/init.js` — IDENTITY_example 부재 시 조기 return(신규 `--force` 없이는 매니페스트 재리셋 불가)
+- `.github/workflows/harness.yml` — permission-guard base가 zero-SHA/부재면 직전 커밋(없으면 빈 트리) 폴백
 
 ## 3. 다음 작업 (단일 진입점)
-- → **[E3] enforce 도그푸딩 = PHASE-02 마지막 1개**(불변). 본질적 *종단*+권한 가림: ①훅 활성화=사용자가
-  `scripts/HOOKS.md` 스니펫을 `.claude/settings.json`에 직접 복사, ②CI 재착륙=워크플로 스코프, ③enforce FP율=실사용 누적.
-- (선택) **PRO-06 실전 검증**: 작은 작업을 2개 계보로 분할해 서브에이전트 위임 시연 — agent-team 모델 도그푸딩.
+- → **리뷰 후속 P1**: README/CHANGELOG 효능 주장 톤 축소(+E3 미완 단서 명시), DESIGN_RATIONALE 제목 "(v5.2)" 갱신,
+  CHANGELOG "v5.5 스킵" ↔ RATIONALE [v5.5] 섹션 모순 해소. (리뷰 리포트는 이 세션 대화에 있음.)
 
 ## 4. 미해결 / 주의
-- **agent-team은 서술적 전용**: 이 평면은 에이전트를 spawn하지 않는다. 실제 기동은 플랫폼(Claude Code `Agent`
-  툴/subagent_type, Workflow) 몫. `lead`·`authority`는 advisory(CODEOWNERS 패턴) — 집행은 플랫폼 hooks/permissions.
-- **플릿 충돌 회피는 락 아닌 계보 분할**(PRO-05): version OCC는 탐지이지 예방 아님. 계보 겹치면 직렬화/인간 에스컬레이트(Fail-close).
-- **hooks 활성화=사용자 행위**(불변): 보안상 에이전트가 `.claude/settings.json` 자동 설치 안 함.
-- **이월**: PRO-04(concern 태그 INFO 차원), PRO-05(런타임 분산락 비범위), PRO-06(팀 health 지표=YAGNI까지 보류).
-- 커밋은 main에 올림(레포 관례). **push 미실행** — main-push는 재승인 필요(메모리 기록).
+- **[E3] enforce 도그푸딩 = PHASE-02 마지막 1개**(불변) — 훅 활성화는 사용자 행위, enforce FP율은 실사용 누적.
+- **표머리 행 편집이 이제 append-only 위반으로 잡힘**(의도된 Fail-close 방향 — 데이터 행 사각지대와 맞바꿈. 구분선·주석·제목은 계속 제외).
+- **리뷰 P2 이월**: context-budget char/4의 한글 2~4배 과소평가(CJK 계수 필요), 재귀 워커 symlink 순환 가드,
+  "해악 팔"(비국소 지식 불필요 과제) 평가 부재, Claude Code auto-memory ↔ lessons 이중 저장소 라우팅 규칙.
+- **커밋·push 미실행** — 사용자 요청 없었음. 주의: `.github/workflows/` 변경 포함 → push 시 workflow 스코프 없으면 거부(메모리 기록). 커밋 분리 권장.
 
 ## 5. 검증 상태
-- 게이트 전부 그린: naming·history·leakage·permission(append-only)·ref(--strict)·size·lock·context budget·domain.
-- 테스트 15스위트 **0 failed**. context budget **1316/4000 불변**(오케스트레이션 문단을 정적 부트스트랩이 아닌 작업별 ritual 구역에 배치).
-- 도메인 분포: PRO:5→6. doc/guide 20/21.
+- 게이트 전부 그린: naming·history·leakage·permission(append-only)·ref·size·lock·context budget·domain.
+- 테스트 15스위트 **230단언 0 failed**(회귀 15개 신규: 표 행 7·ID 오매칭 5·frontmatter 3).
+- E2E(스크래치패드 임시 레포): 표 데이터 행 삭제 + 한글 파일명 줄 삭제 → exit 1 차단, 순수 append → exit 0 통과.

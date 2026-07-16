@@ -8,7 +8,7 @@
 // 설계 근거: AGENTS.md 규칙 1·2는 "의례 수행 자체는 런타임 훅 없이는 완전 강제 불가"를 정직한 한계로 남겼다.
 //   이 모듈이 그 간극을 닫는다 — 선언(게이트는 커밋·CI)에서 *사전 차단*(편집 직전)으로.
 const path = require('path');
-const { parseId } = require('./zfs_util');
+const { parseId, isValidDomain } = require('./zfs_util');
 const { classify } = require('./permission-guard');
 const { blastRadius } = require('./query');
 
@@ -39,7 +39,11 @@ function decideEdit(file, index, mode = 'warn', root = process.cwd()) {
     });
   }
 
-  const id = parseId(path.basename(rel));
+  // 파일명이 ZFS 노드일 때만 blast-radius 검사 — 도메인 화이트리스트 대조 없이는
+  // UTF-8_notes.md 같은 일반 파일명의 `UTF`-`8`이 노드 ID로 오인된다(parseId는 구조만 본다).
+  const base = path.basename(rel);
+  const dm = base.match(/^([A-Z]{2,6})-/);
+  const id = dm && isValidDomain(dm[1]) ? parseId(base) : null;
   if (id) {
     const br = blastRadius(id, index);
     if (br.blocked) {
@@ -56,12 +60,17 @@ function decideEdit(file, index, mode = 'warn', root = process.cwd()) {
   return { block: issues.some(i => i.block), issues };
 }
 
-// 프롬프트에서 첫 ZFS 작업 ID(브래킷/플레인 모두) 추출. 없으면 null.
-const WORKID_RE = /\b([A-Z]{2,6})-([0-9][0-9a-z-]*)\b/;
+// 프롬프트에서 첫 *유효 도메인* ZFS 작업 ID(브래킷/플레인 모두) 추출. 없으면 null.
+// 도메인을 VALID_DOMAINS와 대조하지 않으면 UTF-8→`8`, SHA-256→`256` 같은
+// 기술 토큰이 컨텍스트 주입 트리거가 된다. 무효 도메인은 건너뛰고 다음 후보를 본다.
+const WORKID_RE = /\b([A-Z]{2,6})-([0-9][0-9a-z-]*)\b/g;
 function extractWorkId(prompt) {
-  const m = String(prompt || '').match(WORKID_RE);
-  if (!m) return null;
-  return parseId(`${m[1]}-${m[2]}`);
+  for (const m of String(prompt || '').matchAll(WORKID_RE)) {
+    if (!isValidDomain(m[1])) continue;
+    const id = parseId(`${m[1]}-${m[2]}`);
+    if (id) return id;
+  }
+  return null;
 }
 
 module.exports = { decideEdit, extractWorkId, toRel };

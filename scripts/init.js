@@ -122,12 +122,15 @@ function main(argv = process.argv.slice(2)) {
   const drop = argv.includes('--drop-template-bits');
   const doApply = argv.includes('--apply');
   if (!name || !slug) {
-    console.error('사용법: node scripts/init.js --name "Project Name" [--slug slug] [--apply] [--drop-template-bits]');
+    console.error('사용법: node scripts/init.js --name "Project Name" [--slug slug] [--apply] [--drop-template-bits] [--force]');
     return 2;
   }
   const root = path.resolve(__dirname, '..');
-  if (!fs.existsSync(path.join(root, IDENTITY_SRC)) && !doApply) {
-    console.log('이미 init된 것으로 보임(IDENTITY_example.md 없음). 변경 없음.');
+  // 이미 init된 레포에서 재실행하면 축적된 HISTORY·원장이 더미로 리셋된다(append-only 파괴).
+  // Fail-close: --force 없이는 dry-run/--apply 모두 진행하지 않는다.
+  if (!fs.existsSync(path.join(root, IDENTITY_SRC)) && !argv.includes('--force')) {
+    console.log('이미 init된 것으로 보임(IDENTITY_example.md 없음). 변경 없음. 재실행이 정말 필요하면 --force (매니페스트가 리셋됨).');
+    return 0;
   }
   const files = []; listFiles('.union-stack', root, files);
   ['package.json', '.github/workflows/template-guard.yml',

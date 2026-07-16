@@ -43,6 +43,16 @@ check('extract WO id', extractWorkId('please implement WO-01a1-2 now') === '01a1
 check('extract plain', extractWorkId('context for PLAN-03b') === '03b');
 check('no id → null', extractWorkId('just chatting, no ids here') === null);
 check('ignore lowercase', extractWorkId('the wo-01 thing') === null);
+// 도메인 화이트리스트 대조 — 기술 토큰이 작업 ID로 오인되면 안 된다
+check('UTF-8 → null', extractWorkId('save as UTF-8 encoding') === null);
+check('SHA-256 → null', extractWorkId('verify the SHA-256 digest') === null);
+check('무효 도메인 건너뛰고 유효 ID 추출', extractWorkId('SHA-256 hash for WO-01a1-2') === '01a1-2');
+
+// --- decideEdit: 파일명 도메인 화이트리스트 — 일반 파일명이 노드로 오인되면 안 된다 ---
+const IDX3 = [{ domain: 'PLAN', id: '8', file: '.union-stack/plan/PLAN-8_x.md', status: 'Verifying' }];
+check('UTF-8_notes.md 는 ZFS 노드 아님(blast-radius 미발동)',
+  decideEdit('docs/UTF-8_notes.md', IDX3, 'warn', root).block === false);
+check('진짜 노드는 여전히 잠금 검사', decideEdit('.union-stack/plan/PLAN-8_x.md', IDX3, 'warn', root).block === true);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
