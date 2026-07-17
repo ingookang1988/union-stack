@@ -36,5 +36,10 @@
 }
 ```
 
+## 훅이 주입하는 문구의 설계 원칙 (E5 실측 교훈 — [PRO-07], RESULTS 5회차)
+1. **모순·이중 명령 금지** (3회차): "파일 수정 금지" + "함수를 추가하라" 같은 조합은 약한 모델을 거부/재질의로 몰아넣는다.
+2. **간접 참조 금지** (5회차): "이 파일을 읽고 시키는 대로 하라"식 문구는 에이전트의 주입 방어(injection defense)에 걸린다(실측 10/10 거부). 주입할 내용은 인라인으로.
+3. **Fail-close 스코프 유지** ([PRO-07]): 주입 문구가 "계보 문서에 없는 작업은 멈춰라"로 읽히게 쓰지 마라 — 인간의 직접 요청은 모호함이 아니며, 멈춤은 규범·계약·HISTORY와의 *충돌*에만 해당한다.
+
 > 다른 도구: 같은 두 스크립트를 해당 도구의 pre-edit / prompt 훅 지점에 가리키면 된다(로직은 tool-agnostic).
 > 빠른 점검: `echo '{"tool_input":{"file_path":".union-stack/architecture/ARCH-00_zfs_naming.md"}}' | UNION_STACK_HOOK=enforce node scripts/hook-pretool.js; echo "exit=$?"` → Schema 차단(exit 2) 확인.

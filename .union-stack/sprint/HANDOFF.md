@@ -29,8 +29,8 @@ version: 1.0
 - `.github/workflows/harness.yml` — permission-guard base가 zero-SHA/부재면 직전 커밋(없으면 빈 트리) 폴백
 
 ## 3. 다음 작업 (단일 진입점)
-- → **[PRO-07] 인간 결정**(승인/거부). 승인 시: AGENTS.md 규칙 1 문안 반영(Approved-by) 후
-  **E5-H1 재측정**(델타 −0.8 → ≥ −0.2 회복 + T3 on 5/5 유지가 성공 조건 — PRO-07 §4).
+- → **[E3] enforce 도그푸딩** = PHASE-02 마지막 잔여(불변). PRO-07은 승인·반영·검증 완주됨
+  (H1 델타 −0.8→0, T3 5/5 유지 — [ADR-05]). 훅 활성화는 사용자 행위(HOOKS.md 스니펫 복사).
 
 ## 4. 미해결 / 주의
 - **[E3] enforce 도그푸딩 = PHASE-02 마지막 1개**(불변) — 훅 활성화는 사용자 행위, enforce FP율은 실사용 누적.
