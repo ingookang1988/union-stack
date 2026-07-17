@@ -16,6 +16,9 @@ version: 1.0
   작업 ID 도메인 화이트리스트 대조(hooks), status frontmatter 스코핑(zfs_index), init 재실행 Fail-close, CI zero-SHA 폴백.
 - **P1 톤·드리프트 해소**: README(EN/KO) 측정 박스에 82× 모델링 단서 + E3 미완 명시, CHANGELOG v6.0 범위 주석,
   RATIONALE 제목 버전 표기 제거(단일 출처=CHANGELOG), v5.5 모순 해소(설계-전용 변경으로 각주), HISTORY에 실분기점 2건 등재(인간 승인).
+- **E5 해악 팔 측정 완료**(RESULTS 5회차): 국소 과제 3종 × on/off × N=5(sonnet-5, 30런). H1 델타 **−0.8**
+  (Fail-close 과적용 — 전거 약한 요청을 모호함으로 재분류), H2·H3 델타 0(과일반화 유혹 전부 정확히 스코핑).
+  처방 → **[PRO-07] Fail-close 스코프 한정** 제안(Proposed — 인간 결정 대기).
 
 ## 2. 변경 위치 (ID 목록 / 파일 — 탐색 진입점)
 - ZFS 평면 문서 변경 **없음** (전부 scripts/ + CI — Wiki/Schema 무접촉)
@@ -26,9 +29,8 @@ version: 1.0
 - `.github/workflows/harness.yml` — permission-guard base가 zero-SHA/부재면 직전 커밋(없으면 빈 트리) 폴백
 
 ## 3. 다음 작업 (단일 진입점)
-- → **"해악 팔(harm arm)" 평가 1라운드**: reference-instance에 비국소 지식이 *불필요한* 과제 2~3개 추가,
-  하네스 on/off 성공률·토큰 측정. 목적: arXiv 2602.11988("컨텍스트 파일은 평균 유해") 방어 —
-  "필요할 때 돕고 아닐 때 무해"를 측정으로 완성. E1 인프라 재사용(PROTOCOL/TASKS 확장).
+- → **[PRO-07] 인간 결정**(승인/거부). 승인 시: AGENTS.md 규칙 1 문안 반영(Approved-by) 후
+  **E5-H1 재측정**(델타 −0.8 → ≥ −0.2 회복 + T3 on 5/5 유지가 성공 조건 — PRO-07 §4).
 
 ## 4. 미해결 / 주의
 - **[E3] enforce 도그푸딩 = PHASE-02 마지막 1개**(불변) — 훅 활성화는 사용자 행위, enforce FP율은 실사용 누적.
