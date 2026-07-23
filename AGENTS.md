@@ -111,4 +111,7 @@ this file only pins the deterministic core. The detail lives in the structure.
 - **[TOOL-05]** 런타임 질의 MCP 서버 (읽기 전용 5종) — plane 조회 5종(upward_fetch·blast_radius·where_to_record·zfs_lint·list_docs)을 에이전트 런타임 도구로 노출한다(zero-dep stdio JSON-RPC). (`scripts/mcp-server.js`)
 - **[TOOL-06]** init 스캐폴딩 (템플릿 → 실프로젝트 1-샷 전환) — 정체성 시딩·더미(example) 제거·매니페스트 초기화로 템플릿을 실프로젝트로 전환한다(dry-run 기본). (`scripts/init.js`)
 - **[TOOL-07]** tools-index 컴파일러 (상시 주입 카탈로그 인덱스) — TOOL 카드들의 한 줄 요약 인덱스를 생성해 AGENTS.md 마커 블록에 주입한다(온디맨드 미호출 문제의 해법 — 인덱스는 항상 보여야 작동). (`scripts/tools-index.js`)
+- **[TOOL-08]** check-prereqs (단계 진입 전제 게이트) — 작업 진입 전 필수 산출물을 Fail-close로 검사한다 — 부트스트랩(IDENTITY·HANDOFF 5부) + 작업 ID의 계보 전거(PLAN/CON/ARCH 존재). (`scripts/check-prereqs.js`)
+- **[TOOL-09]** transcript-stats (세션 관측 — 의례 자발 수행률) — 로컬 Claude Code 트랜스크립트(*.jsonl)에서 도구 호출 빈도와 **의례 자발 수행률**(첫 편집 전 upward-fetch/blast-radius 수행 비율 — E3 지표)을 측정한다. (`scripts/transcript-stats.js`)
+- **[TOOL-10]** smell 린터 (카드 사용 계약 해부 검사) — TOOL 카드가 사용 계약의 최소 해부(용도·언제 쓰지 않나·호출·kind)를 갖추고 비대(>4KB)하지 않은지 Fail-close로 검사한다. (`scripts/smell-linter.js`)
 <!-- tools-index:end -->

@@ -31,6 +31,7 @@ const METHODOLOGY = new Set([
   // 템플릿이 실제로 배송하는 도구의 카탈로그 카드([PRO-08] — 실도구라 더미 마커 없음)
   'TOOL-02_upward_fetch.md', 'TOOL-03_blast_radius.md', 'TOOL-04_health.md',
   'TOOL-05_mcp_server.md', 'TOOL-06_init.md', 'TOOL-07_tools_index.md',
+  'TOOL-08_check_prereqs.md', 'TOOL-09_transcript_stats.md', 'TOOL-10_smell_linter.md',
 ]);
 
 // 더미 표시 마커. 슬러그 또는 본문 어디든 있으면 sanitize된 것으로 간주.

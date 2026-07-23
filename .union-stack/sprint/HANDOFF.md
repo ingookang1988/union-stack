@@ -37,7 +37,11 @@ version: 1.0
   블록에 생성·주입하는 상시 인덱스(check=드리프트 게이트, lint 체인 등재. 근거: Vercel 온디맨드 56% 미호출
   실측 — 인덱스가 항상 보여야 카탈로그가 작동). ② 셀프 카탈로그 6장(TOOL-02~07: upward-fetch·blast-radius·
   health·mcp-server·init·tools-index) — 실도구라 leakage-guard METHODOLOGY 등재.
-  2단계 후보(승인 대기): check-prerequisites 게이트 / transcript 분석기(E3 계측 겸용) / skill-smell 린터.
+- **[PRO-08] 2단계 완료**(승인 2026-07-23): ① `check-prereqs.js` — 진입 전제 게이트(IDENTITY·HANDOFF 5부
+  + 계보 전거, Spec Kit 패턴). ② `transcript-stats.js` — 세션 관측기(도구 빈도 + **의례 자발 수행률** = E3 지표).
+  ③ `smell-linter.js` — 카드 사용 계약 해부 검사(2607.01456 smell 대응, lint 체인 등재). 카드 TOOL-08~10.
+  **E3 기준선 실측(스모크)**: 전체 로컬 188세션 중 편집 세션 184개, 첫 편집 전 의례 수행 **20%(37/184)**
+  — 단 union-stack 외 레포 포함 하한치. E3 본측정은 이 레포 세션만 필터해 재실행할 것.
 
 ## 4. 미해결 / 주의
 - **[E3] enforce 도그푸딩 = PHASE-02 마지막 1개**(불변) — 훅 활성화는 사용자 행위, enforce FP율은 실사용 누적.
