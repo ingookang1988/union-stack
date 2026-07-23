@@ -78,7 +78,7 @@ LLM 에이전트는 컨텍스트 윈도우와 추론력이 커질수록 *능력*
 - `.union-stack/reference/contracts/` — 공유 정적 명세(타입·인터페이스)와 **테스트 도구 카탈로그**. "에이전트가 새로 만들지 말고 찾아 쓸 것들."
 - `.union-stack/reference/lessons/` — 반복된 실패의 누적(오답노트). 작업 진입 시 *사전 경고*로 주입.
 
-> 위 두 ★평면은 `.union-stack/reference/` 아래 묶인다 — *쓰기 전에 조회하는 지식*(재사용 + 사전경고). `verification/`이 `raw/`+`derived/`를 묶는 것과 대칭. 권한 tier는 하위별 유지: `contracts`=Schema, `lessons`=Wiki.
+> 위 두 ★평면은 `.union-stack/reference/` 아래 묶인다 — *쓰기 전에 조회하는 지식*(재사용 + 사전경고). `verification/`이 `raw/`+`derived/`를 묶는 것과 대칭. 권한 tier는 하위별 유지: `contracts`=Schema, `lessons`=Wiki. 추가 멤버 둘: `domain/`(DOM-*, 도메인 진리)과 `tools/`(TOOL-*, Wiki — 재사용 실행 자산(스크립트·스킬·MCP 도구)의 *카탈로그*. 실체는 원래 자리에 두고 `scripts/tool-linter.js`가 깨진 포인터를 Fail-close).
 
 각 디렉터리의 `_GUIDE.md`에 "무엇을 싣고 무엇을 빼는가"가 적혀 있다.
 

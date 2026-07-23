@@ -9,7 +9,8 @@ const { parse } = require('./zfs_util');
 const BASE = '.union-stack';
 const SCAN_DIRS = [
   'plan', 'feature/flow', 'sprint', 'architecture', 'verification',
-  'reference/contracts', 'reference/lessons', 'reference/domain', 'project/roadmap', 'proposals',
+  'reference/contracts', 'reference/lessons', 'reference/domain', 'reference/tools',
+  'project/roadmap', 'proposals',
 ].map(d => `${BASE}/${d}`);
 
 // frontmatter(선두 --- 블록)에서만 status를 추출. 없으면 null.

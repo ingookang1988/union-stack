@@ -12,6 +12,12 @@ design, see [`DESIGN_RATIONALE.md`](./DESIGN_RATIONALE.md). Entries marked **⚠
 action in already-adopted projects.
 
 ## [Unreleased]
+- **PRO-08** — new `reference/tools/` member (`TOOL-*` domain): a *catalog* of reusable executable
+  assets (scripts, skills, MCP tools). Catalog-only (implementation stays at its real home), Wiki
+  tier, `scripts/tool-linter.js` fail-closes dangling `impl:` pointers.
+- **PRO-07** — Fail-close scope qualifier in AGENTS.md rule 1 ("a direct human request is not, by
+  itself, ambiguity"), driven by the E5 harm-arm measurement (`eval/RESULTS.md`); re-measured and
+  verified (H1 delta −0.8 → 0, T3 guard intact).
 - **PRO-06** — agent-team resource + lineage-partitioning orchestration. Proposal-stage; not yet a
   released harness rule.
 

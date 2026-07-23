@@ -34,6 +34,11 @@ const nameCases = [
 ];
 for (const [n, e] of nameCases) check(`name(${n})`, isValidName(n), e);
 
+// --- TOOL 도메인 ([PRO-08]) ---
+check('TOOL 유효', isValidName('TOOL-01_example_zfs_linter.md'), true);
+check('TOOL 화이트리스트 등재', isValidDomain('TOOL'), true);
+check('미등록 유사 도메인(TOOLS) 거부', isValidName('TOOLS-01_example_x.md'), false);
+
 // --- 도메인 화이트리스트 ---
 check('domain(PLAN)', isValidDomain('PLAN'), true);
 check('domain(PHASE)', isValidDomain('PHASE'), true);

@@ -78,7 +78,7 @@ The pillars are not flat. They operate at three distinct layers. **All of them l
 - `.union-stack/reference/contracts/` — shared static specs (types/interfaces) and a **test-tooling catalog**. "Things the agent should find and reuse, not recreate."
 - `.union-stack/reference/lessons/` — accumulated repeated failures (a mistake log). Injected as a *pre-warning* when entering work.
 
-> Both `*` planes are grouped under `.union-stack/reference/` — *consult-before-act knowledge* (reuse + pre-warning), mirroring how `verification/` groups `raw/`+`derived/`. Permission tiers stay per-member: `contracts` = Schema, `lessons` = Wiki.
+> Both `*` planes are grouped under `.union-stack/reference/` — *consult-before-act knowledge* (reuse + pre-warning), mirroring how `verification/` groups `raw/`+`derived/`. Permission tiers stay per-member: `contracts` = Schema, `lessons` = Wiki. Two further members: `domain/` (DOM-*, settled subject-matter truth) and `tools/` (TOOL-*, Wiki — a *catalog* of reusable executable assets: scripts, skills, MCP tools; the implementation stays at its real home and `scripts/tool-linter.js` fail-closes dangling pointers).
 
 Each directory's `_GUIDE.md` states "what to put in, what to keep out."
 

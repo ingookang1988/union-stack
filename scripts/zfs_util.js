@@ -28,6 +28,7 @@ const VALID_DOMAINS = new Set([
   'WF',    // sprint      실제·행위(워크플로우)
   'LSN',   // lessons     시간축(오답노트)
   'DOM',   // reference/domain  도메인 지식·모델
+  'TOOL',  // reference/tools   재사용 실행 자산 카탈로그 ([PRO-08])
   'EVD',   // verification   증거
   'ADR',   // 결정 기록
   'PRO',   // proposals   하네스 규칙 변경 제안

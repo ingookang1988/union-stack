@@ -31,6 +31,9 @@ version: 1.0
 ## 3. 다음 작업 (단일 진입점)
 - → **[E3] enforce 도그푸딩** = PHASE-02 마지막 잔여(불변). PRO-07은 승인·반영·검증 완주됨
   (H1 델타 −0.8→0, T3 5/5 유지 — [ADR-05]). 훅 활성화는 사용자 행위(HOOKS.md 스니펫 복사).
+- **[PRO-08] 구현 완료**(2026-07-17 승인): `reference/tools/`(TOOL-*) 신설 — 카탈로그-only(Wiki),
+  `tool-linter.js` 드리프트 게이트(+test), VALID_DOMAINS/SCAN_DIRS/ARCH-00/가이드/README(EN·KO)/CHANGELOG 반영.
+  후속(선택): 실사용 도구들(upward-fetch, blast-radius, MCP 5종 등)의 실제 TOOL-* 카드 등재는 채택 인스턴스 몫.
 
 ## 4. 미해결 / 주의
 - **[E3] enforce 도그푸딩 = PHASE-02 마지막 1개**(불변) — 훅 활성화는 사용자 행위, enforce FP율은 실사용 누적.
