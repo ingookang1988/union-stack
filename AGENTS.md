@@ -114,4 +114,8 @@ this file only pins the deterministic core. The detail lives in the structure.
 - **[TOOL-08]** check-prereqs (단계 진입 전제 게이트) — 작업 진입 전 필수 산출물을 Fail-close로 검사한다 — 부트스트랩(IDENTITY·HANDOFF 5부) + 작업 ID의 계보 전거(PLAN/CON/ARCH 존재). (`scripts/check-prereqs.js`)
 - **[TOOL-09]** transcript-stats (세션 관측 — 의례 자발 수행률) — 로컬 Claude Code 트랜스크립트(*.jsonl)에서 도구 호출 빈도와 **의례 자발 수행률**(첫 편집 전 upward-fetch/blast-radius 수행 비율 — E3 지표)을 측정한다. (`scripts/transcript-stats.js`)
 - **[TOOL-10]** smell 린터 (카드 사용 계약 해부 검사) — TOOL 카드가 사용 계약의 최소 해부(용도·언제 쓰지 않나·호출·kind)를 갖추고 비대(>4KB)하지 않은지 Fail-close로 검사한다. (`scripts/smell-linter.js`)
+- **[TOOL-11]** Repomix (레포 → 압축 컨텍스트 패킹) [adopt] — 레포 전체(또는 글롭 선택)를 단일 압축 파일로 패킹해 에이전트 컨텍스트로 공급한다(Tree-sitter 압축으로 토큰 ~-70%). (`npx:repomix`)
+- **[TOOL-12]** ccusage (토큰·비용 회계) [adopt] — 로컬 Claude Code 트랜스크립트(*.jsonl)에서 세션·일·월 단위 토큰 사용량과 비용을 집계한다. (`npx:ccusage`)
+- **[TOOL-13]** Context7 MCP (최신 라이브러리 문서 주입) [adopt] — 작업 중인 외부 라이브러리의 *현행 버전* 공식 문서·코드 예시를 MCP로 주입해 구식 API 환각을 막는다. (`https://github.com/upstash/context7`)
+- **[TOOL-14]** worktree 헬퍼 (계보 파티션 물리 격리) — 계보 서브트리별 git worktree(`../<repo>-wt-<id>`, 브랜치 `fleet/<id>`)를 생성/제거한다 — [PRO-05] "락이 아닌 파티션"의 물리 격리 수단. (`scripts/worktree.js`)
 <!-- tools-index:end -->

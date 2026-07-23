@@ -13,6 +13,9 @@
 - Required frontmatter: `impl:` — repo-relative path of the implementation. Enforced by
   `node scripts/tool-linter.js` (Fail-close: missing field or dangling path = violation).
   For assets without a single file (e.g. an MCP tool), point to its registration surface (e.g. `.mcp.json`).
+- **Adopted external assets** (not shipped in this repo): `impl:` takes `npx:<package>` (external CLI)
+  or `https://...` (server/repo reference); mark the title with `[adopt]`. The linter checks the form,
+  not remote existence — the card's usage contract is the whole point of adopting.
 
 ## ⚠️ What stays out (route to its real home)
 - The implementation itself → `scripts/` etc. (this plane is pointers, not code)

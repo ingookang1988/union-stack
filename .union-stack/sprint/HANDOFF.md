@@ -42,6 +42,10 @@ version: 1.0
   ③ `smell-linter.js` — 카드 사용 계약 해부 검사(2607.01456 smell 대응, lint 체인 등재). 카드 TOOL-08~10.
   **E3 기준선 실측(스모크)**: 전체 로컬 188세션 중 편집 세션 184개, 첫 편집 전 의례 수행 **20%(37/184)**
   — 단 union-stack 외 레포 포함 하한치. E3 본측정은 이 레포 세션만 필터해 재실행할 것.
+- **[PRO-08] 3단계 완료**: adopt 카드 3장(TOOL-11 Repomix·12 ccusage·13 Context7 — `impl: npx:/https:` 외부
+  형식, tool-linter 확장) + TOOL-14 worktree 헬퍼 build(`scripts/worktree.js`, [PRO-05] 물리 격리).
+  카탈로그 14장 완성 — 리서치 제안 12후보 중 10개 반영(보류 2: git 가드 훅=E3와 함께, 메모리 통합기=이중
+  저장소 라우팅 선행 필요). PRO-08 트랙 종료.
 
 ## 4. 미해결 / 주의
 - **[E3] enforce 도그푸딩 = PHASE-02 마지막 1개**(불변) — 훅 활성화는 사용자 행위, enforce FP율은 실사용 누적.

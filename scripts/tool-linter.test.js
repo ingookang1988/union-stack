@@ -18,6 +18,13 @@ check('깨진 포인터 → 위반', findViolations([{ file: 'a', impl: 's/x.js'
 check('impl 누락 → 위반', findViolations([{ file: 'a', impl: null, implExists: false }]).length === 1);
 check('빈 목록 → 통과', findViolations([]).length === 0);
 
+// --- 외부 채택(adopt) impl 형식 ---
+const { EXTERNAL_RE } = require('./tool-linter');
+check('npx: 형식 인정', EXTERNAL_RE.test('npx:repomix'));
+check('https 형식 인정', EXTERNAL_RE.test('https://github.com/upstash/context7'));
+check('일반 경로는 외부 아님', EXTERNAL_RE.test('scripts/zfs-linter.js') === false);
+check('npx: 빈 패키지 거부', EXTERNAL_RE.test('npx:') === false);
+
 // --- 실레포 통합: 템플릿 모드(더미 TOOL-01 존재)에서만 픽스처 검사 ---
 const cards = gather();
 if (cards.length) {

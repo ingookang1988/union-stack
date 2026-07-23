@@ -8,6 +8,9 @@ const fs = require('fs');
 const path = require('path');
 
 const TOOLS_DIR = '.union-stack/reference/tools';
+// 외부 채택(adopt) 자산의 impl 형식 — 레포 파일 실존 검사를 대신해 형식만 강제.
+//   npx:<pkg> = 외부 npm CLI, https://... = 외부 레퍼런스(MCP 서버·저장소)
+const EXTERNAL_RE = /^(npx:\S+|https?:\/\/\S+)$/;
 
 /** frontmatter(선두 --- 블록)에서 impl 값 추출(순수). 없으면 null. */
 function readImpl(txt) {
@@ -38,7 +41,8 @@ function gather(root = path.resolve(__dirname, '..')) {
     .map(e => {
       let impl = null;
       try { impl = readImpl(fs.readFileSync(path.join(abs, e), 'utf8')); } catch { /* 읽기 실패 → impl 누락으로 취급 */ }
-      return { file: `${TOOLS_DIR}/${e}`, impl, implExists: impl ? fs.existsSync(path.join(root, impl)) : false };
+      const external = impl ? EXTERNAL_RE.test(impl) : false;
+      return { file: `${TOOLS_DIR}/${e}`, impl, implExists: impl ? (external || fs.existsSync(path.join(root, impl))) : false };
     });
 }
 
@@ -56,6 +60,6 @@ function run(root) {
   return 0;
 }
 
-module.exports = { readImpl, findViolations, gather, TOOLS_DIR };
+module.exports = { readImpl, findViolations, gather, TOOLS_DIR, EXTERNAL_RE };
 
 if (require.main === module) process.exit(run());
