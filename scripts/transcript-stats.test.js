@@ -16,7 +16,15 @@ check('MCP 이름', isRitual({ name: 'mcp__union-stack__upward_fetch', input: {}
 check('Bash 명령', isRitual({ name: 'Bash', input: { command: 'node scripts/upward-fetch.js WO-01a-1' } }));
 check('blast-radius도 의례', isRitual({ name: 'Bash', input: { command: 'node scripts/blast-radius.js 01a' } }));
 check('스킬 인자', isRitual({ name: 'Skill', input: { skill: 'upward-fetch' } }));
+check('PowerShell 명령', isRitual({ name: 'PowerShell', input: { command: 'node scripts/blast-radius.js 01a' } }));
 check('무관 호출 아님', isRitual({ name: 'Bash', input: { command: 'git status' } }) === false);
+// 계측 오염 회귀: 문서에 의례 이름을 *쓰는* 편집은 수행이 아니다
+check('Write 내용 언급은 수행 아님',
+  isRitual({ name: 'Write', input: { file_path: 'a.md', content: '# blast-radius 설명\nupward-fetch 의례' } }) === false);
+check('Edit 내용 언급은 수행 아님',
+  isRitual({ name: 'Edit', input: { new_string: 'node scripts/upward-fetch.js' } }) === false);
+check('Agent 프롬프트 언급은 수행 아님',
+  isRitual({ name: 'Agent', input: { prompt: 'review upward-fetch and blast-radius' } }) === false);
 
 // --- analyze: 의례 자발 수행률 ---
 const S = (...names) => ({ calls: names.map(n => (typeof n === 'string' ? { name: n, input: {} } : n)) });

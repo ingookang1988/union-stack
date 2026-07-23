@@ -24,11 +24,19 @@ function toolUses(node, out = []) {
   return out;
 }
 
-/** 호출이 의례(upward-fetch/blast-radius) 수행인지(순수) — 이름·Bash 명령·스킬 인자 어디에 있든. */
+/**
+ * 호출이 의례(upward-fetch/blast-radius) *실행*인지(순수).
+ * ⚠ 임의 input을 통째로 스캔하면 안 된다 — 문서에 "blast-radius"를 *쓰는* Write/Edit이
+ *   의례 수행으로 잡혀 수행률이 허수가 된다(2026-07-24 실측 중 발견한 계측 오염).
+ *   실행 표면(도구 이름·셸 명령·스킬/슬래시 인자)만 본다.
+ */
 function isRitual(call) {
-  if (RITUAL_RE.test(call.name)) return true;
-  const hay = call.name === 'Bash' ? String(call.input.command || '') : JSON.stringify(call.input);
-  return RITUAL_RE.test(hay);
+  const n = String(call.name || '');
+  if (RITUAL_RE.test(n)) return true;                       // 도구 이름 자체(MCP upward_fetch 등)
+  const i = call.input || {};
+  if (n === 'Bash' || n === 'PowerShell') return RITUAL_RE.test(String(i.command || ''));
+  if (n === 'Skill' || n === 'SlashCommand') return RITUAL_RE.test(String(i.skill || i.command || ''));
+  return false;                                             // Write/Edit/Agent 등의 *내용*은 세지 않는다
 }
 
 /**

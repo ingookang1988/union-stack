@@ -29,8 +29,11 @@ version: 1.0
 - `.github/workflows/harness.yml` — permission-guard base가 zero-SHA/부재면 직전 커밋(없으면 빈 트리) 폴백
 
 ## 3. 다음 작업 (단일 진입점)
-- → **[E3] enforce 도그푸딩** = PHASE-02 마지막 잔여(불변). PRO-07은 승인·반영·검증 완주됨
-  (H1 델타 −0.8→0, T3 5/5 유지 — [ADR-05]). 훅 활성화는 사용자 행위(HOOKS.md 스니펫 복사).
+- → **[E3] 라이브 훅 전환**(사용자 행위): `scripts/HOOKS.md` 스니펫을 `.claude/settings.json`에 복사하고
+  `UNION_STACK_HOOK=enforce`. 사전 경제성은 이번 세션에 측정 완료([ADR-06]: 차단 6%·전부 schema·lock 0,
+  정탐 3 대 논쟁 4) — **운영 수칙**: 승인된 Schema 배치 작업 동안 mode를 `warn`으로 낮췄다 복귀.
+  전환 후 재측정: `npm run observe -- <이 레포 트랜스크립트 디렉터리>`로 의례 수행률 0% → 상승 확인.
+- (인간 몫) `project/roadmap/PHASE-02`는 Schema라 에이전트가 못 고침 — E3 exit gate 충족 표기는 인간이.
 - **[PRO-08] 구현 완료**(2026-07-17 승인): `reference/tools/`(TOOL-*) 신설 — 카탈로그-only(Wiki),
   `tool-linter.js` 드리프트 게이트(+test), VALID_DOMAINS/SCAN_DIRS/ARCH-00/가이드/README(EN·KO)/CHANGELOG 반영.
 - **[PRO-08] 1단계(리서치 기반) 완료**: ① `tools-index.js`(+test) — 카드 한 줄 요약을 AGENTS.md 마커
@@ -53,6 +56,10 @@ version: 1.0
   아무 세션도 수행 안 함 — git 히스토리로 일원화), ⑦AGENTS.md 규칙 2 Wiki 목록에 reference/tools.
   점검 중 **tools-index 오탐 버그 발견·수정**: 블록을 LF 고정 주입해 CRLF 레포에서 다른 도구가 파일을
   정규화할 때마다 거짓 Fail-close. 이제 파일의 지배적 개행을 따르며 CRLF 멱등(회귀 3건 추가).
+- **[E3] 본측정 완료**(RESULTS §E3, [ADR-06]·[ADR-07]): 의례 자발 수행률 **자기 레포 0%**(전체 15%),
+  enforce 재생 **6% 차단**(122편집 중 7, 전부 schema, lock 0). 신규 도구 `hook-replay.js`(TOOL-15) —
+  훅 설치 없이 enforce 경제성 측정. **계측 오염 수정**: transcript-stats가 문서 *내용*의 "blast-radius"를
+  수행으로 오집계(100%→0% 반전) → 실행 표면만 보도록 한정(회귀 3건).
 
 ## 4. 미해결 / 주의
 - **[E3] enforce 도그푸딩 = PHASE-02 마지막 1개**(불변) — 훅 활성화는 사용자 행위, enforce FP율은 실사용 누적.
