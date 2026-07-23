@@ -26,7 +26,12 @@ const ROOT_MANIFESTS = ['.union-stack/archive_ledger.md'];
 
 // 마커 없이도 합법인 방법론 파일(명시 집합). 린터의 IGNORED와 같은 유지보수 방식.
 // 새 방법론 파일을 추가하면 여기에도 등재한다.
-const METHODOLOGY = new Set(['ARCH-00_zfs_naming.md']);
+const METHODOLOGY = new Set([
+  'ARCH-00_zfs_naming.md',
+  // 템플릿이 실제로 배송하는 도구의 카탈로그 카드([PRO-08] — 실도구라 더미 마커 없음)
+  'TOOL-02_upward_fetch.md', 'TOOL-03_blast_radius.md', 'TOOL-04_health.md',
+  'TOOL-05_mcp_server.md', 'TOOL-06_init.md', 'TOOL-07_tools_index.md',
+]);
 
 // 더미 표시 마커. 슬러그 또는 본문 어디든 있으면 sanitize된 것으로 간주.
 const MARKER = /example|dummy|예시|더미/i;

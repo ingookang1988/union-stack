@@ -33,7 +33,11 @@ version: 1.0
   (H1 델타 −0.8→0, T3 5/5 유지 — [ADR-05]). 훅 활성화는 사용자 행위(HOOKS.md 스니펫 복사).
 - **[PRO-08] 구현 완료**(2026-07-17 승인): `reference/tools/`(TOOL-*) 신설 — 카탈로그-only(Wiki),
   `tool-linter.js` 드리프트 게이트(+test), VALID_DOMAINS/SCAN_DIRS/ARCH-00/가이드/README(EN·KO)/CHANGELOG 반영.
-  후속(선택): 실사용 도구들(upward-fetch, blast-radius, MCP 5종 등)의 실제 TOOL-* 카드 등재는 채택 인스턴스 몫.
+- **[PRO-08] 1단계(리서치 기반) 완료**: ① `tools-index.js`(+test) — 카드 한 줄 요약을 AGENTS.md 마커
+  블록에 생성·주입하는 상시 인덱스(check=드리프트 게이트, lint 체인 등재. 근거: Vercel 온디맨드 56% 미호출
+  실측 — 인덱스가 항상 보여야 카탈로그가 작동). ② 셀프 카탈로그 6장(TOOL-02~07: upward-fetch·blast-radius·
+  health·mcp-server·init·tools-index) — 실도구라 leakage-guard METHODOLOGY 등재.
+  2단계 후보(승인 대기): check-prerequisites 게이트 / transcript 분석기(E3 계측 겸용) / skill-smell 린터.
 
 ## 4. 미해결 / 주의
 - **[E3] enforce 도그푸딩 = PHASE-02 마지막 1개**(불변) — 훅 활성화는 사용자 행위, enforce FP율은 실사용 누적.
