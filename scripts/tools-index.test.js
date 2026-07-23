@@ -30,6 +30,13 @@ check('블록 치환', injected.includes('- **[TOOL-01]**') && !injected.include
 check('마커 없으면 null', inject('# no markers', idx) === null);
 check('멱등', inject(injected, idx) === injected);
 
+// --- 개행 보존: CRLF 파일에 LF 블록을 박으면 다른 도구의 정규화마다 오탐한다 ---
+const CRLF = AG.replace(/\n/g, '\r\n');
+const injCRLF = inject(CRLF, idx);
+check('CRLF 파일 → 블록도 CRLF', /begin[^\n]*-->\r\n- \*\*\[TOOL-01\]/.test(injCRLF));
+check('CRLF 멱등(오탐 없음)', inject(injCRLF, idx) === injCRLF);
+check('LF 파일은 LF 유지', /begin[^\n]*-->\n- \*\*\[TOOL-01\]/.test(injected));
+
 // --- 실레포 통합 ---
 const cards = gather();
 check('실레포 카드 파싱(전부 필수 필드 보유)', cards.length >= 1 && cards.every(x => x.id && x.impl));

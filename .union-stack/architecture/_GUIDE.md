@@ -4,7 +4,8 @@
 
 ## What goes in
 - Architecture rules: layer definitions, dependency direction, DDD/FSD boundaries.
-- **Test strategy (tier 1):** the norms of "why & how we test." (concrete tools go to `.union-stack/reference/contracts/`)
+- **Test strategy (tier 1):** the norms of "why & how we test." (tool *calling conventions* go to
+  `.union-stack/reference/contracts/`; a runnable asset's *usage contract* goes to `.union-stack/reference/tools/`)
 - Cross-cutting norms: *principles* of security/observability (concrete impl goes to code/contracts).
 - The ZFS naming convention itself.
 

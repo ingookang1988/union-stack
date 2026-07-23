@@ -10,6 +10,7 @@
 
 ## ⚠️ What stays out (route to its real home — do not duplicate here)
 - Test runner/fixture/mock **calling conventions** → `.union-stack/reference/contracts/` (CON-00 catalog). Already has a home.
+- A reusable **script/skill/MCP tool's usage contract** (when to run it, when not) → `.union-stack/reference/tools/` (`TOOL-*`).
 - Concrete DB **schema/types** (a contract) → `.union-stack/reference/contracts/`.
 - **Current** deployed state · DB migration status (observed reality) → `.union-stack/verification/derived/state`.
 

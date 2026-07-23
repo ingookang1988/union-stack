@@ -46,6 +46,13 @@ version: 1.0
   형식, tool-linter 확장) + TOOL-14 worktree 헬퍼 build(`scripts/worktree.js`, [PRO-05] 물리 격리).
   카탈로그 14장 완성 — 리서치 제안 12후보 중 10개 반영(보류 2: git 가드 훅=E3와 함께, 메모리 통합기=이중
   저장소 라우팅 선행 필요). PRO-08 트랙 종료.
+- **_GUIDE 전수 점검(21개) 후 8건 수정**: ①roadmap의 `GATE-*` 안내 삭제(화이트리스트에 없어 가이드대로
+  하면 zfs-linter Fail-close — 실동작 모순이었음), ②reference 서문 "two pillars"→4멤버·domain 권한 줄 추가,
+  ③contracts↔tools 경계 명문화(+architecture·infra 라우팅 2건), ④proposals 등재/폐기 대상에 tools 추가,
+  ⑤feature의 미존재 target/hold 안내 정정, ⑥sprint의 `prev.md` 롤링 규율 삭제(파일이 존재한 적 없고
+  아무 세션도 수행 안 함 — git 히스토리로 일원화), ⑦AGENTS.md 규칙 2 Wiki 목록에 reference/tools.
+  점검 중 **tools-index 오탐 버그 발견·수정**: 블록을 LF 고정 주입해 CRLF 레포에서 다른 도구가 파일을
+  정규화할 때마다 거짓 Fail-close. 이제 파일의 지배적 개행을 따르며 CRLF 멱등(회귀 3건 추가).
 
 ## 4. 미해결 / 주의
 - **[E3] enforce 도그푸딩 = PHASE-02 마지막 1개**(불변) — 훅 활성화는 사용자 행위, enforce FP율은 실사용 누적.

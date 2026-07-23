@@ -1,10 +1,11 @@
 # reference/ — consult-before-act knowledge (grouping plane)
 
-> **What it is:** not a single pillar, but a **grouping** of two pillars that share one identity —
+> **What it is:** not a single pillar, but a **grouping** of members that share one identity —
 > *accumulated knowledge you consult **before** producing something, to prevent redundant or repeated work.*
-> Parallels `verification/` (which groups `raw/` + `derived/`); here we group `contracts/` + `lessons/`.
+> Parallels `verification/` (which groups `raw/` + `derived/`); here we group
+> `contracts/` + `lessons/` + `domain/` + `tools/`.
 
-## Why these two are grouped (the Reference axis)
+## Why these are grouped (the Reference axis)
 Both answer "what already exists / already happened that I must check first?" — they are the
 *settled, justified knowledge* of the plane (as opposed to norms = ought, plan = intent, feature/sprint = state/process).
 
@@ -20,6 +21,7 @@ Both answer "what already exists / already happened that I must check first?" �
 
 ## ⚠️ Permission tiers are kept per-member (grouping does NOT unify them)
 - `contracts/` = **Schema** (human edits, agent read-only) — contracts are pinned hard.
+- `domain/` = **Schema** (human-owned, near-immutable subject-matter facts).
 - `lessons/` = **Wiki** (agent atomic writes; list/retire via proposals).
 - `tools/` = **Wiki** (agent atomic writes; register only what exists — `tool-linter` enforces `impl:` paths).
 Do not infer a shared tier from the shared folder. See each member's `_GUIDE.md`.

@@ -36,10 +36,16 @@ function buildIndex(cards) {
     .join('\n');
 }
 
-/** AGENTS 텍스트의 마커 블록에 인덱스 주입(순수). 마커 없으면 null. */
+/**
+ * AGENTS 텍스트의 마커 블록에 인덱스 주입(순수). 마커 없으면 null.
+ * 블록은 **파일의 지배적 개행**을 따른다 — LF로 고정 주입하면 CRLF 레포에서 다른 도구가 파일을
+ * 정규화할 때마다 check가 오탐(거짓 Fail-close)한다.
+ */
 function inject(agentsTxt, index) {
   if (!BLOCK_RE.test(agentsTxt)) return null;
-  return agentsTxt.replace(BLOCK_RE, (_, b, __, e) => `${b}\n${index}\n${e}`);
+  const eol = (agentsTxt.match(/\r\n/g) || []).length > (agentsTxt.match(/(?<!\r)\n/g) || []).length ? '\r\n' : '\n';
+  const body = index.split('\n').join(eol);
+  return agentsTxt.replace(BLOCK_RE, (_, b, __, e) => `${b}${eol}${body}${eol}${e}`);
 }
 
 function gather(root = path.resolve(__dirname, '..')) {

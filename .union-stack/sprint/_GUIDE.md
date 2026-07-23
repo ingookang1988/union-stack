@@ -17,13 +17,16 @@
   return structured results to the lead. HANDOFF is latest-only, so a single author avoids contention.
 
 ### Volatile — only the latest one is valid
-- Overwrite `HANDOFF.md` at the end of each session. The previous one is pushed to `prev.md` (rolling).
+- Overwrite `HANDOFF.md` at the end of each session. **No rolling copy** — the previous version is already
+  in git history (`git show HEAD~1:.union-stack/sprint/HANDOFF.md`), so a `prev.md` would duplicate the
+  fact and drift. (Pre-2026-07 guidance said to roll one into `prev.md`; no session ever did, and the file
+  never existed — the discipline was removed rather than automated.)
 - Not for permanent retention. Once the next session reads it, its role is done.
 - Lasting lessons are promoted separately to .union-stack/reference/lessons/, decision records to archive_ledger.
 
 ### Session history — where it lives (don't accumulate a giant log)
-- **git history is the session archive.** HANDOFF/prev are a 1-deep rolling window, not a log — past
-  sessions are recovered from commits, so HANDOFF stays small (avoids the 70KB-sessions.md trap).
+- **git history is the session archive.** HANDOFF is latest-only, not a log — past sessions are
+  recovered from commits, so HANDOFF stays small (avoids the 70KB-sessions.md trap).
 - Want a human-readable running log? Append session summaries to `.union-stack/verification/raw/` (append-only),
   NOT to HANDOFF. Promote anything lasting to lessons/archive_ledger.
 

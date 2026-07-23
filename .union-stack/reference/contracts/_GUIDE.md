@@ -6,6 +6,11 @@
 1. Shared static specs: global types · interfaces · enums · core signatures (SSOT).
 2. Test-tooling catalog (tier 2): the *calling conventions* of runners · fixtures · mocks.
 
+> **Boundary with `reference/tools/` ([PRO-08]).** Contracts hold *static specs* — the shape a caller must
+> match (types, signatures, calling conventions). `tools/` holds the *usage contract of an executable asset*
+> — when to run it, when not to, how to invoke it. A test runner's fixture signature → here; "run this
+> script before X, it fail-closes on Y" → a `TOOL-*` card.
+
 ## The catalog's 3 mandatory elements (missing any one and it doesn't work)
 - What exists (existence) · where it is (path/ID) · **how to use it (call example)**.
 
