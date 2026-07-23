@@ -21,7 +21,14 @@ jobs:
       - name: HISTORY reason gate (Fail-close; no-op if HISTORY absent)
         run: node scripts/history-linter.js
       - name: Permission guard (append-only integrity, Fail-close)
-        run: node scripts/permission-guard.js --range ${{ github.event.pull_request.base.sha || github.event.before }}..${{ github.sha }}
+        # 새 브랜치 첫 push에선 github.event.before 가 zero-SHA라 diff가 실패하고
+        # 가드가 "변경 없음"으로 조용히 통과한다 → 직전 커밋(없으면 빈 트리)으로 폴백.
+        run: |
+          BASE="${{ github.event.pull_request.base.sha || github.event.before }}"
+          if [ -z "$BASE" ] || ! git cat-file -e "$BASE" 2>/dev/null; then
+            BASE=$(git rev-parse "${{ github.sha }}~1" 2>/dev/null || git hash-object -t tree /dev/null)
+          fi
+          node scripts/permission-guard.js --range "$BASE..${{ github.sha }}"
       - name: Full test suite (all gate + query + hook + eval logic)
         run: npm test
       - name: Health scorecard (gate status + structural metrics)
