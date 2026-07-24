@@ -5,7 +5,9 @@
 // 단계별 예산 상한과 대조한다. 초과 시 WARN — 하네스가 막으려던 context-rot의 자가 유발을 조기 경고.
 // read-only·zero-dep. 실행: node scripts/context-budget.js [--json]
 //
-// 한계(정직히): 토큰은 char/4 근사(실 토크나이저 아님). 절대값이 아니라 *추세·예산 대비*를 본다.
+// 한계(정직히): 실 토크나이저가 아닌 문자 기반 근사다. 단 **스크립트별 계수**를 쓴다 —
+//   라틴 ~4자/토큰, 한글·CJK·가나 ~1.5자/토큰. 단일 char/4는 한국어를 2~3배 *과소평가*해
+//   "예산 내"를 낙관적으로 보고했다(이 레포는 문서 다수가 한국어라 직접 영향).
 const fs = require('fs');
 const path = require('path');
 
@@ -17,8 +19,16 @@ const BUDGETS = {
 };
 const TOTAL_CAP = 4000; // 정적 부트스트랩 총합 상한
 
-// 거친 토큰 추정(영문 ~4 char/token; 한글 혼재로 보수적이나 추세 추적엔 충분).
-function estimateTokens(text) { return Math.ceil((text || '').length / 4); }
+// 스크립트별 문자/토큰 계수. CJK 계열은 현행 토크나이저에서 대략 1~2자당 1토큰이라 1.5로 잡는다.
+const CJK_RE = /[가-힣ᄀ-ᇿ㄰-㆏぀-ヿ一-鿿㐀-䶿豈-﫿]/g;
+const CHARS_PER_TOKEN = { cjk: 1.5, latin: 4 };
+
+/** 거친 토큰 추정(스크립트 혼재 대응). 절대값이 아니라 추세·예산 대비를 본다. */
+function estimateTokens(text) {
+  const t = text || '';
+  const cjk = (t.match(CJK_RE) || []).length;
+  return Math.ceil(cjk / CHARS_PER_TOKEN.cjk + (t.length - cjk) / CHARS_PER_TOKEN.latin);
+}
 
 /** 순수: 섹션별 {name, tokens, budget} → 평가 리포트. (FS 비의존 → 테스트 용이) */
 function computeBudget(sections, totalCap = TOTAL_CAP) {
@@ -74,6 +84,6 @@ function run(root) {
   return r.over ? 1 : 0;
 }
 
-module.exports = { estimateTokens, computeBudget, gather, BUDGETS, TOTAL_CAP };
+module.exports = { estimateTokens, computeBudget, gather, BUDGETS, TOTAL_CAP, CHARS_PER_TOKEN };
 
 if (require.main === module) process.exit(run());

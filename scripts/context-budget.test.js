@@ -5,9 +5,16 @@ const { estimateTokens, computeBudget, gather } = require('./context-budget');
 let pass = 0, fail = 0;
 function check(label, cond) { if (cond) pass++; else { fail++; console.error(`FAIL ${label}`); } }
 
-// estimateTokens
-check('estimate ~ char/4', estimateTokens('aaaa') === 1 && estimateTokens('aaaaa') === 2);
+// estimateTokens — 스크립트별 계수(라틴 ~4자/토큰, CJK ~1.5자/토큰)
+check('latin ~ char/4', estimateTokens('aaaa') === 1 && estimateTokens('aaaaa') === 2);
 check('estimate empty', estimateTokens('') === 0 && estimateTokens(null) === 0);
+check('한글은 라틴보다 비싸다', estimateTokens('가나다라') > estimateTokens('aaaa'));
+check('한글 4자 ≈ 3토큰', estimateTokens('가나다라') === 3);
+check('한자·가나도 CJK 계수', estimateTokens('漢字') === 2 && estimateTokens('かな') === 2);
+// 회귀: char/4 단일 계수는 한국어를 2~3배 과소평가했다(같은 길이 문자열 비교)
+const ko = '한글문장열두글자다', en = 'abcdefghi';
+check('동일 길이에서 한글 추정치가 2배 이상',
+  ko.length === en.length && estimateTokens(ko) >= estimateTokens(en) * 2);
 
 // computeBudget: 전부 예산 내
 const ok = computeBudget([
