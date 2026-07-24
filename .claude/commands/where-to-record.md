@@ -1,5 +1,5 @@
 ---
-description: Where to record — route a past/decision item to the right store (HANDOFF/lessons/proposals/ledger/HISTORY)
+description: Where to record — route a past/decision item to the right store (HANDOFF/memory/lessons/proposals/ledger/HISTORY)
 allowed-tools: Bash(node scripts/query-cli.js:*)
 ---
 Routing for kind `$ARGUMENTS`:

@@ -24,9 +24,8 @@ version: 1.0
 - `_GUIDE` 8건 갱신(전수 점검) · `AGENTS.md` 규칙 1·2 + tools 인덱스 블록
 
 ## 3. 다음 작업 (단일 진입점)
-- → **잔여 백로그 중 택1**: ① MEMORY.md ↔ `reference/lessons` 이중 저장소 라우팅 규칙
-  (where-to-record 분기 추가), ② 재귀 워커 5곳 symlink 순환 가드,
-  ③ 3단계 보류분(파괴적 git 가드 훅 — 단 [ADR-08] 입장과 정합 필요).
+- → **리뷰 P2 3건 전부 종결됨**(토큰계수 [ADR-09]·symlink [ADR-10]·이중저장소 [ADR-11]). 신규 진입점은
+  잔여 3단계 보류분(파괴적 git 가드 훅 — 단 [ADR-08] 훅 미설치 입장과 정합 필요) 또는 사용자 지정.
 - (인간 몫) `project/roadmap/PHASE-02`는 Schema — E3 트랙 종료 표기.
 
 ## 4. 미해결 / 주의

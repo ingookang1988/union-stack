@@ -53,7 +53,9 @@ summary · changed-location IDs · next task (single entry point) · open issues
 
 ### 🗂️ Where to record (route every past/decision by *kind* — don't pile into one place)
 - Volatile session progress → `sprint/HANDOFF.md` (latest only)
-- A failure seen 2–3× in a lineage → `reference/lessons/LSN-*`
+- A failure seen 2–3× **in a lineage (repo/product-specific)** → `reference/lessons/LSN-*`
+- A recurring **environment/machine/cross-repo** fact or preference → the agent platform's private cross-session
+  memory (Claude Code: `MEMORY.md`), NOT a committed `LSN-*` ([ADR-11] — leakage + injection-economics boundary)
 - A proposed harness-rule change → `proposals/PRO-*`
 - A tactical decision (ADR, task/ZFS-scoped) → `archive_ledger.md` (append-only)
 - A strategic turning point (pivot, dependency adopt/drop) → `project/HISTORY.md` (fact + reason)

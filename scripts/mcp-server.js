@@ -14,7 +14,7 @@ const TOOLS = [
     inputSchema: { type: 'object', properties: { id: { type: 'string', description: 'ZFS ID·파일명·브래킷 ID' } }, required: ['id'] } },
   { name: 'blast_radius', description: '수정·삭제 영향권: 대상의 모든 자손 + 잠금(Verifying/Live) 여부.',
     inputSchema: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] } },
-  { name: 'where_to_record', description: '과거/결정 기록 라우팅: kind→목적지(HANDOFF/lessons/proposals/ledger/HISTORY).',
+  { name: 'where_to_record', description: '과거/결정 기록 라우팅: kind→목적지(HANDOFF/사적메모리/lessons/proposals/ledger/HISTORY).',
     inputSchema: { type: 'object', properties: { kind: { type: 'string', description: '예: pivot, lesson, adr, proposal, session' } }, required: ['kind'] } },
   { name: 'zfs_lint', description: 'ZFS 네이밍 위반 목록(쓰기 전 자가검사).',
     inputSchema: { type: 'object', properties: {} } },

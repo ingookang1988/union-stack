@@ -30,10 +30,12 @@ function blastRadius(id, index) {
   return { id, affected, locked, blocked: locked.length > 0 };
 }
 
-// 과거·결정 라우팅(P1-A 결정 트리).
+// 과거·결정 라우팅(P1-A 결정 트리). find()가 첫 매칭을 반환하므로 *더 구체적인* 분기가 앞선다.
 const ROUTES = [
   { keys: ['ephemeral', 'session', 'progress', 'handoff', 'relay'], destination: '.union-stack/sprint/HANDOFF.md', tier: 'Wiki (volatile)', note: '다음 세션이 이어받을 휘발성 진행' },
-  { keys: ['failure', 'repeat', 'pitfall', 'lesson', 'bug', 'mistake'], destination: '.union-stack/reference/lessons/LSN-*', tier: 'Wiki', note: '같은 계보 2~3회 반복 실패 → 사전경고' },
+  // 환경·머신·크로스레포 사실은 lessons *앞*에 둔다 — 둘 다 "failure/repeat"를 포함하므로 순서가 경계다([ADR-11]).
+  { keys: ['environment', 'machine', 'tooling-quirk', 'toolquirk', 'cross-repo', 'crossrepo', 'preference', 'workflow-quirk'], destination: 'agent-platform cross-session memory (예: Claude Code MEMORY.md — 비커밋·사용자 전역)', tier: 'Private (off-plane)', note: '환경/크로스레포 반복 사실·선호 → 사적 메모리. 커밋 평면 아님(누설 방지). 레포 특정이면 lessons로.' },
+  { keys: ['failure', 'repeat', 'pitfall', 'lesson', 'bug', 'mistake'], destination: '.union-stack/reference/lessons/LSN-*', tier: 'Wiki', note: '같은 계보 2~3회 반복 실패 → 사전경고. 단 *레포/제품* 특정만 — 환경 특정은 위 사적 메모리로.' },
   { keys: ['proposal', 'rule', 'harness', 'process'], destination: '.union-stack/proposals/PRO-*', tier: 'Proposal', note: '하네스 규칙/프로세스 변경 제안' },
   { keys: ['decision', 'adr', 'tactical'], destination: '.union-stack/archive_ledger.md', tier: 'Raw (append-only)', note: '전술적 결정(작업/ZFS 단위)' },
   { keys: ['pivot', 'strategic', 'turning', 'direction', 'dependency', 'history'], destination: '.union-stack/project/HISTORY.md', tier: 'Schema/Raw', note: '전략적 분기점(사실+근거)' },

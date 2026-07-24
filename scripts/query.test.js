@@ -36,7 +36,12 @@ check('route pivot→HISTORY', whereToRecord('pivot').match.destination, '.union
 check('route lesson→lessons', whereToRecord('a repeated bug').match.destination, '.union-stack/reference/lessons/LSN-*');
 check('route adr→ledger', whereToRecord('tactical decision').match.destination, '.union-stack/archive_ledger.md');
 check('route unknown→null', whereToRecord('zzz').match, null);
-check('route all has 5', whereToRecord('x').all.length, 5);
+check('route all has 6', whereToRecord('x').all.length, 6);
+// 환경/크로스레포 사실은 사적 메모리로(lessons 아님) — 순서가 경계([ADR-11])
+check('route env→private memory', /memory/i.test(whereToRecord('a machine-specific tooling-quirk').match.destination), true);
+check('route env not lessons', /lessons/.test(whereToRecord('cross-repo environment quirk').match.destination), false);
+// 레포/제품 특정 반복 실패는 여전히 lessons(환경 키워드 없으면)
+check('route repo pitfall→lessons still', whereToRecord('a repeated pitfall in this feature').match.destination, '.union-stack/reference/lessons/LSN-*');
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
