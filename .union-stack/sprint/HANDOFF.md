@@ -29,11 +29,12 @@ version: 1.0
 - `.github/workflows/harness.yml` — permission-guard base가 zero-SHA/부재면 직전 커밋(없으면 빈 트리) 폴백
 
 ## 3. 다음 작업 (단일 진입점)
-- → **[E3] 라이브 훅 전환**(사용자 행위): `scripts/HOOKS.md` 스니펫을 `.claude/settings.json`에 복사하고
-  `UNION_STACK_HOOK=enforce`. 사전 경제성은 이번 세션에 측정 완료([ADR-06]: 차단 6%·전부 schema·lock 0,
-  정탐 3 대 논쟁 4) — **운영 수칙**: 승인된 Schema 배치 작업 동안 mode를 `warn`으로 낮췄다 복귀.
-  전환 후 재측정: `npm run observe -- <이 레포 트랜스크립트 디렉터리>`로 의례 수행률 0% → 상승 확인.
-- (인간 몫) `project/roadmap/PHASE-02`는 Schema라 에이전트가 못 고침 — E3 exit gate 충족 표기는 인간이.
+- → **잔여 백로그 중 택1** (E3는 종료 — [ADR-08]로 훅 미설치 확정):
+  ① context-budget의 한글 토큰 과소평가(char/4 → CJK 계수) — 리뷰 P2 잔여,
+  ② MEMORY.md ↔ `reference/lessons` 이중 저장소 라우팅 규칙(where-to-record 분기 추가),
+  ③ 재귀 워커 5곳 symlink 순환 가드.
+- (인간 몫) `project/roadmap/PHASE-02`는 Schema라 에이전트가 못 고침 — E3 트랙 종료 표기는 인간이
+  ("라이브 전환은 미완이 아니라 선택하지 않은 길" — [ADR-08]).
 - **[PRO-08] 구현 완료**(2026-07-17 승인): `reference/tools/`(TOOL-*) 신설 — 카탈로그-only(Wiki),
   `tool-linter.js` 드리프트 게이트(+test), VALID_DOMAINS/SCAN_DIRS/ARCH-00/가이드/README(EN·KO)/CHANGELOG 반영.
 - **[PRO-08] 1단계(리서치 기반) 완료**: ① `tools-index.js`(+test) — 카드 한 줄 요약을 AGENTS.md 마커
@@ -60,6 +61,9 @@ version: 1.0
   enforce 재생 **6% 차단**(122편집 중 7, 전부 schema, lock 0). 신규 도구 `hook-replay.js`(TOOL-15) —
   훅 설치 없이 enforce 경제성 측정. **계측 오염 수정**: transcript-stats가 문서 *내용*의 "blast-radius"를
   수행으로 오집계(100%→0% 반전) → 실행 표면만 보도록 한정(회귀 3건).
+- **[ADR-08] 훅 미설치 확정**: 하네스 권한 최소화 — 훅은 문서화만(`HOOKS.md` §기본 입장), `.claude/`에
+  아무것도 넣지 않는다. 근거: 강제력↑ → 마찰↑(실측 차단 7건 중 4건이 승인된 배치의 반복 차단),
+  통제는 사후 게이트+문서 규율 2층으로 이미 다층. **향후 "훅을 켜자" 재제안 금지**(재검토 조건은 ADR에).
 
 ## 4. 미해결 / 주의
 - **[E3] enforce 도그푸딩 = PHASE-02 마지막 1개**(불변) — 훅 활성화는 사용자 행위, enforce FP율은 실사용 누적.
