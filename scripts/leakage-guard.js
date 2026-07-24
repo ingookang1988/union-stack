@@ -12,6 +12,7 @@
 // 실행: node scripts/leakage-guard.js   (CI 게이팅은 .github/workflows/template-guard.yml 참조)
 const fs = require('fs');
 const path = require('path');
+const { walkFiles } = require('./fs_walk');
 
 // 실제 프로젝트 내용이 들어설 수 있는 칸/화살표 평면(.union-stack/ 격리, 재귀 스캔).
 // project 를 재귀 스캔하므로 project/roadmap·HISTORY 도 포함된다.
@@ -49,20 +50,9 @@ function isSanitized(relPath, content) {
   return MARKER.test(relPath + '\n' + content);          // 더미 마커
 }
 
-function walk(dir, root, out) {
-  const abs = path.join(root, dir);
-  if (!fs.existsSync(abs)) return;
-  for (const entry of fs.readdirSync(abs)) {
-    const full = path.join(abs, entry);
-    const rel = `${dir}/${entry}`;
-    if (fs.statSync(full).isDirectory()) { walk(rel, root, out); continue; }
-    if (entry.endsWith('.md')) out.push(rel);
-  }
-}
-
 function collectFiles(root) {
   const out = [];
-  CONTENT_DIRS.forEach(d => walk(d, root, out));
+  CONTENT_DIRS.forEach(d => walkFiles(root, d, rel => { if (rel.endsWith('.md')) out.push(rel); }));
   ROOT_MANIFESTS.forEach(f => {
     if (fs.existsSync(path.join(root, f))) out.push(f);
   });

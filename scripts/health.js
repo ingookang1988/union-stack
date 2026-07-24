@@ -10,6 +10,7 @@ const { buildIndex } = require('./zfs_index');
 const { lint } = require('./zfs-linter');
 const { findViolations: historyViolationsOf } = require('./history-linter');
 const { collectFiles, isSanitized } = require('./leakage-guard');
+const { walkFiles } = require('./fs_walk');
 const { gather: gatherBrokenRefs } = require('./ref-linter');
 const { gather: gatherBudget } = require('./context-budget');
 
@@ -47,16 +48,7 @@ function computeHealth({ index, domainsDefined, guideCount, namingViolations, hi
 
 function countGuides(root) {
   let n = 0;
-  (function walk(dir) {
-    const abs = path.join(root, dir);
-    if (!fs.existsSync(abs)) return;
-    for (const e of fs.readdirSync(abs)) {
-      const rel = `${dir}/${e}`;
-      const full = path.join(root, rel);
-      if (fs.statSync(full).isDirectory()) walk(rel);
-      else if (e === '_GUIDE.md') n++;
-    }
-  })('.union-stack');
+  walkFiles(root, '.union-stack', rel => { if (rel.endsWith('/_GUIDE.md')) n++; });
   return n;
 }
 
@@ -68,18 +60,12 @@ function gather(root = path.resolve(__dirname, '..')) {
   const leakageViolations = collectFiles(root)
     .filter(rel => !isSanitized(rel, fs.readFileSync(path.join(root, rel), 'utf8'))).length;
   const oversize = [];
-  (function walk(dir) {
-    const abs = path.join(root, dir);
-    if (!fs.existsSync(abs)) return;
-    for (const e of fs.readdirSync(abs)) {
-      const rel = `${dir}/${e}`;
-      const full = path.join(root, rel);
-      if (fs.statSync(full).isDirectory()) { walk(rel); continue; }
-      if (!e.endsWith('.md')) continue;
-      const kb = Math.round(fs.statSync(full).size / 1024);
-      if (kb > SIZE_CAP_KB) oversize.push({ file: rel, kb });
-    }
-  })('.union-stack');
+  walkFiles(root, '.union-stack', rel => {
+    if (!rel.endsWith('.md')) return;
+    let kb = 0;
+    try { kb = Math.round(fs.statSync(path.join(root, rel)).size / 1024); } catch { return; }
+    if (kb > SIZE_CAP_KB) oversize.push({ file: rel, kb });
+  });
   const brokenRefs = gatherBrokenRefs(root).length;
   const budget = gatherBudget(root);
   return computeHealth({

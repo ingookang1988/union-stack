@@ -15,6 +15,7 @@ const fs = require('fs');
 const path = require('path');
 const { buildIndex } = require('./zfs_index');
 const { isSanitized } = require('./leakage-guard');
+const { walkFiles } = require('./fs_walk');
 
 // 끝의 (\??)로 forward 마커를 포착: `[PLAN-09z]`=일반, `[PLAN-09z?]`=의도된 forward.
 const REF_RE = /\[([A-Z]{2,6})-([0-9][0-9a-z-]*)(\??)\]/g;
@@ -44,19 +45,13 @@ function findBroken(refs, knownSet) {
 function gather(root = path.resolve(__dirname, '..'), gateOnly = false) {
   const known = new Set(buildIndex(root).map(d => `${d.domain}-${d.id}`));
   const broken = [];
-  (function walk(dir) {
-    const abs = path.join(root, dir);
-    if (!fs.existsSync(abs)) return;
-    for (const e of fs.readdirSync(abs)) {
-      const rel = `${dir}/${e}`;
-      const full = path.join(root, rel);
-      if (fs.statSync(full).isDirectory()) { walk(rel); continue; }
-      if (!e.endsWith('.md')) continue;
-      const content = fs.readFileSync(full, 'utf8');
-      if (gateOnly && isSanitized(rel, content)) continue; // 예시/가이드/방법론은 게이트 면제
-      for (const r of findBroken(extractRefs(content), known)) broken.push({ file: rel, ref: r.raw });
-    }
-  })('.union-stack');
+  walkFiles(root, '.union-stack', rel => {
+    if (!rel.endsWith('.md')) return;
+    let content = '';
+    try { content = fs.readFileSync(path.join(root, rel), 'utf8'); } catch { return; }
+    if (gateOnly && isSanitized(rel, content)) return; // 예시/가이드/방법론은 게이트 면제
+    for (const r of findBroken(extractRefs(content), known)) broken.push({ file: rel, ref: r.raw });
+  });
   return broken;
 }
 

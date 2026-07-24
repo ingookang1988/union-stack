@@ -14,6 +14,7 @@ const path = require('path');
 const { toolUses } = require('./transcript-stats');
 const { decideEdit } = require('./hooks');
 const { buildIndex } = require('./zfs_index');
+const { walkFiles } = require('./fs_walk');
 
 const EDIT_RE = /^(Edit|Write|MultiEdit|NotebookEdit)$/;
 
@@ -38,16 +39,7 @@ function replay(paths, index, root) {
 function gatherEdits(dir, root) {
   const out = [];
   const files = [];
-  const walk = d => {
-    if (!fs.existsSync(d)) return;
-    for (const e of fs.readdirSync(d)) {
-      const full = path.join(d, e);
-      let st; try { st = fs.statSync(full); } catch { continue; }
-      if (st.isDirectory()) walk(full);
-      else if (e.endsWith('.jsonl')) files.push(full);
-    }
-  };
-  walk(dir);
+  walkFiles(dir, '', rel => { if (rel.endsWith('.jsonl')) files.push(path.join(dir, rel)); });
   for (const f of files) {
     for (const line of fs.readFileSync(f, 'utf8').split('\n')) {
       if (!line.trim()) continue;

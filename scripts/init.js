@@ -10,6 +10,7 @@
 // 보존: 모든 _GUIDE.md, architecture/ARCH-00(방법론), 강제 게이트 스크립트.
 const fs = require('fs');
 const path = require('path');
+const { walkFiles } = require('./fs_walk');
 
 const KEEP_EXACT = new Set(['.union-stack/architecture/ARCH-00_zfs_naming.md']);
 const EXPLICIT_DUMMIES = new Set([
@@ -105,14 +106,7 @@ function apply(ops, root) {
 }
 
 function listFiles(dir, root, out) {
-  const abs = path.join(root, dir);
-  if (!fs.existsSync(abs)) return;
-  for (const e of fs.readdirSync(abs)) {
-    const rel = dir ? `${dir}/${e}` : e;
-    const full = path.join(root, rel);
-    if (fs.statSync(full).isDirectory()) { if (e !== '.git' && e !== 'node_modules') listFiles(rel, root, out); }
-    else out.push(rel);
-  }
+  walkFiles(root, dir, rel => out.push(rel), { skipDir: n => n === '.git' || n === 'node_modules' });
 }
 
 function main(argv = process.argv.slice(2)) {
