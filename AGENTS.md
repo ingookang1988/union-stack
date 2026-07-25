@@ -85,6 +85,12 @@ Given a task like `WO-01a1-2`:
 > `sprint/HANDOFF.md`** (it is latest-only, so a single author avoids multi-writer contention).
 > Team membership/roles are declared in `profile/agent/team_*.md`; concurrency/merge is [PRO-05].
 
+> **Work-type scenarios ([PRO-10], `kind: scenario` cards).** For a work archetype with a codified
+> procedure (e.g. defect correction), the **human selects the scenario** — activation is `manual` by
+> default, because routing is the measured-weak half (automatic selection performs no better than
+> random). At most one scenario is active; switching mid-task is allowed but **must be recorded with
+> its reason**. A scenario stays `Draft` until an A/B delta lands in its `evidence[]`.
+
 Reference other documents by **bracket ID** (`[PLAN-01a1]`), never by relative path.
 
 ---
@@ -122,4 +128,5 @@ this file only pins the deterministic core. The detail lives in the structure.
 - **[TOOL-14]** worktree 헬퍼 (계보 파티션 물리 격리) — 계보 서브트리별 git worktree(`../<repo>-wt-<id>`, 브랜치 `fleet/<id>`)를 생성/제거한다 — [PRO-05] "락이 아닌 파티션"의 물리 격리 수단. (`scripts/worktree.js`)
 - **[TOOL-15]** hook-replay (enforce 경제성 사전 측정) — 과거 실제 편집을 PreToolUse 결정 함수에 재생해 "enforce를 켰다면 무엇이 몇 번 막혔을까"를 훅 설치 없이 측정한다(차단율·유형·대상). (`scripts/hook-replay.js`)
 - **[TOOL-16]** session-friction (의도당 마찰 계측 · P₁ 탐지) — 사용자 발화 1건을 의도 1건으로 보고 다음 발화까지의 왕복 턴·토큰·도구 시퀀스를 집계해, 흡수 가치가 있는 **문제 후보(P₁)**를 비용 순으로 제시한다. (`scripts/session-friction.js`)
+- **[TOOL-17]** 결함 수정(Defect Correction) 시나리오 — 실패가 존재하고 원인이 미상일 때의 절차(재현→최소화→기원추적→격리→수정→회귀고정). ISO/IEC 14764 *corrective*에 대응하며 절차는 Zeller TRAFFIC + 델타 디버깅을 따른다. (`.claude/skills/defect-correction/SKILL.md`)
 <!-- tools-index:end -->
