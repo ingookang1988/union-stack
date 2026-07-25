@@ -121,4 +121,5 @@ this file only pins the deterministic core. The detail lives in the structure.
 - **[TOOL-13]** Context7 MCP (최신 라이브러리 문서 주입) [adopt] — 작업 중인 외부 라이브러리의 *현행 버전* 공식 문서·코드 예시를 MCP로 주입해 구식 API 환각을 막는다. (`https://github.com/upstash/context7`)
 - **[TOOL-14]** worktree 헬퍼 (계보 파티션 물리 격리) — 계보 서브트리별 git worktree(`../<repo>-wt-<id>`, 브랜치 `fleet/<id>`)를 생성/제거한다 — [PRO-05] "락이 아닌 파티션"의 물리 격리 수단. (`scripts/worktree.js`)
 - **[TOOL-15]** hook-replay (enforce 경제성 사전 측정) — 과거 실제 편집을 PreToolUse 결정 함수에 재생해 "enforce를 켰다면 무엇이 몇 번 막혔을까"를 훅 설치 없이 측정한다(차단율·유형·대상). (`scripts/hook-replay.js`)
+- **[TOOL-16]** session-friction (의도당 마찰 계측 · P₁ 탐지) — 사용자 발화 1건을 의도 1건으로 보고 다음 발화까지의 왕복 턴·토큰·도구 시퀀스를 집계해, 흡수 가치가 있는 **문제 후보(P₁)**를 비용 순으로 제시한다. (`scripts/session-friction.js`)
 <!-- tools-index:end -->
