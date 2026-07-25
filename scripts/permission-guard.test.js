@@ -1,6 +1,6 @@
 // scripts/permission-guard.test.js
 // 순수 함수(classify, findViolations) 단위 테스트. git 비의존. 실행: node scripts/permission-guard.test.js
-const { classify, findViolations, isSubstantiveLine } = require('./permission-guard');
+const { classify, findViolations, isSubstantiveLine, globToRe } = require('./permission-guard');
 
 let pass = 0, fail = 0;
 function check(label, got, exp) {
@@ -40,20 +40,35 @@ check('주석 = 비실질', isSubstantiveLine('<!-- [Raw] append-only -->'), fal
 check('빈 줄 = 비실질', isSubstantiveLine(''), false);
 check('본문 줄 = 실질', isSubstantiveLine('결정: zeta 어댑터 폐기'), true);
 
-// --- Check B: Schema 승인 (strict에서만) ---
+// --- Check B: Schema 승인 (strict에서만) — [PRO-09] grant 모델 ---
 const schemaChange = [{ path: '.union-stack/architecture/ARCH-02_x.md', added: 5, removed: 1 }];
-check('strict+에이전트+승인없음 → 위반',
-  findViolations(schemaChange, { agentAuthored: true, approvedBy: false }, { strict: true })
+const hasSchemaViol = (meta, opts) => findViolations(schemaChange, meta, { strict: true, ...opts }).some(v => v.rule === 'schema-approval');
+
+check('reference/domain도 Schema로 분류', classify('.union-stack/reference/domain/DOM-01_x.md'), 'schema');
+
+check('strict+에이전트+승인없음 → 위반', hasSchemaViol({ agentAuthored: true, approvals: [] }), true);
+check('(a) 인간 명시 승인 → 통과', hasSchemaViol({ agentAuthored: true, approvals: ['ingookang1988 (chat, 2026)'] }), false);
+check('non-strict → schema 미검사',
+  findViolations(schemaChange, { agentAuthored: true, approvals: [] }, { strict: false }).some(v => v.rule === 'schema-approval'), false);
+check('strict+인간작성 → 위반 없음', hasSchemaViol({ agentAuthored: false, approvals: [] }), false);
+
+// (b) 상시 스탬프: 커버하는 grant를 인용하면 재승인 없이 통과, 아니면 위반
+const grantArch = [{ id: 'GRANT-01', scopeRe: globToRe('.union-stack/architecture/**') }];
+const grantOther = [{ id: 'GRANT-02', scopeRe: globToRe('.union-stack/reference/tools/**') }];
+check('스탬프 인용 + 커버 → 통과',
+  findViolations(schemaChange, { agentAuthored: true, approvals: ['GRANT-01'] }, { strict: true, grants: grantArch }).length === 0, true);
+check('스탬프 인용하나 스코프 밖 → 위반',
+  findViolations(schemaChange, { agentAuthored: true, approvals: ['GRANT-02'] }, { strict: true, grants: grantOther })
     .some(v => v.rule === 'schema-approval'), true);
-check('strict+승인있음 → schema 위반 없음',
-  findViolations(schemaChange, { agentAuthored: true, approvedBy: true }, { strict: true })
-    .some(v => v.rule === 'schema-approval'), false);
-check('non-strict → schema 미검사(기본 false-positive 없음)',
-  findViolations(schemaChange, { agentAuthored: true, approvedBy: false }, { strict: false })
-    .some(v => v.rule === 'schema-approval'), false);
-check('strict+인간작성 → 위반 없음',
-  findViolations(schemaChange, { agentAuthored: false }, { strict: true })
-    .some(v => v.rule === 'schema-approval'), false);
+check('등록 안 된 스탬프 인용 → 위반',
+  hasSchemaViol({ agentAuthored: true, approvals: ['GRANT-99'] }, { grants: grantArch }), true);
+check('위반 메시지가 스코프 불일치를 구분',
+  findViolations(schemaChange, { agentAuthored: true, approvals: ['GRANT-02'] }, { strict: true, grants: grantOther })[0].msg.includes('커버하지 않음'), true);
+
+// globToRe: ** vs *
+check('** 는 슬래시 포함', globToRe('.union-stack/plan/**').test('.union-stack/plan/a/b/PLAN-01_x.md'), true);
+check('* 는 슬래시 제외', globToRe('.union-stack/plan/*').test('.union-stack/plan/a/b.md'), false);
+check('정확 경로 매칭', globToRe('.union-stack/project/HISTORY.md').test('.union-stack/project/HISTORY.md'), true);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

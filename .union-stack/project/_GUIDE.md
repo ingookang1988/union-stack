@@ -44,7 +44,14 @@ But as three files in one *folder*, not one *file* — they move at different ve
 ## How to use
 - Inject IDENTITY once at session start. Reference roadmap·HISTORY when direction judgment / anti-regression is needed.
 
+## GRANTS.md — standing Schema-edit stamps ([PRO-09])
+- **Goes in:** rows granting an agent *ongoing* edit rights to a narrow Schema scope, so it can keep editing
+  without re-asking each time (it cites `Approved-by: GRANT-id` and `permission-guard --strict` checks coverage).
+- **Human-owned** (it is itself Schema — an agent adding its own grant would be self-authorization, blocked).
+  Keep scopes minimal, record rationale, delete the row to revoke. Not a lifecycle store — just the grant list.
+
 ## Files
 - `IDENTITY_example.md` — dummy (present). Replace with your real project after cloning.
 - `roadmap/` — future direction (child folder).
 - `HISTORY.md` — the ledger of past turning points.
+- `GRANTS.md` — standing Schema-edit stamps (human-owned; empty/example in the template).
