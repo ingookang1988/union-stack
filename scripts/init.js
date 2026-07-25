@@ -21,7 +21,7 @@ const RESET_TARGETS = new Set([
   '.union-stack/feature/live.md', '.union-stack/sprint/next.md', '.union-stack/sprint/HANDOFF.md',
   '.union-stack/verification/derived/gap.md', '.union-stack/verification/derived/state.md',
   '.union-stack/verification/raw/evidence.md', '.union-stack/project/HISTORY.md',
-  '.union-stack/archive_ledger.md',
+  '.union-stack/project/GRANTS.md', '.union-stack/archive_ledger.md',
 ]);
 const TEMPLATE_BITS = [
   'scripts/leakage-guard.js', 'scripts/leakage-guard.test.js',
@@ -84,6 +84,7 @@ const RESET_TEMPLATES = {
   '.union-stack/verification/raw/evidence.md': '<!-- [Raw] 시스템만 Append. 에이전트 read-only. -->\n# Evidence Log (CI/CD 자동 기록)\n',
   '.union-stack/project/HISTORY.md': '<!-- [Schema/Raw] 프로젝트 전략적 분기점. 사실+근거는 한 쌍(근거 없는 사실 등재 불가). -->\n# Project History — strategic turning points\n\n| Date | Turning point (fact) | Reason (why) | Implication |\n|---|---|---|---|\n',
   '.union-stack/archive_ledger.md': '<!-- [Raw] 결정화된 ADR 영구 원장. Append-only. 전술 결정만(전략은 HISTORY). -->\n# Architecture Decision Ledger\n',
+  '.union-stack/project/GRANTS.md': '<!-- [Schema] 에이전트 Schema 편집 상시 스탬프 원장. 인간만 grant를 추가한다(자기부여 방지 — 에이전트는 인간 명시 승인이 있을 때만 이 파일 편집). 커밋에 `Approved-by: GRANT-id` 인용, `permission-guard --strict`가 스코프 커버 검증. 철회=행 삭제. [PRO-09] -->\n# Schema Edit Grants — 승인 스탬프 원장\n\n| Grant | Scope (glob) | Granted-by | Date | Rationale / 철회 |\n|---|---|---|---|---|\n',
 };
 
 function apply(ops, root) {
