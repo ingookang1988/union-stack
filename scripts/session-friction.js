@@ -56,7 +56,10 @@ function segment(events) {
         turns: 0, subTurns: 0, toolCalls: 0, outTok: 0, inTok: 0, tools: [], startTs: e.ts, endTs: e.ts };
       continue;
     }
-    if (!cur || e.kind !== 'assistant') continue;
+    // 세션 경계 가드: 다른 세션의 어시스턴트 이벤트는 이 의도에 얹지 않는다. 한 디렉터리에
+    // 세션이 여럿이면(A/B 팔의 런 5개) walk 순서에 따라 다른 런의 비용이 앞 런의 마지막 의도로
+    // 흘러들어간다 — 실측에서 잡힌 귀속 오류다.
+    if (!cur || e.kind !== 'assistant' || e.session !== cur.session) continue;
     if (e.sidechain) cur.subTurns++; else cur.turns++;
     if (e.tools) cur.tools.push(...e.tools);
     cur.toolCalls += e.toolCalls || 0;
@@ -125,12 +128,23 @@ function baseline(segs) {
 }
 
 // --- 어댑터(얇음) ---
+/** 전사 파일 경로 → 소속 세션 id(순수). 서브에이전트 전사는 부모 세션에 귀속시킨다. */
+function sessionOf(rel) {
+  const parts = rel.split(/[\\/]/);
+  const i = parts.indexOf('subagents');
+  return i > 0 ? parts[i - 1] : path.basename(rel, '.jsonl');
+}
+
 function readEvents(dir) {
   const files = [];
-  walkFiles(dir, '', rel => { if (rel.endsWith('.jsonl')) files.push(path.join(dir, rel)); });
+  walkFiles(dir, '', rel => { if (rel.endsWith('.jsonl')) files.push(rel); });
   const events = [];
-  for (const f of files) {
-    const session = path.basename(f, '.jsonl');
+  for (const rel of files) {
+    const f = path.join(dir, rel);
+    // 서브에이전트 전사(`<sid>/subagents/agent-*.jsonl`)는 *부모 세션의 비용*이다. 파일명을 세션으로
+    // 삼으면 별개 세션이 되고, walk 순서에 따라 그 토큰이 엉뚱한 의도에 얹힌다. 부모 sid로 귀속시킨 뒤
+    // 아래에서 **시간순**으로 정렬해, 실제로 열려 있던 의도에 붙인다.
+    const session = sessionOf(rel);
     for (const line of fs.readFileSync(f, 'utf8').split('\n')) {
       if (!line.trim()) continue;
       let o; try { o = JSON.parse(line); } catch { continue; }
@@ -148,7 +162,12 @@ function readEvents(dir) {
       }
     }
   }
-  return events;
+  // 세션별로 묶고 세션 안에서는 시간순(타임스탬프 없으면 읽은 순서)으로 안정 정렬.
+  return events
+    .map((e, i) => ({ e, i }))
+    .sort((a, b) => (a.e.session < b.e.session ? -1 : a.e.session > b.e.session ? 1
+      : (Date.parse(a.e.ts) || 0) - (Date.parse(b.e.ts) || 0) || a.i - b.i))
+    .map(x => x.e);
 }
 
 function run(argv = process.argv.slice(2)) {
@@ -177,6 +196,6 @@ function run(argv = process.argv.slice(2)) {
   return 0;
 }
 
-module.exports = { segment, aggregate, baseline, bucketOf, BUCKETS };
+module.exports = { segment, aggregate, baseline, bucketOf, BUCKETS, readEvents, sessionOf };
 
 if (require.main === module) process.exit(run());

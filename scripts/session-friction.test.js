@@ -1,6 +1,6 @@
 // scripts/session-friction.test.js
 // 순수 로직(segment, aggregate, baseline, bucketOf) 테스트. 실행: node scripts/session-friction.test.js
-const { segment, aggregate, baseline, bucketOf } = require('./session-friction');
+const { segment, aggregate, baseline, bucketOf, sessionOf } = require('./session-friction');
 
 let pass = 0, fail = 0;
 function check(label, cond) { if (cond) pass++; else { fail++; console.error(`FAIL ${label}`); } }
@@ -32,6 +32,20 @@ check('소요 시간 계산', segs[0].durationMs === 20000);
 check('발화 전 assistant는 무시', segment([A(10), U('x', '2026-01-01T00:00:00Z')]).length === 1);
 check('빈 입력 → 빈 배열', segment([]).length === 0);
 
+// 세션 경계 가드: 다른 세션의 어시스턴트 비용이 앞 세션의 마지막 의도로 새면 안 된다
+// (한 팔 디렉터리에 런이 여럿일 때의 귀속 오류 — A/B 리그의 전제).
+const crossed = segment([
+  U('push 해줘', '2026-01-01T00:00:00Z', 's1'), A(100, { session: 's1' }),
+  A(9999, { session: 's2' }),                          // s1의 의도에 얹히면 안 된다
+]);
+check('타 세션 비용 누수 없음', crossed.length === 1 && crossed[0].outTok === 100);
+check('타 세션 턴 누수 없음', crossed[0].turns === 1);
+
+// 서브에이전트 전사는 부모 세션에 귀속(파일명이 아니라 경로로 판정)
+check('subagents → 부모 sid', sessionOf('40edefc4/subagents/agent-a02b49.jsonl') === '40edefc4');
+check('일반 전사 → 파일명', sessionOf('40edefc4.jsonl') === '40edefc4');
+check('중첩 경로도 부모 sid', sessionOf('x/y/sid-9/subagents/agent-z.jsonl') === 'sid-9');
+
 // --- aggregate: 비용 순 정렬 + 독립 지지도 ---
 const many = segment([
   U('push 해줘', '2026-01-01T00:00:00Z', 's1'), A(500, { session: 's1' }),
@@ -53,20 +67,21 @@ const twoSess = segment([
 check('세션 2개 → indep 2', aggregate(twoSess)[0].independent === 2);
 
 // --- homogeneity: 흡수 가능성 판별자(비용만으론 마찰과 본질 작업을 구분 못 한다) ---
-const T = (tools) => ({ kind: 'assistant', usage: { output_tokens: 1 }, session: 's1', toolCalls: tools.length, tools });
+// ⚠ session을 반드시 발화와 맞춰 넘긴다 — 예전 픽스처는 's1' 고정이라 세션 경계 누수에 의존했다.
+const T = (tools, session = 's1') => ({ kind: 'assistant', usage: { output_tokens: 1 }, session, toolCalls: tools.length, tools });
 const same = aggregate(segment([
   U('수정해줘', '2026-01-01T00:00:00Z', 's1'), T(['Read', 'Edit']),
-  U('수정해줘', '2026-01-02T00:00:00Z', 's2'), T(['Edit', 'Read']),
+  U('수정해줘', '2026-01-02T00:00:00Z', 's2'), T(['Edit', 'Read'], 's2'),
 ]))[0];
 check('동일 도구집합 → 동형성 1', same.homogeneity === 1 && same.homogeneityN === 2);
 const diff = aggregate(segment([
   U('수정해줘', '2026-01-01T00:00:00Z', 's1'), T(['Read']),
-  U('수정해줘', '2026-01-02T00:00:00Z', 's2'), T(['Bash']),
+  U('수정해줘', '2026-01-02T00:00:00Z', 's2'), T(['Bash'], 's2'),
 ]))[0];
 check('겹침 없음 → 동형성 0', diff.homogeneity === 0);
 const noTool = aggregate(segment([
   U('수정해줘', '2026-01-01T00:00:00Z', 's1'), T([]),
-  U('수정해줘', '2026-01-02T00:00:00Z', 's2'), T([]),
+  U('수정해줘', '2026-01-02T00:00:00Z', 's2'), T([], 's2'),
 ]))[0];
 check('도구 없으면 판정 불가(null, n=0)', noTool.homogeneity === null && noTool.homogeneityN === 0);
 check('표본 1개면 판정 불가', aggregate(segment([U('수정', '2026-01-01T00:00:00Z'), T(['Read'])]))[0].homogeneity === null);

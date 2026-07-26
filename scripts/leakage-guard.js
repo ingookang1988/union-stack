@@ -36,6 +36,7 @@ const METHODOLOGY = new Set([
   'TOOL-11_repomix.md', 'TOOL-12_ccusage.md', 'TOOL-13_context7.md', 'TOOL-14_worktree.md',
   'TOOL-15_hook_replay.md', 'TOOL-16_session_friction.md',
   'TOOL-17_scenario_defect_correction.md',
+  'TOOL-18_scenario_rubric.md', 'TOOL-19_eval_arm.md',
 ]);
 
 // 더미 표시 마커. 슬러그 또는 본문 어디든 있으면 sanitize된 것으로 간주.

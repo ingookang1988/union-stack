@@ -129,4 +129,6 @@ this file only pins the deterministic core. The detail lives in the structure.
 - **[TOOL-15]** hook-replay (enforce 경제성 사전 측정) — 과거 실제 편집을 PreToolUse 결정 함수에 재생해 "enforce를 켰다면 무엇이 몇 번 막혔을까"를 훅 설치 없이 측정한다(차단율·유형·대상). (`scripts/hook-replay.js`)
 - **[TOOL-16]** session-friction (의도당 마찰 계측 · P₁ 탐지) — 사용자 발화 1건을 의도 1건으로 보고 다음 발화까지의 왕복 턴·토큰·도구 시퀀스를 집계해, 흡수 가치가 있는 **문제 후보(P₁)**를 비용 순으로 제시한다. (`scripts/session-friction.js`)
 - **[TOOL-17]** 결함 수정(Defect Correction) 시나리오 — 실패가 존재하고 원인이 미상일 때의 절차(재현→최소화→기원추적→격리→수정→회귀고정). ISO/IEC 14764 *corrective*에 대응하며 절차는 Zeller TRAFFIC + 델타 디버깅을 따른다. (`.claude/skills/defect-correction/SKILL.md`)
+- **[TOOL-18]** scenario-rubric (시나리오 A/B 품질 비악화 루브릭) — 런(=세션) 1개의 도구 호출 **순서**에서 결함수정 절차의 관측 가능한 두 지점을 판정한다 — ①재현 선행(첫 편집 이전 실행) ②회귀 고정(테스트 파일 편집 + 이후 실행). E6 성공 바의 AND 절반인 *품질 비악화*를 기계로 낸다. (`scripts/scenario-rubric.js`)
+- **[TOOL-19]** eval-arm (시나리오 A/B 팔 집계·비교 + 성공 바 판정) — 두 팔의 전사 디렉터리를 받아 런별 비용(의도당 턴·출력 토큰)을 내고, 델타 + 소표본 유의성(Mann–Whitney U 정확 임계표) + 품질 비악화([TOOL-18])를 합쳐 **E6 성공 바를 기계로 판정**한다. (`scripts/eval-arm.js`)
 <!-- tools-index:end -->
