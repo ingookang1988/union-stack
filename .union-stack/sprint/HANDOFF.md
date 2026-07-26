@@ -1,55 +1,48 @@
 <!-- [Wiki] 세션 이어달리기. 세션을 마치는 에이전트가 덮어쓴다. 최신 하나만 유효.
      다음 세션 부트스트랩 시 가장 먼저 읽힘. -->
 ---
-session_id: review-p0-tools-e3-2026-07-24
-date: 2026-07-24T00:00:00Z
+session_id: scenario-layer-2026-07-25
+date: 2026-07-25T00:00:00Z
 author: agent
-verification: "전 게이트 그린 + 22스위트 0 fail. npm 래퍼는 이 머신에서 크래시 — node 직접 실행으로 검증."
+verification: "24스위트 360단언 0 fail · 전 게이트 그린 · 부트스트랩 2184/4000. npm 래퍼는 이 머신에서 크래시 — node 직접 실행으로 검증."
 version: 1.0
 ---
 
 # Handoff → 다음 세션
 
 ## 1. 세션 요약 (1~3줄)
-- 외부 리뷰(장점·차별점·보완점 + 2026 트렌드 대조) → **P0 6건 경화** → **주장 톤 축소** →
-  **E5 해악 팔** → **[PRO-07]** 완주 → **[PRO-08] tool 축**(카드 15장·게이트 3종) → **[E3] 측정·종료**.
-- 이 레포의 자기진화 루프(측정→제안→승인→반영→재측정)가 두 번(PRO-07·E3) 실전 완주.
+- 외부 리뷰에서 시작해 **P0 경화 → 주장 톤 축소 → E5 해악팔 → [PRO-07] → [PRO-08] tool축 → E3 종료 →
+  리뷰 P2 3건 종결**까지 완주. 자기진화 루프(측정→제안→승인→반영→재측정)가 여러 번 실전 완주.
+- 이후 **새 방향 둘 착수**: 세션 종료 증류 루프([ADR-12][ADR-13])와 그 상위층인 **시나리오 층**([PRO-10]).
 
-## 2. 변경 위치 (ID 목록 / 파일 — 탐색 진입점)
-- `[PRO-07]` Fail-close 스코프 한정(승인·반영·검증) · `[PRO-08]` reference/tools 신설(승인·3단계 구현)
-- `[ADR-05]`~`[ADR-08]` — 결정 4건(원장). `eval/RESULTS.md` §E5·E5후속·E3 — 측정 3회차분
-- `reference/tools/TOOL-01~15` — 카탈로그(셀프 6·build 5·adopt 3·예시 1)
-- `scripts/` 신규 6: tools-index · tool-linter · smell-linter · check-prereqs · transcript-stats ·
-  hook-replay · worktree (+각 test). 경화 5: permission-guard · hooks · zfs_index · init · context-budget
-- `_GUIDE` 8건 갱신(전수 점검) · `AGENTS.md` 규칙 1·2 + tools 인덱스 블록
-
-## 3-bis. 새 방향 — 세션 종료 증류 루프 (착수됨)
-- **목표**: 단발 핑퐁을 프로세스/거버넌스로 흡수해 의도당 왕복 비용을 낮춘다("눈빛만 봐도 아는 팀").
-- **골격**: 포퍼 4단계 P₁→TT→EE→P₂. 진보는 P₂와 P₁의 *거리*로 측정(P₂≡P₁이면 진보 없음).
-  **귀납 금지** — 채굴은 P₁ 발견까지만, 승격은 별도 추측+생성자 아닌 검증자의 가혹한 시험을 통과해야.
-- **결정 3건**([ADR-12]): CNJ 도메인 거부 · 미검증 후보는 사적 계층([ADR-11] 확장) · 계측기 선행.
-- **완료**: `session-friction.js`(TOOL-16) + 기준선 실측([ADR-13]).
-- **시나리오 층 착수**([PRO-10], [ADR-14][ADR-15]): 작업 유형별 절차를 `kind: scenario` TOOL 카드로.
-  신규 도메인 0. **내용과 라우팅을 분리 측정**(라우팅이 측정상 약한 절반 → `activation: manual` 기본).
-  `roleDefinition` 금지·증거 없는 Active 금지. 첫 카드 **TOOL-17 결함수정**(Draft) + 스킬 본문.
-- **다음**: E6 3-arm A/B(`eval/PROTOCOL.md` §3-bis) — ①무시나리오 ②강제 ③자가선택.
-  **②−①=내용 가치, ②−③=오분류 비용(문헌 부재)**. 1사이클은 ①vs②만(카드 1개이므로).
-  **반증 조건**: 시나리오 3개가 모두 ①을 못 이기면 층 폐기(Cursor·Roo 철수 전례).
+## 2. 변경 위치 (ID 목록 — Upward Fetching 진입점)
+- 제안: `[PRO-07]`(Fail-close 스코프) `[PRO-08]`(tool축) `[PRO-09]`(Schema grant) `[PRO-10]`(시나리오 층)
+- 결정: `[ADR-05]`~`[ADR-15]` (원장) · 측정: `eval/RESULTS.md` §E3·E5 · 프로토콜: `eval/PROTOCOL.md` §3-bis
+- 카탈로그: `TOOL-01`~`TOOL-17`(예시1·셀프6·build6·adopt3·시나리오1)
+- 스크립트 신규 9: tools-index · tool-linter · smell-linter · check-prereqs · transcript-stats ·
+  hook-replay · worktree · session-friction · fs_walk (+각 test)
+- 권한: `project/GRANTS.md`(GRANT-01 = roadmap 위임) · 로드맵: `PHASE-02` Crystallized
 
 ## 3. 다음 작업 (단일 진입점)
-- → 사용자 지정 대기. 잔여 백로그: 3단계 보류분(파괴적 git 가드 훅 — [ADR-08] 훅 미설치 입장과 정합 필요).
-- (인간 몫) `project/roadmap/PHASE-02`는 Schema — E3 트랙 종료 표기.
-  **이제 상시 스탬프로 인간이 특정 Schema 스코프를 에이전트에 위임 가능**([PRO-09] — `project/GRANTS.md`에
-  행 추가 후 에이전트가 `Approved-by: GRANT-id` 인용). 예: roadmap 갱신을 에이전트에 맡기려면 GRANT 부여.
+→ **E6 1사이클**(`eval/PROTOCOL.md` §3-bis): `TOOL-17` 결함수정 시나리오의 **①무시나리오 vs ②강제** A/B.
+   과제는 이 레포 실결함 3~5건(과거 수정 커밋에서 역산), N=5/팔, 기계 루브릭.
+   성공 바 = 의도당 턴 또는 토큰 유의미 감소 **AND** 품질 비악화. 델타를 카드 `evidence[]`에 고정하고
+   그때만 `status: Draft → Active`. (③자가선택 팔은 시나리오 2개 이상일 때.)
 
 ## 4. 미해결 / 주의
-- **[ADR-08] 훅 미설치 확정**: 하네스 권한 최소화 — 훅은 `HOOKS.md` 문서화만. **"켜자" 재제안 금지**
-  (재검토 조건은 ADR에). E3의 두 질문은 답 났음: 의례 자발 수행률 **0%**, enforce 차단 **6%**.
-- **계측기 오염 주의**([ADR-07]): 자기 도메인 용어를 문서에 쓰는 레포에서 문자열 매칭 계측은 자기 언급에
-  오염된다(100%→0% 반전 전례). 새 계측기는 *실행 표면*만 보게 설계할 것.
-- **표머리 행 편집이 append-only 위반으로 잡힘**(의도된 Fail-close 방향 — 데이터 행 사각지대와 맞바꿈).
-- `npm` 래퍼가 이 머신에서 크래시(exit -1073741819) — `node scripts/*.test.js` 직접 실행.
+- **[ADR-08] 훅 미설치 확정 — "켜자" 재제안 금지**(재검토 조건은 ADR에). E3는 답이 났다: 의례 자발
+  수행률 **0%**, enforce 차단 **6%**.
+- **시나리오 층 반증 조건**([ADR-15]): 시나리오 3개가 모두 기준선을 못 이기면 **층 폐기**. 첫 대상
+  `fix`는 Feedback-Bandwidth상 **효과 없음이 예보되는 자리** — 그래서 고른 것이다(위험한 시험 우선).
+- **증류 루프 규율**([ADR-12]): 채굴은 P₁까지만(귀납 금지). 미검증 후보는 사적 계층([ADR-11]).
+  자가생성 스킬은 실측 −1.8pp, 자동승격 안전 후보 0/133 — **제거 기계이지 생성 기계가 아니다.**
+- **계측기 오염 주의**([ADR-07]): 자기 도메인 용어를 문서에 쓰는 레포에서 문자열 매칭 계측은 자기
+  언급에 오염된다(100%→0% 반전 전례). 새 계측기는 *실행 표면*만 보게 설계할 것.
+- append-only 평면은 표머리 행 편집도 위반으로 잡힌다(의도된 Fail-close 방향).
+- HANDOFF가 누설 가드를 통과하는 건 본문에 마커 단어가 *우연히* 있기 때문이다(이번 세션에 실제로 걸림).
+  HANDOFF는 init RESET 대상이라 채택자에게 상속되진 않는다 — 가드 적용 방식은 재검토 여지.
 
 ## 5. 검증 상태
 - 게이트 전부 그린: naming·history·leakage·permission(+strict)·tool·smell·tools-index·size·lock·budget.
-- 테스트 **22스위트 0 fail**. context-budget은 CJK 계수 도입 후 재측정치(아래).
+- 테스트 **24스위트 360단언 0 fail**. 부트스트랩 2184/4000 tok.
+- 원격 main = `ec9a74c`, 트리 클린, 미푸시 0.
