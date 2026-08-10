@@ -14,9 +14,9 @@ jobs:
     permissions:
       contents: write # evidence append 커밋용([PRO-11] — Raw 평면은 시스템만 Append)
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with: { fetch-depth: 0 } # permission-guard 의 diff 범위가 이전 커밋을 보려면 전체 히스토리 필요
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with: { node-version: '22' }
       - name: ZFS naming linter (Fail-close gate)
         run: node scripts/zfs-linter.js
