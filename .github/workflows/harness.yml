@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 } # permission-guard 의 diff 범위가 이전 커밋을 보려면 전체 히스토리 필요
       - uses: actions/setup-node@v4
-        with: { node-version: '20' }
+        with: { node-version: '22' }
       - name: ZFS naming linter (Fail-close gate)
         run: node scripts/zfs-linter.js
       - name: HISTORY reason gate (Fail-close; no-op if HISTORY absent)
