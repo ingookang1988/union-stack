@@ -48,6 +48,7 @@ const METHODOLOGY = new Set([
   'TOOL-15_hook_replay.md', 'TOOL-16_session_friction.md',
   'TOOL-17_scenario_defect_correction.md',
   'TOOL-18_scenario_rubric.md', 'TOOL-19_eval_arm.md', 'TOOL-20_e6_workspace.md',
+  'TOOL-21_template_update.md',
 ]);
 
 // 더미 표시 마커. 슬러그 또는 본문 어디든 있으면 sanitize된 것으로 간주.

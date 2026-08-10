@@ -12,6 +12,15 @@ design, see [`DESIGN_RATIONALE.md`](./DESIGN_RATIONALE.md). Entries marked **⚠
 action in already-adopted projects.
 
 ## [Unreleased]
+- **TOOL-21** — `scripts/template-update.js`: adopters check their template version (latest
+  CHANGELOG heading) and methodology-file drift against upstream, then apply sync-category
+  updates (`--apply`). Never touches `.union-stack/` content; review-category files (AGENTS.md,
+  `_GUIDE.md`) are reported only. Surfaces ⚠ migration items from the upstream changelog.
+- **⚠ PRO-11·12·13** — gate contract layer (`--contract` declaration, 4-value outcomes
+  PASS/REJECT/CLARIFY/HOLD with **REJECT-only blocking**), trust-tier gate (`tier: draft`
+  agent delegation, human-only promotion), `handoff-linter` (5-part + 1,500 tok budget,
+  never blocks). Migration: adopters re-wiring their own CI should copy harness.yml's
+  exit-code mapping (only exit 1 fails the build; 3/4 are annotations).
 - **PRO-08** — new `reference/tools/` member (`TOOL-*` domain): a *catalog* of reusable executable
   assets (scripts, skills, MCP tools). Catalog-only (implementation stays at its real home), Wiki
   tier, `scripts/tool-linter.js` fail-closes dangling `impl:` pointers.
