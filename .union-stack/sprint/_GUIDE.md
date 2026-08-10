@@ -40,3 +40,17 @@
 
 ### The 5 mandatory parts (miss any one and the relay fails)
 - Session summary (1–3 lines) · changed locations (ID list) · next task (single entry point) · open/caution · verification status (did tests pass)
+- An empty part must say `— 해당 없음` explicitly (distinguishes "not applicable" from "forgot to write").
+
+### Routing decision tree + budget ([PRO-13] — token bloat is a routing failure, not a size problem)
+Per item, first match wins:
+1. Re-derivable from git/code/plane docs? → **don't record** (process narrative, attempt logs, raw tool output)
+2. Strategic pivot + reason? → `project/HISTORY.md`  3. Decision + rationale? → `archive_ledger.md`
+4. Pitfall repeated ≥2 in a lineage? → `reference/lessons/`  5. Harness rule change? → `proposals/`
+6. Not-yet-started queue? → `next.md`  7. Needed by next session's bootstrap? → **HANDOFF, as ID pointers only**
+8. None of the above → drop it. "Feels wasteful" is not a reason.
+
+Compression rules: pointer over copy · measurements = number + one repro command · discussions = one
+conclusion line + one why line · an item surviving 3 sessions in HANDOFF is misrouted (promote or drop).
+Budget 1,500 tok — `node scripts/handoff-linter.js` surfaces overruns as CLARIFY (**never blocks** — an
+imperfect HANDOFF beats a lost one; unresolved findings appear at the next session's bootstrap).

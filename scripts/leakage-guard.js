@@ -9,10 +9,21 @@
 // 동작: 콘텐츠 디렉터리의 모든 .md는 (a) 방법론 allowlist에 속하거나
 //   (b) 더미 마커를 가져야 한다. 둘 다 아니면 Fail-close(exit 1).
 //
-// 실행: node scripts/leakage-guard.js   (CI 게이팅은 .github/workflows/template-guard.yml 참조)
+// 실행: node scripts/leakage-guard.js [--contract]   (CI 게이팅은 .github/workflows/template-guard.yml 참조)
 const fs = require('fs');
 const path = require('path');
 const { walkFiles } = require('./fs_walk');
+const { withContract } = require('./gate-contract');
+
+// 계약 선언([PRO-11] — [GRAM-12c] 꼴).
+const CONTRACT = {
+  gate: 'Leakage Gate (leakage-guard)',
+  input: '콘텐츠 디렉터리·매니페스트의 .md 전문',
+  predicate: '방법론 allowlist 소속 또는 더미 마커(example·dummy·예시·더미) 보유',
+  scope: '마커의 존재만 본다 — 실제 기밀·개인정보를 이해해서 탐지하지 않는다(마커만 붙이면 우회 가능한 트립와이어)',
+  outcomes: ['PASS', 'REJECT'],
+  failure_mode: '미표시 파일 목록 출력 후 REJECT(차단)',
+};
 
 // 실제 프로젝트 내용이 들어설 수 있는 칸/화살표 평면(.union-stack/ 격리, 재귀 스캔).
 // project 를 재귀 스캔하므로 project/roadmap·HISTORY 도 포함된다.
@@ -78,6 +89,6 @@ function run(root = path.resolve(__dirname, '..')) {
   return 0;
 }
 
-module.exports = { isSanitized, collectFiles, run, MARKER, METHODOLOGY, CONTENT_DIRS };
+module.exports = { isSanitized, collectFiles, run, CONTRACT, MARKER, METHODOLOGY, CONTENT_DIRS };
 
-if (require.main === module) process.exit(run());
+if (require.main === module) process.exit(withContract(CONTRACT, () => run())()); // run(root) 시그니처 — argv 전달 금지

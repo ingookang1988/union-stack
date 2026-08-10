@@ -70,5 +70,47 @@ check('** 는 슬래시 포함', globToRe('.union-stack/plan/**').test('.union-s
 check('* 는 슬래시 제외', globToRe('.union-stack/plan/*').test('.union-stack/plan/a/b.md'), false);
 check('정확 경로 매칭', globToRe('.union-stack/project/HISTORY.md').test('.union-stack/project/HISTORY.md'), true);
 
+// --- Check C: 신뢰도 티어 ([PRO-12]) — strict에서만, 차단은 자기승격뿐 ---
+const agent = { agentAuthored: true, approvals: [] };
+const tierViols = (change, meta = agent, opts = {}) => findViolations([change], meta, { strict: true, ...opts });
+
+// 완화의 실체: tier:draft는 승인 없이 생성·편집 통과
+check('draft 신규 → 통과([PRO-12] 완화)',
+  tierViols({ path: '.union-stack/architecture/ARCH-03_x.md', added: 9, removed: 0, isNew: true, tier: 'draft', tierEscalated: false }).length, 0);
+check('draft 편집 → 통과',
+  tierViols({ path: '.union-stack/architecture/ARCH-03_x.md', added: 2, removed: 1, isNew: false, tier: 'draft', tierEscalated: false }).length, 0);
+
+// 위계의 실체: 자기승격은 REJECT — grant로도 못 넘는다(승격은 인간만)
+check('자기승격 → REJECT',
+  tierViols({ path: '.union-stack/architecture/ARCH-03_x.md', added: 1, removed: 1, isNew: false, tier: 'ratified', tierEscalated: true })
+    .map(v => [v.rule, v.outcome]), [['tier-self-promotion', 'REJECT']]);
+check('신규 파일을 ratified로 직접 생성 → 자기승격 REJECT',
+  tierViols({ path: '.union-stack/architecture/ARCH-03_x.md', added: 9, removed: 0, isNew: true, tier: 'ratified', tierEscalated: true })
+    .some(v => v.rule === 'tier-self-promotion'), true);
+check('grant 인용해도 승격은 REJECT',
+  tierViols({ path: '.union-stack/architecture/ARCH-03_x.md', added: 1, removed: 0, isNew: false, tier: 'reviewed', tierEscalated: true },
+    { agentAuthored: true, approvals: ['GRANT-01'] }, { grants: grantArch }).some(v => v.rule === 'tier-self-promotion'), true);
+check('인간 명시 승인이면 승격 허용',
+  tierViols({ path: '.union-stack/architecture/ARCH-03_x.md', added: 1, removed: 0, isNew: false, tier: 'ratified', tierEscalated: true },
+    { agentAuthored: true, approvals: ['ingookang1988 (chat)'] }).length, 0);
+
+// 신규 tier 미기입 → CLARIFY(비차단 넛지)
+check('신규 미기입 → CLARIFY',
+  tierViols({ path: '.union-stack/architecture/ARCH-03_x.md', added: 9, removed: 0, isNew: true, tier: null, tierEscalated: false })
+    .map(v => [v.rule, v.outcome]), [['tier-missing', 'CLARIFY']]);
+
+// 기존 문서 미기입 = ratified 간주 → Check B 유지(승인 없으면 REJECT)
+check('기존 미기입 → schema-approval(현행 보존)',
+  tierViols({ path: '.union-stack/architecture/ARCH-03_x.md', added: 2, removed: 1, isNew: false, tier: null, tierEscalated: false })
+    .map(v => [v.rule, v.outcome]), [['schema-approval', 'REJECT']]);
+
+// 보강 필드 없는 호출(구형) → Check B 동작 그대로(하위 호환)
+check('tier 필드 없는 변경 → 기존 규칙',
+  tierViols({ path: '.union-stack/architecture/ARCH-03_x.md', added: 2, removed: 1 })
+    .map(v => v.rule), ['schema-approval']);
+// append-only 위반의 outcome도 명시된다
+check('append-only outcome=REJECT',
+  findViolations([{ path: '.union-stack/archive_ledger.md', added: 0, removed: 1 }])[0].outcome, 'REJECT');
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

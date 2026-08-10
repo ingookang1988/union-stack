@@ -14,20 +14,25 @@ const SCAN_DIRS = [
   'project/roadmap', 'proposals',
 ].map(d => `${BASE}/${d}`);
 
-// frontmatter(선두 --- 블록)에서만 status를 추출. 없으면 null.
+// frontmatter(선두 --- 블록)에서만 status·tier를 추출. 없으면 null.
 // 파일 전체 매칭은 본문 예시(`status: Live` 코드블록 등)를 잠금 상태로 오인해
 // blast-radius 오차단(false Fail-close)을 일으킨다. 선두 HTML 주석은 건너뛴다.
-function readStatus(full) {
+// tier(신뢰도 티어, [PRO-12]): draft | reviewed | ratified — 미기입은 null(기존 문서 = ratified 간주는
+// 소비자(permission-guard) 몫이고, 색인은 관측만 한다).
+function readFront(full) {
   try {
     const txt = fs.readFileSync(full, 'utf8');
     const fm = txt.match(/^(?:\s|<!--[\s\S]*?-->)*---\r?\n([\s\S]*?)\r?\n---/);
-    if (!fm) return null;
-    const m = fm[1].match(/^\s*status:\s*(.+?)\s*$/m);
-    return m ? m[1].trim() : null;
+    if (!fm) return { status: null, tier: null };
+    const g = k => { const m = fm[1].match(new RegExp('^\\s*' + k + ':\\s*(.+?)\\s*$', 'm')); return m ? m[1].trim() : null; };
+    const tier = g('tier');
+    return { status: g('status'), tier: tier ? tier.toLowerCase() : null };
   } catch {
-    return null;
+    return { status: null, tier: null };
   }
 }
+
+function readStatus(full) { return readFront(full).status; }
 
 function collect(dir, root, out) {
   walkFiles(root, dir, rel => {
@@ -35,7 +40,8 @@ function collect(dir, root, out) {
     if (!entry.endsWith('.md')) return;
     const parsed = parse(entry); // {domain, id, slug} 또는 null(가이드·매니페스트)
     if (!parsed) return;
-    out.push({ file: rel, ...parsed, status: readStatus(path.join(root, rel)) });
+    const front = readFront(path.join(root, rel));
+    out.push({ file: rel, ...parsed, status: front.status, tier: front.tier });
   });
 }
 
@@ -46,4 +52,4 @@ function buildIndex(root = path.resolve(__dirname, '..')) {
   return out;
 }
 
-module.exports = { buildIndex, readStatus, SCAN_DIRS };
+module.exports = { buildIndex, readStatus, readFront, SCAN_DIRS };

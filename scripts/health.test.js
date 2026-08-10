@@ -32,10 +32,14 @@ const sz = computeHealth({ index, domainsDefined: defined, guideCount: 5, naming
 check('file size WARN', sz.dims.find(d => d.name === 'file size').status === 'WARN');
 check('ref integrity INFO', sz.dims.find(d => d.name === 'ref integrity').value.includes('3'));
 
-// gather(): 실제 레포 스모크 — 구조 정상이면 fails 0
+// gather(): 실제 레포 스모크 — 구조 정상이면 fails 0.
+// 단 leakage는 *미커밋* 작업트리 콘텐츠에 좌우된다(검토 중 spike 등) — 커밋 평면 게이트만 단언.
 const g = gather();
-check('gather healthy(현재 레포)', g.healthy === true);
-check('gather dims 9', g.dims.length === 9);
+const nonLeakFails = g.dims.filter(d => d.status === 'FAIL' && d.name !== 'leakage gate').length;
+check('gather 커밋 평면 게이트 그린', nonLeakFails === 0);
+check('gather dims 12 (관측 3절 포함)', g.dims.length === 12);
+check('sync 절은 INFO(판정 없음)', g.dims.find(d => d.name === 'plane sync').status === 'INFO');
+check('tier 절은 INFO(관측만)', g.dims.find(d => d.name === 'tier distribution').status === 'INFO');
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -8,11 +8,22 @@
 // 동작: .union-stack/project/HISTORY.md 의 표를 파싱해, 분기점(사실) 칸이 채워졌는데
 //   근거(왜) 칸이 비면 위반. HISTORY.md 가 없으면 no-op(히스토리는 점진 적체 → 신규 프로젝트 보호).
 //
-// 실행: node scripts/history-linter.js
+// 실행: node scripts/history-linter.js [--contract]
 const fs = require('fs');
 const path = require('path');
+const { withContract } = require('./gate-contract');
 
 const HISTORY_PATH = '.union-stack/project/HISTORY.md';
+
+// 계약 선언([PRO-11] — [GRAM-12c] 꼴).
+const CONTRACT = {
+  gate: 'HISTORY Reason Gate (history-linter)',
+  input: '.union-stack/project/HISTORY.md 의 분기점 표(사실·근거 컬럼)',
+  predicate: '사실 칸이 채워진 행은 근거 칸도 비어 있지 않아야 한다',
+  scope: '근거의 존재만 본다 — 근거의 등급·진위·발현점은 보지 않음(SPIKE-fdt D4, [PRO-11] 보류 항목)',
+  outcomes: ['PASS', 'REJECT'],
+  failure_mode: '근거 없는 분기점 목록 출력 후 REJECT(차단). HISTORY.md 없으면 no-op PASS',
+};
 
 // 헤더 키워드로 컬럼을 식별(위치·번역 내성).
 const FACT_HEADER = /사실|분기점|fact|turning/i;
@@ -93,6 +104,6 @@ function run(root = path.resolve(__dirname, '..')) {
   return 0;
 }
 
-module.exports = { findViolations, run, HISTORY_PATH };
+module.exports = { findViolations, run, CONTRACT, HISTORY_PATH };
 
-if (require.main === module) process.exit(run());
+if (require.main === module) process.exit(withContract(CONTRACT, () => run())()); // run(root) 시그니처 — argv 전달 금지

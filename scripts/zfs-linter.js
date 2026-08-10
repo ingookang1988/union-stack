@@ -1,10 +1,21 @@
 #!/usr/bin/env node
 // scripts/zfs-linter.js
 // ZFS 네이밍 규약을 강제하는 Fail-close 게이트. CI 최상단에 배치 권장.
-// 실행: node scripts/zfs-linter.js
+// 실행: node scripts/zfs-linter.js [--contract]
 const path = require('path');
 const { ZFS_REGEX, isValidDomain, isValidName, VALID_DOMAINS } = require('./zfs_util');
 const { walkFiles } = require('./fs_walk');
+const { withContract } = require('./gate-contract');
+
+// 계약 선언([PRO-11] — [GRAM-12c] 꼴). scope의 "안 보는 것"이 LSN-13류 오독을 막는 핵심.
+const CONTRACT = {
+  gate: 'ZFS Naming Gate (zfs-linter)',
+  input: '.union-stack/ 대상 디렉터리의 .md 파일명(면제 목록 제외)',
+  predicate: '[DOMAIN]-[LUHMANN_ID]_[slug].md 형식 · 허용 도메인 · Luhmann ID의 l/o 금지',
+  scope: '파일명만 본다 — 내용·frontmatter·참조 무결성(ref-linter 소관)·파일 간 결합은 보지 않음',
+  outcomes: ['PASS', 'REJECT'],
+  failure_mode: '위반 파일 목록 출력 후 REJECT(차단)',
+};
 
 // ZFS ID를 갖는 원자적 문서가 사는 디렉터리 (.union-stack/ 격리 구조)
 const BASE = '.union-stack';
@@ -58,6 +69,6 @@ function run() {
   return 0;
 }
 
-module.exports = { lint, run, TARGET_DIRS };
+module.exports = { lint, run, CONTRACT, TARGET_DIRS };
 
-if (require.main === module) process.exit(run());
+if (require.main === module) process.exit(withContract(CONTRACT, run)());

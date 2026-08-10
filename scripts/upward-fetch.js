@@ -16,11 +16,15 @@ if (!id) { console.error(`ZFS ID를 해석할 수 없음: ${arg}`); process.exit
 const r = upwardFetch(id, buildIndex());
 if (json) { console.log(JSON.stringify(r, null, 2)); process.exit(0); }
 
+// 비규범 배너([PRO-12]): tier:draft 문서는 주입하되 구속력 없음을 명시(기본 제외가 아님 —
+// 방금 위임받아 쓴 초안이 다음 세션에 안 보이는 컨텍스트 기아를 막는다).
+const banner = d => (d.tier === 'draft' ? '  ⚠ tier:draft — 비규범(구속력 없음)' : '');
+
 console.log(`# Upward Fetching: ${r.id}`);
 console.log(`계보(조상 역산): ${r.chain.join(' → ')}\n`);
 console.log('## 공간 맥락 (부모 PLAN/FLOW/CON/ARCH/MTG)');
-if (r.context.length) r.context.forEach(d => console.log(`  [${d.domain}-${d.id}] ${d.file}`));
+if (r.context.length) r.context.forEach(d => console.log(`  [${d.domain}-${d.id}] ${d.file}${banner(d)}`));
 else console.log('  (없음)');
 console.log('\n## 시간축 경고 (같은 계보의 LSN — 과거 반복 실패)');
-if (r.lessons.length) r.lessons.forEach(d => console.log(`  ⚠ [${d.domain}-${d.id}] ${d.file}`));
+if (r.lessons.length) r.lessons.forEach(d => console.log(`  ⚠ [${d.domain}-${d.id}] ${d.file}${banner(d)}`));
 else console.log('  (없음)');
