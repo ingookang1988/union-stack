@@ -52,5 +52,12 @@ Per item, first match wins:
 
 Compression rules: pointer over copy · measurements = number + one repro command · discussions = one
 conclusion line + one why line · an item surviving 3 sessions in HANDOFF is misrouted (promote or drop).
+
+> **"Don't re-propose X" does NOT belong in HANDOFF** ([PRO-14]·[ADR-18]). It reads like rule 7
+> ("needed by the next session's bootstrap"), but HANDOFF is latest-only and hand-copied — an item
+> that must survive *every* future session cannot live in a file each session overwrites. Put the
+> `blocks:`/`reopen_when:` fields on the decision itself (ledger entry or `PRO-*` frontmatter);
+> `blocks-index` compiles them into the AGENTS.md block. Copying the list back into HANDOFF
+> re-creates the drift this rule removed.
 Budget 1,500 tok — `node scripts/handoff-linter.js` surfaces overruns as CLARIFY (**never blocks** — an
 imperfect HANDOFF beats a lost one; unresolved findings appear at the next session's bootstrap).

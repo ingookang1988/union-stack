@@ -12,6 +12,16 @@ design, see [`DESIGN_RATIONALE.md`](./DESIGN_RATIONALE.md). Entries marked **⚠
 action in already-adopted projects.
 
 ## [Unreleased]
+- **⚠ PRO-14** — re-proposal blocks. A decision that must not be relitigated carries `blocks:` +
+  `reopen_when:` (ledger entry or `PRO-*` frontmatter); `scripts/blocks-index.js` (**TOOL-22**)
+  compiles those into an always-injected AGENTS.md marker block, the same shape as `tools-index`.
+  Closes a structural gap: rejection *records* were preserved (proposals/_GUIDE Supersession
+  principle) but nothing **delivered** them — no injection path reaches `proposals/` or
+  `archive_ledger.md`, so delivery relied on hand-copying into HANDOFF (latest-only).
+  `reopen_when:` also gives decisions the `valid_time` axis lessons already had.
+  Gate is CLARIFY-only (never blocks), wired into `npm run lint`.
+  Migration: add the marker block to your `AGENTS.md` (see MIGRATION.md §Upgrading) — without it
+  `blocks-index` reports CLARIFY. Existing ledger rows need **no** retro-labelling.
 - **TOOL-21** — `scripts/template-update.js`: adopters check their template version (latest
   CHANGELOG heading) and methodology-file drift against upstream, then apply sync-category
   updates (`--apply`). Never touches `.union-stack/` content; review-category files (AGENTS.md,
