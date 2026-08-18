@@ -4,7 +4,7 @@
 const { ancestorChain, isDescendant } = require('./zfs_util');
 
 const CONTEXT_DOMAINS = new Set(['PLAN', 'FLOW', 'CON', 'ARCH', 'MTG']);
-const LOCKED = new Set(['Verifying', 'Live']);
+const LOCKED = new Set(['Verifying']);
 
 /** Upward Fetching: 부모 계보 맥락(PLAN/FLOW/CON/ARCH/MTG) + 같은 계보 LSN. */
 function upwardFetch(id, index) {
@@ -20,7 +20,7 @@ function upwardFetch(id, index) {
   return { id, chain, context, lessons };
 }
 
-/** Blast Radius: 대상의 모든 자손 + 잠금(Verifying/Live) 여부. */
+/** Blast Radius: 대상의 모든 자손 + 잠금(Verifying) 여부. */
 function blastRadius(id, index) {
   const affected = index
     .filter(d => isDescendant(id, d.id))

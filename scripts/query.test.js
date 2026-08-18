@@ -15,7 +15,7 @@ const index = [
   { domain: 'MTG', id: '01a', file: 'plan/meetings/MTG-01a_x.md' },
   { domain: 'LSN', id: '01a', file: 'reference/lessons/LSN-01a_x.md' },
   { domain: 'WO', id: '01a1', status: 'Active', file: 'sprint/WO-01a1_x.md' },
-  { domain: 'FLOW', id: '01b', status: 'Live', file: 'feature/flow/FLOW-01b_x.md' },
+  { domain: 'FLOW', id: '01b', status: 'Verifying', file: 'feature/flow/FLOW-01b_x.md' },
 ];
 
 // --- upwardFetch ---

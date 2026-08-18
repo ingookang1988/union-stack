@@ -2,7 +2,7 @@
 // scripts/hook-replay.js
 // enforce 모드 경제성 사전 측정 — [E3]. 과거 *실제* 편집을 PreToolUse 결정 함수(hooks.decideEdit)에
 // 재생해 "훅을 켰다면 무엇이 몇 번 막혔을까"를 훅 설치 없이 잰다.
-//   차단 유형: schema(Schema-tier 편집) / lock(Blast-Radius Verifying·Live 자손).
+//   차단 유형: schema(Schema-tier 편집) / lock(Blast-Radius Verifying 자손).
 // 이 레포 밖 경로의 편집은 제외한다(다른 프로젝트 세션 혼입 방지).
 //
 // 정직한 한계: 인덱스는 *현재* 평면 상태다(편집 시점 status가 아님) — lock 수치는 근사.

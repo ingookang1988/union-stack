@@ -22,7 +22,7 @@ function toRel(file, root) {
 /**
  * 편집/생성 직전 결정(순수). mode: 'off' | 'warn' | 'enforce'.
  *  - Schema tier 편집      → enforce에서 차단, warn에서 경고(에이전트는 Schema read-only).
- *  - Blast-Radius 잠금     → mode≠off 면 항상 차단(Verifying/Live 자손은 Fail-close 불변식).
+ *  - Blast-Radius 잠금     → mode≠off 면 항상 차단(Verifying 자손은 Fail-close 불변식).
  * 반환: { block, issues:[{kind, block, msg}] }
  */
 function decideEdit(file, index, mode = 'warn', root = process.cwd()) {

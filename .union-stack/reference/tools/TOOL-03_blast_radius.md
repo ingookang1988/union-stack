@@ -11,7 +11,7 @@ version: 1.0
 # [TOOL-03] Blast Radius
 
 ## 용도
-노드의 모든 자손(영향권)을 나열하고, Verifying/Live 자손이 있으면 Fail-close(exit 1)한다.
+노드의 모든 자손(영향권)을 나열하고, Verifying 자손이 있으면 Fail-close(exit 1)한다.
 
 ## 언제 쓰나
 - 컨트롤 평면 노드를 **편집/삭제하기 전** 항상. 플릿 모드에선 서브트리 소유권 확인용([PRO-05]).

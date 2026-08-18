@@ -7,7 +7,7 @@ function check(label, cond) { if (cond) pass++; else { fail++; console.error(`FA
 
 const index = [
   { domain: 'PLAN', id: '01' }, { domain: 'FLOW', id: '01a' },
-  { domain: 'LSN', id: '01a' }, { domain: 'FLOW', id: '01b', status: 'Live' },
+  { domain: 'LSN', id: '01a' }, { domain: 'FLOW', id: '01b', status: 'Verifying' },
 ];
 const defined = ['PLAN', 'FLOW', 'LSN', 'WO', 'WF', 'EVD', 'ADR', 'PRO', 'ARCH'];
 

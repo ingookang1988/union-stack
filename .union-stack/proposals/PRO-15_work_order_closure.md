@@ -2,7 +2,9 @@
 ---
 id: PRO-15
 title: 작업 지시(WO) 정본화와 종료 의례 — 진입 의례의 거울
-status: Proposed
+status: Approved
+decided_by: ingookang1988 (chat approval, 2026-08-18)
+reason: "§12 다섯 항목 일괄 승인. ①상한 1,500 tok ②닫힘=흔적1+증거1(none — 이유 허용) ③Live 제거 ④Closed WO 이동은 **세션 종료 시**(배치 — 중간 이동은 diff만 어지럽힌다) ⑤next.md 기존 수기 표는 폐기하고 생성 뷰로 전환. 구현·검증 완료([ADR-21])."
 version: 1.0
 ---
 

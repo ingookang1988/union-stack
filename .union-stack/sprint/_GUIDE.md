@@ -1,7 +1,45 @@
 # sprint/ — actual × action (current work) guide
 > **Grid:** actual (observed) × action. **Permission:** Wiki. **Change velocity:** very frequent.
-## Goes in: "what is being done." WO (work order) / WF (workflow). next.md/prev.md rolling window.
+## Goes in: "what is being done." WO (work order) / WF (workflow) documents + HANDOFF.
 ## Stays out: planning intent (→ .union-stack/plan), finished decisions (→ archive_ledger).
+
+---
+
+## WO — the work order document ([PRO-15])
+
+> **`status:` in frontmatter is the single source of truth.** `next.md` is a *generated view* of it —
+> never encode the lifecycle in two places (same rule as `plan/_GUIDE`: duplication → drift).
+
+### Anatomy (4 required elements — enforced the way `smell-linter` enforces TOOL cards)
+`## 목표` · `## 수용 기준` · `## 증거` sections, plus frontmatter `parent:`.
+```yaml
+status: Draft | Active | Verifying | Closed
+parent: PLAN-01a
+evidence: "<test/artifact/commit>"  |  "none — <이유>"   # 빈 값 금지
+closed_by: []                                            # 상위 축 흔적(파일 경로)
+```
+
+### Budget: 1,500 tok — and what an overrun *means*
+Same quantum as a scenario body and HANDOFF (no third number). Per [PRO-13], an overrun is a **routing
+failure, not a size problem**: decisions → `archive_ledger`, pitfalls → `lessons`, contracts → `CON-*`,
+process narrative → drop it (git has it). And note the second reading:
+**if WOs habitually approach the cap, the work is too big — split the WO, don't shrink the doc.**
+
+### Closing a WO — the work-exit ritual (mirror of Upward Fetching)
+A WO is not closed by declaring it closed. Two facts must be checkable in the diff:
+1. **A trace on a parent axis** (`closed_by:` ≥ 1) — `feature/live.md` · `verification/derived/{state,gap}.md`
+   · `CON-*`. `work-close` verifies the file *actually* references the lineage, catching "declared but not applied."
+2. **Evidence stated** (`evidence:`) — a value, or `none — <이유>`. Distinguishing *forgot* from
+   *not applicable* is the whole requirement (the `— 해당 없음` trick from [PRO-13]).
+
+```bash
+node scripts/work-close.js WO-01a-1        # 점검 (CLARIFY only — never blocks)
+node scripts/work-close.js --table --write # 작업대 뷰 재생성
+```
+At **session end**, move Closed WOs to `archived/` and regenerate the view. Closed WOs are **never
+deleted** — they keep `plan/_GUIDE`'s GC condition ("every successor is terminal") computable.
+
+> **prev.md is not revived** — see below. The rolling window was removed, not automated.
 
 ---
 

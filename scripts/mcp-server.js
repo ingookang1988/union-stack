@@ -12,7 +12,7 @@ const { version: VERSION } = require('../package.json'); // 단일 출처 — �
 const TOOLS = [
   { name: 'upward_fetch', description: '작업 진입 맥락: ID의 부모 PLAN/FLOW/CON/ARCH/MTG + 같은 계보 LSN.',
     inputSchema: { type: 'object', properties: { id: { type: 'string', description: 'ZFS ID·파일명·브래킷 ID' } }, required: ['id'] } },
-  { name: 'blast_radius', description: '수정·삭제 영향권: 대상의 모든 자손 + 잠금(Verifying/Live) 여부.',
+  { name: 'blast_radius', description: '수정·삭제 영향권: 대상의 모든 자손 + 잠금(Verifying) 여부.',
     inputSchema: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] } },
   { name: 'where_to_record', description: '과거/결정 기록 라우팅: kind→목적지(HANDOFF/사적메모리/lessons/proposals/ledger/HISTORY).',
     inputSchema: { type: 'object', properties: { kind: { type: 'string', description: '예: pivot, lesson, adr, proposal, session' } }, required: ['kind'] } },

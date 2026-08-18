@@ -26,7 +26,7 @@ No relative paths. Reference only via bracket IDs like `[PLAN-01a1]` in body tex
 - **Upward Fetching**: trim from the terminal to reverse-derive parents. `01a1-2`→`01a1`→`01a`→`01`.
   Automated: `node scripts/upward-fetch.js <ID>` — gathers parent PLAN/FLOW/CON/ARCH (space)
   and same-lineage LSN (time-axis pitfalls).
-- **Blast Radius**: on edit/delete, index the descendants of the same lineage; if a Verifying/Live
+- **Blast Radius**: on edit/delete, index the descendants of the same lineage; if a Verifying
   node exists, Fail-close. (the alternation rule keeps `01a1` from mistaking `01a10` for a child)
   Automated: `node scripts/blast-radius.js <ID>` — exits 1 if a locked node exists.
 

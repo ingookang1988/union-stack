@@ -5,7 +5,7 @@
 ## Goes in: "what we agreed to do." Feature-level requirements & intent.
 ## Stays out: immutable norms (→ .union-stack/architecture), work tracking (→ .union-stack/sprint).
 ## Lifecycle (status field is the SINGLE source of truth): Draft → Active → Verifying → Crystallized.
-##   The frontmatter `status:` is canonical — tooling reads it (e.g. blast-radius locks on Verifying/Live).
+##   The frontmatter `status:` is canonical — tooling reads it (e.g. blast-radius locks on Verifying).
 ##   Do NOT encode lifecycle in directories too (that would duplicate the fact → drift).
 ##   Crystallized is not immediate deletion. Only after every successor in the lineage is terminal and a
 ##   grace period passes does GC crystallize the decision into archive_ledger and remove the plan (GC guard).

@@ -12,6 +12,16 @@ design, see [`DESIGN_RATIONALE.md`](./DESIGN_RATIONALE.md). Entries marked **⚠
 action in already-adopted projects.
 
 ## [Unreleased]
+- **⚠ PRO-15** — work-order closure. `sprint/` gains real `WO-*` documents (frontmatter `status`,
+  `evidence`, `closed_by`) and `sprint/next.md` becomes a **generated view** of them; `scripts/work-close.js`
+  (**TOOL-23**) is the work-*exit* ritual mirroring Upward Fetching. Closes a structural hole: entry had
+  three gates and exit had none, so `plan/_GUIDE`'s GC condition ("every successor in the lineage is
+  terminal") was undecidable and no plan could ever reach `Crystallized`. Closing a WO now requires two
+  checkable facts — a trace on a parent axis, and evidence stated (or `none — <reason>`). CLARIFY-only.
+  Also **removes `Live` from the lock vocabulary**: code locked on it while no guide defined it and no
+  index path could ever produce it — a safety device that could never fire. `Verifying` remains the lock.
+  Migration: add the `worktable` marker block to `sprint/next.md` (see MIGRATION.md §Upgrading); replace
+  `Verifying/Live` with `Verifying` in any text you copied. Existing plans need no changes.
 - **⚠ PRO-14** — re-proposal blocks. A decision that must not be relitigated carries `blocks:` +
   `reopen_when:` (ledger entry or `PRO-*` frontmatter); `scripts/blocks-index.js` (**TOOL-22**)
   compiles those into an always-injected AGENTS.md marker block, the same shape as `tools-index`.

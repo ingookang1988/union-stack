@@ -16,7 +16,7 @@ const { gather: gatherBudget } = require('./context-budget');
 
 const { withContract } = require('./gate-contract');
 
-const LOCKED = ['Verifying', 'Live'];
+const LOCKED = ['Verifying'];
 const SIZE_CAP_KB = 30; // soft cap — 초과 시 분할/로테이션 권고
 
 // 계약 선언([PRO-11] — [GRAM-12c] 꼴).
@@ -67,7 +67,7 @@ function computeHealth({ index, domainsDefined, guideCount, namingViolations, hi
       value: budget ? `${budget.total}/${budget.totalCap} tok bootstrap` : 'n/a',
       note: budget && budget.over ? budget.rows.filter(r => r.status === 'OVER').map(r => `${r.name}:${r.tokens}>${r.budget}`).join(' ') : '' },
     { name: 'lock exposure', status: locked.length ? 'WARN' : 'OK',
-      value: `${locked.length} Verifying/Live`, note: locked.map(l => `${l.domain}-${l.id}`).join(' ') },
+      value: `${locked.length} Verifying`, note: locked.map(l => `${l.domain}-${l.id}`).join(' ') },
   ];
   // 관측 절([PRO-11]·[PRO-12]) — 전부 INFO. 판정·점수를 만들지 않는다(측도 금지, [AXIOM-27] 취지).
   if (sync) {
