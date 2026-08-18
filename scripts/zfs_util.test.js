@@ -81,5 +81,32 @@ check('parseId(bracket)',  parseId('WO-01a1-2'), '01a1-2'); // 슬러그 없는 
 check('parseId(phase)',    parseId('PHASE-01'), '01');
 check('parseId(garbage)',  parseId('hello-world'), null);
 
-console.log(`\n${pass} passed, ${fail} failed`);
+// --- 단말 작업 접미사(-N)의 양방향 일치 회귀 ---
+// 결함: 알파벳 종료 부모에서 isDescendant 가 `-` 를 자식으로 인정하지 않아,
+//   ancestorChain 과 방향이 어긋났다(WO 가 blast-radius·GC·플릿 파티션에서 누락).
+{
+  const pairs = [
+    ['01a', '01a-1', true],    // 알파벳 종료 부모 + 단말 — 이 케이스가 깨져 있었다
+    ['01a', '01a-12', true],
+    ['01a1', '01a1-2', true],  // 숫자 종료 부모 + 단말 — 원래 정상
+    ['01', '01-1', true],
+    ['01a', '01a1', true],     // 정상 레벨 하강
+    ['01', '01a', true],
+    ['01a1', '01a10', false],  // 형제 숫자 노드 오인 금지(원래 의도)
+    ['01a', '01ab', false],    // 형제 문자 블록 오인 금지
+    ['01a', '01a-', false],    // 숫자 없는 하이픈은 단말이 아니다
+    ['01a', '01a-1b', false],  // 단말 뒤 잡문자 금지
+  ];
+  pairs.forEach(([p, c, want]) =>
+    check(`isDescendant(${p}, ${c})`, isDescendant(p, c), want));
+
+  // 양방향 일치 불변식: ancestorChain 이 부모라고 말하면 isDescendant 도 자식이라고 해야 한다.
+  ['01a-1', '01a1-2', '01-1', '01a1', '01ab1-3'].forEach(id => {
+    ancestorChain(id).slice(1).forEach(parent =>
+      check(`양방향 일치: ${parent} ⊃ ${id}`, isDescendant(parent, id), true));
+  });
+}
+
+console.log(`
+${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

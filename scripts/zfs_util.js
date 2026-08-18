@@ -67,16 +67,23 @@ function parseId(name) {
 
 /**
  * otherId 가 planId 의 진짜 자식/단말/자기자신인지 판정.
- * 루만 교차 규칙: 부모가 숫자로 끝나면 자식은 알파벳(다음 레벨) 또는 하이픈(단말),
- *                부모가 알파벳으로 끝나면 자식은 숫자로 이어진다.
- * 이로써 01a1 이 01a10(다른 숫자 노드)을 자식으로 오인하지 않는다.
+ * 루만 교차 규칙: 부모가 숫자로 끝나면 자식은 알파벳(다음 레벨), 부모가 알파벳으로 끝나면
+ *                자식은 숫자(다음 레벨). **단말 접미사 `-N` 은 양쪽 모두에서 자식이다**
+ *                (ARCH-00 규칙 2: "A terminal task ends with -[0-9]+" — 부모의 끝 문자와 무관).
+ * 이로써 01a1 이 01a10(다른 숫자 노드)을 자식으로 오인하지 않으면서, 01a-1(단말 작업)은 놓치지 않는다.
+ *
+ * ⚠ 이 함수는 ancestorChain 의 역방향이며 **둘은 반드시 일치해야 한다**.
+ *   과거 알파벳 종료 분기에서 `-` 가 빠져 있어 ancestorChain("01a-1")=[…,"01a",…] 인데
+ *   isDescendant("01a","01a-1")=false 로 방향이 어긋났다 — 단말 WO 가 blast-radius 잠금·GC 계수·
+ *   플릿 파티션에서 통째로 누락되던 결함. 회귀는 zfs_util.test.js 의 양방향 일치 검사가 고정한다.
  */
 function isDescendant(planId, otherId) {
   if (otherId === planId) return true;
   if (!otherId.startsWith(planId)) return false;
   const parentEndsDigit = /[0-9]/.test(planId[planId.length - 1]);
   const next = otherId[planId.length];
-  return parentEndsDigit ? /[a-z-]/.test(next) : /[0-9]/.test(next);
+  if (next === '-') return /^-[0-9]+$/.test(otherId.slice(planId.length)); // 단말 작업 — 양쪽 공통
+  return parentEndsDigit ? /[a-z]/.test(next) : /[0-9]/.test(next);
 }
 
 /** 단말 ID에서 부모 체인을 역산. 01a1-2 → [01a1-2, 01a1, 01a, 01] */
