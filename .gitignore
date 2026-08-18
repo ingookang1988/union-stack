@@ -3,3 +3,6 @@ node_modules/
 .claude/settings.local.json
 # real (PII) profiles — only *example* dummies are committed (AGENTS.local.md convention)
 .union-stack/profile/**/*.local.md
+
+# lineage-tree output (TOOL-24) — generated view, never committed
+lineage-tree.html
