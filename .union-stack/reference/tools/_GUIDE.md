@@ -26,6 +26,12 @@
 ## Discipline
 - **Register only what exists**: create the implementation first, then the card (`impl:` must resolve).
 - Keep each card short (the invocation snippet is the longest part) — cards are injected context.
+- **Instrument self-contamination** — check this *before* writing any measuring tool ([ADR-07]·[ADR-19];
+  observed 3×, most recently within minutes of building [TOOL-22]). In a repo whose subject matter *is* its own
+  vocabulary, a string-matching instrument counts the repo's documentation as data: a doc explaining a marker
+  syntax is also a source of that syntax. Scan **execution surfaces only** (tool names, shell commands, skill
+  args) — never document prose — and exclude fenced blocks and inline code spans. A first measurement that
+  looks clean is the symptom, not the proof: `transcript-stats` read 100% before the fix and 0% after.
 
 ## Files
 - `TOOL-*` (ZFS). e.g. `TOOL-01_example_zfs_linter.md`
