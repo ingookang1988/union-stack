@@ -1,48 +1,48 @@
 <!-- [Wiki] 세션 이어달리기. 세션을 마치는 에이전트가 덮어쓴다. 최신 하나만 유효.
      다음 세션 부트스트랩 시 가장 먼저 읽힘. -->
 ---
-session_id: e6-rig-and-suite-2026-07-27
-date: 2026-07-27T00:00:00Z
+session_id: reproposal-blocks-and-schema-friction-2026-08-18
+date: 2026-08-18T00:00:00Z
 author: agent
-verification: "27스위트 464단언 0 fail · 전 게이트 그린 · 부트스트랩 2014/4000. npm 래퍼는 이 머신에서 크래시 — node 직접 실행으로 검증."
+verification: "28스위트 0 fail · 게이트 전부 그린 · 부트스트랩 2072/4000 · permission-guard --strict 전 커밋 통과. npm 래퍼는 이 머신에서 크래시 — node 직접 실행."
 version: 1.0
 ---
 
 # Handoff → 다음 세션
 
 ## 1. 세션 요약 (1~3줄)
-- 지난 세션의 진입점(E6 1사이클)을 **검토했더니 그대로는 실행 불가**였다 — 리그·계측 경로·N 정의·과제 오염·
-  품질 루브릭이 모두 비어 있었다. 그래서 **리그를 먼저 지었다**([ADR-16]) 그리고 **과제 스위트를 고정했다**([ADR-17]).
-- 도중 마찰 계측기의 귀속 결함이 실데이터에서 드러나 수정 — **[ADR-13]·[TOOL-17]의 보고 수치가 바뀐다**(아래 4).
+- 외부 딥리서치(`ref/`) 대비 갭 분석에서 **구조적 결함 하나**를 찾아 닫았다 — 결정 기록의 *보존*은
+  규율이었으나 *배송* 경로가 없었다([PRO-14]). 같은 병이 [PRO-12] `tier: draft`에서도 발견돼 함께 배선했다.
+- Schema 편집 마찰을 실측하고 GRANT-02로 완화했다(규칙 변경 0 — 철회 가능한 스탬프로).
 
 ## 2. 변경 위치 (ID 목록 — Upward Fetching 진입점)
-- 결정: `[ADR-16]`(리그 확정+계측기 수정) `[ADR-17]`(과제 스위트) — 원장
-- 신규 도구: `TOOL-18`(품질 루브릭) `TOOL-19`(팔 비교·성공 바 판정) `TOOL-20`(워크스페이스+숨은 오라클)
-- 프로토콜: `eval/PROTOCOL.md` §3-bis 개정 · 스위트: `eval/e6-suite/`(README + defects D1~D5)
-- 수정: `scripts/session-friction.js`(세션 귀속) · `TOOL-17` 카드 동형성 문구 정정
+- 규칙: `[PRO-14]`(승인·반영 완료) · `[GRANT-02]` — `_GUIDE.md` 상시 스탬프
+- 결정: `[ADR-18]`(차단 표식 도입·소급 흡수) `[ADR-19]`(계측기 자기언급 오염 3회차) — 원장
+- 신규 도구: `[TOOL-22]` blocks-index · 신규 게이트는 `npm run lint` 체인에 편입
+- 탐색: `spike/SPIKE-model_led_graph_gap.md` (§6 출구 — A·B는 승격 완료, **C는 미해소**)
 
 ## 3. 다음 작업 (단일 진입점)
-→ **E6 1사이클 10런 실행**(`eval/e6-suite/README.md` 운영 순서): D1~D5를 ①무시나리오/②강제 두 팔에 같은
-   순서로. `build`가 찍어 주는 발화 **하나만** 입력(추가 발화 금지), 종료 후 `verify`.
-   10런 후 `node scripts/eval-arm.js <①> <②> --n 5`. **pass일 때만** 델타를 `TOOL-17`의 `evidence[]`에
-   `{eval_run, delta, n, date}`로 고정하고 `status: Draft → Active`.
+→ **E6 1사이클 10런 실행**(`eval/e6-suite/README.md` 운영 순서) — 지난 세션의 진입점이 그대로 남아 있다.
+   D1~D5를 ①무시나리오/②강제 두 팔에 같은 순서로. `build`가 찍어 주는 발화 **하나만** 입력(추가 발화 금지),
+   종료 후 `verify`. 10런 후 `node scripts/eval-arm.js <①> <②> --n 5`. **pass일 때만** 델타를
+   `[TOOL-17]`의 `evidence[]`에 고정하고 `status: Draft → Active`.
    ⚠ 팔은 **사람이 top-level 세션으로** 돌려야 한다 — 서브에이전트 대행은 측정 자체가 안 된다([ADR-16] ②).
 
 ## 4. 미해결 / 주의
-- **재제안 금지 목록은 이제 AGENTS.md 부트스트랩의 `blocks-index` 블록이 소유한다**([PRO-14]·[ADR-18]) —
-  여기 복제하지 말 것(단일 출처는 원장). 표식 없이 남는 주의: [ADR-07] 계측기 자기언급 오염 —
-  새 계측기는 *실행 표면*만 보게 설계하라([ADR-19]에서 3회차 재현).
-- **수치 정정 반영 필요**: 서브에이전트 턴 234→1608, fix 버킷 동형성 1.00(n=8)→0.80(n=9). 동형성은 시퀀스가
-  아니라 *도구 이름 집합* Jaccard이고 코퍼스 의존이다(전 프로젝트 186세션 기준 0.39). [ADR-15]의 착수 근거
-  ("가장 반증당하기 쉬운 자리")는 이 하향에도 유지된다.
-- **과거 실측 기준선을 팔 ①로 재사용 금지** — 자연 작업 분포이고 살아 움직인다(17.28→16.95→17.39로 실제 이동).
-- **스위트 범위**: D1~D5는 전부 *순수 함수 국소 결함*이다. 다중 모듈·경합 결함으로 일반화 금지 —
-  [ADR-15] 반증 판정 시 이 범위를 함께 읽을 것. 오라클은 *이 체크아웃의* 테스트 파일이라 드리프트 여지가 있다.
-- append-only 평면은 표머리 행 편집도 위반으로 잡힌다(의도된 Fail-close 방향).
-- HANDOFF가 누설 가드를 통과하는 건 본문에 마커 단어(예시 등)가 우연히 있기 때문이다. HANDOFF는 init RESET
-  대상이라 채택자에게 상속되진 않는다 — 가드 적용 방식은 재검토 여지.
+- **미커밋·미푸시**: 로컬 6커밋이 origin에 없다. `ref/`(외부 리서치 63KB)와
+  `spike/SPIKE-fdt_canon_import_utility_analysis.md`는 **의도적으로 커밋하지 않았다** —
+  후자는 실 위탁 리포트라 누설 가드가 정당하게 막는다(더미 마커를 붙이면 트립와이어 무력화).
+  공개 여부는 인간 판단 사항. 이 파일 하나가 `leakage` FAIL 1건 + `ref-linter` 게이팅 30건의 원인 전부다.
+- **[PRO-14] §4.1 실측 교정**: 예산 감소는 관측되지 않았다(2044→2072). 원인은 별건 —
+  `context-budget.js`가 **AGENTS.md를 측정하지 않는다**(대상은 project·profile·handoff).
+  상시 주입 파일의 비용이 예산 게이트에 안 보인다 → 차원 추가 여부는 미결.
+- **관측 지표 둘**: `health`의 `tier distribution`이 `draft:0`에서 움직이는가([PRO-12] 실사용 여부) ·
+  GRANT-02가 3개월 뒤에도 철회되지 않으면 규칙 승격(PRO) 검토 — 지금 승격하지 않은 이유가 증거 부족이다.
+- **갭 분석 §3-C 미해소**: 효과 표면(git push·Bash)이 평면 밖 비구조 allowlist로 통제된다.
+  최소 조치는 `health.js` 관측 차원 1개. 새 게이트는 증거 후.
+- 재제안 금지 목록은 이제 **AGENTS.md의 `blocks-index` 블록**이 소유한다 — 여기 복제하지 말 것([ADR-18]).
 
 ## 5. 검증 상태
-- 게이트 전부 그린: naming·history·leakage·permission(+strict)·tool·smell·tools-index·size·lock·budget.
-- 테스트 **27스위트 464단언 0 fail**. 부트스트랩 2014/4000 tok.
-- 스위트 빌드 검증 4항(체인 그린·증상 재현·결함 시 오라클 실패·정답 시 통과) D1~D5 전부 통과.
+- 게이트 그린: naming·history·permission(+strict)·handoff·tool·smell·tools-index·**blocks-index**·budget·lock.
+  (leakage만 FAIL 1 — 위 §4의 untracked 파일 하나, 커밋 대상 아님.)
+- 테스트 **28스위트 0 fail** · 부트스트랩 2072/4000 tok · HANDOFF 예산 확인 필요 시 `node scripts/handoff-linter.js`.
