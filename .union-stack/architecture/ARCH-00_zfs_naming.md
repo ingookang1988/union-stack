@@ -30,5 +30,22 @@ No relative paths. Reference only via bracket IDs like `[PLAN-01a1]` in body tex
   node exists, Fail-close. (the alternation rule keeps `01a1` from mistaking `01a10` for a child)
   Automated: `node scripts/blast-radius.js <ID>` — exits 1 if a locked node exists.
 
+## ID space — single and shared, with known aliasing ([ADR-25])
+- The Luhmann coordinate space is **one space shared across domains** — same id in different
+  domains = same lineage. That is the design (`CON-01a` ↔ `PLAN-01a`), not an accident.
+- **Counter domains** (`TOOL`, `PRO`) allocate ids serially, *without* lineage intent. They therefore
+  alias coordinates: `blast-radius TOOL-10` and `PRO-10` return the same impact set even though
+  `TOOL-10` (smell linter) is unrelated to lineage 10 (measured 2026-08-18).
+- **Ruling: the single space stays; no code split.** A domain-level rule cannot separate true coupling
+  from false — `PRO-10 → WO-10a-1` is an intended edge while `TOOL-10 → WO-10a-1` is noise, and both
+  ends live in counter domains. The discriminator is intent, which ID arithmetic cannot see; encoding
+  intent would replace lineage inference (this file's core mechanism) with declared edges.
+  `upward-fetch` is already immune via its `CONTEXT_DOMAINS` whitelist.
+- **Discipline**: when anchoring a new lineage root, know that the low-number band is occupied by
+  counters. Exposure is watched, not gated: `health.js` `lock exposure` (a false lock needs a
+  `Verifying` doc in the aliased lineage — 0 today).
+- **Reopen**: an actually observed false lock or GC block reopens the split proposal, with that
+  incident as evidence.
+
 > The verified regex & decision logic live in `scripts/zfs_util.js`, tests in `scripts/zfs_util.test.js`.
 > The index layer is `scripts/zfs_index.js`.

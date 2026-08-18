@@ -70,6 +70,7 @@ summary · changed-location IDs · next task (single entry point) · open issues
 - ⛔ **[ADR-15]** 시나리오 층 확대(반증 실험 전 신규 시나리오 추가) — 재개 조건: 3-arm A/B에서 어느 시나리오든 ①무시나리오 팔을 이길 때
 - ⛔ **[ADR-21]** feature/live.md 의 Status 열 어휘 정의 — 재개 조건: work-close 가 행의 존재가 아니라 값을 봐야 하는 요구가 실제로 생길 때
 - ⛔ **[ADR-22]** Live 상태값 재도입 — 재개 조건: 운영 중인 산출물을 보호해야 했는데 못 한 사례가 실제로 관측될 때
+- ⛔ **[ADR-25]** 계수 도메인의 계보 ID 공간 분리(코드 수정) — 재개 조건: 잠금 오탐 또는 GC 오차단이 실제 관측될 때
 <!-- blocks-index:end -->
 
 ---
