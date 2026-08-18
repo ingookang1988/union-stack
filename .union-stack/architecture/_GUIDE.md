@@ -1,6 +1,6 @@
 # architecture/ — ought × state (architecture norms) guide
 
-> **Grid position:** ought × state. **Permission:** Schema (human only). **Change velocity:** near-immutable.
+> **Grid position:** ought × state. **Permission:** Schema (human only). *(New docs here may be authored by the agent as `tier: draft` with no approval — zero normative force until a human promotes them. [PRO-12])* **Change velocity:** near-immutable.
 
 ## What goes in
 - Architecture rules: layer definitions, dependency direction, DDD/FSD boundaries.

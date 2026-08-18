@@ -1,7 +1,7 @@
 # project/ — Frame (boundary) + unified time-3-axis layer guide
 
 > **Layer:** Frame (Boundary). Not a cell of the grid, but the boundary that defines "what this project is."
-> **Permission:** Schema (human edits only, agent read-only)
+> **Permission:** Schema (human edits only, agent read-only) *(New docs here may be authored by the agent as `tier: draft` with no approval — zero normative force until a human promotes them. [PRO-12])*
 > **Change velocity:** identity is near-immutable; the children (roadmap·history) each move at their own pace.
 
 ## Three time axes in one folder (core design)

@@ -1,5 +1,5 @@
 # plan/ — contract × action (tactical planning) guide
-> **Grid:** contract (agreed) × action. **Permission:** Schema (human-owned, planning isolated).
+> **Grid:** contract (agreed) × action. **Permission:** Schema (human-owned, planning isolated). *(New docs here may be authored by the agent as `tier: draft` with no approval — zero normative force until a human promotes them. [PRO-12])*
 > **Change velocity:** frequently created/destroyed — hence split from immutable norms (entropy isolation).
 
 ## Goes in: "what we agreed to do." Feature-level requirements & intent.
