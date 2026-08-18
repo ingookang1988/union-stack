@@ -49,6 +49,9 @@ const METHODOLOGY = new Set([
   'TOOL-17_scenario_defect_correction.md',
   'TOOL-18_scenario_rubric.md', 'TOOL-19_eval_arm.md', 'TOOL-20_e6_workspace.md',
   'TOOL-21_template_update.md', 'TOOL-22_blocks_index.md', 'TOOL-23_work_close.md',
+  // 자기 도그푸딩 작업 오더 — 공개 방법론(eval/PROTOCOL §3-bis · eval/e6-suite)의 *실행* 지시다.
+  // 위탁 데이터 0. 더미로 만들면 실행 불가한 지시가 되므로 마커 대신 등재로 닫는다.
+  'WO-10a-1_e6_scenario_ab_cycle.md',
 ]);
 
 // 더미 표시 마커. 슬러그 또는 본문 어디든 있으면 sanitize된 것으로 간주.
