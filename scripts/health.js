@@ -22,7 +22,7 @@ const SIZE_CAP_KB = 30; // soft cap — 초과 시 분할/로테이션 권고
 // 계약 선언([PRO-11] — [GRAM-12c] 꼴).
 const CONTRACT = {
   gate: 'Health Scorecard Gate (health) — 집계',
-  input: '각 게이트의 순수 함수 재호출 결과 + .union-stack/ 구조 지표(크기·참조·예산·잠금·sync·lessons·tier)',
+  input: '각 게이트의 순수 함수 재호출 결과 + .union-stack/ 구조 지표(크기·참조·예산·잠금·sync·lessons·tier·effect surface)',
   predicate: '개별 게이트 FAIL 0건이면 건강. sync·lessons·tier 절은 판정 없는 관측 병치([PRO-11] §4 측도 금지)',
   scope: '자기 준수도만 잰다 — 하네스 효능(true A/B)은 eval/PROTOCOL.md 소관. 관측 절은 stale "판정"을 하지 않는다',
   outcomes: ['PASS', 'REJECT'],
@@ -39,6 +39,10 @@ const SYNC_PLANES = [
 const LEDGER = '.union-stack/archive_ledger.md';
 const LESSONS_DIR = '.union-stack/reference/lessons';
 
+// 효과 표면(갭 분석 §3-C) — 비가역 외부 효과는 평면이 아니라 에이전트 설정의 문자열 allowlist가 다스린다.
+// [ADR-08]의 논리는 "훅으로 *강제*하지 않는다"였지 "*관측*하지 않는다"가 아니었다. 그래서 게이트가 아니라 관측 1절이다.
+const EFFECT_SETTINGS = ['.claude/settings.json', '.claude/settings.local.json'];
+
 /** 본문에서 가장 늦은 YYYY-MM-DD를 뽑는다(순수). 없으면 null — "무기입"으로 표기된다. */
 function lastDateIn(txt) {
   const ds = String(txt || '').match(/\b20\d{2}-\d{2}-\d{2}\b/g);
@@ -46,7 +50,7 @@ function lastDateIn(txt) {
 }
 
 /** 순수 계산: 1차 지표 → 차원별 평가 리포트. (FS 비의존 → 테스트 용이) */
-function computeHealth({ index, domainsDefined, guideCount, namingViolations, historyViolations, leakageViolations, oversize = [], brokenRefs = 0, budget = null, sync = null, lessons = null }) {
+function computeHealth({ index, domainsDefined, guideCount, namingViolations, historyViolations, leakageViolations, oversize = [], brokenRefs = 0, budget = null, sync = null, lessons = null, effect = null }) {
   const used = new Set(index.map(d => d.domain));
   const unused = domainsDefined.filter(d => !used.has(d));
   const locked = index.filter(d => LOCKED.includes(d.status));
@@ -79,6 +83,15 @@ function computeHealth({ index, domainsDefined, guideCount, namingViolations, hi
     dims.push({ name: 'lessons lifecycle', status: 'INFO',
       value: `${lessons.total} LSN`,
       note: `status없음:${lessons.unmarked} 조건부(valid_reason):${lessons.conditional}` });
+  }
+  if (effect) {
+    dims.push({ name: 'effect surface', status: 'INFO',
+      value: effect.files.length
+        ? `allow ${effect.allow} · deny ${effect.deny} · ask ${effect.ask} · wildcard ${effect.wildcard}`
+        : '설정 파일 없음 — 관측 불가',
+      note: effect.files.length
+        ? Object.entries(effect.byTool).map(([t, n]) => `${t}:${n}`).join(' ') + '  ← ' + effect.files.join(' ')
+        : '' });
   }
   const tiers = { draft: 0, reviewed: 0, ratified: 0, untagged: 0 };
   index.forEach(d => { tiers[d.tier && tiers[d.tier] !== undefined ? d.tier : 'untagged']++; });
@@ -114,7 +127,7 @@ function gather(root = path.resolve(__dirname, '..')) {
   return computeHealth({
     index, domainsDefined: [...VALID_DOMAINS], guideCount: countGuides(root),
     namingViolations, historyViolations, leakageViolations, oversize, brokenRefs, budget,
-    sync: gatherSync(root), lessons: gatherLessons(root),
+    sync: gatherSync(root), lessons: gatherLessons(root), effect: gatherEffectSurface(root),
   });
 }
 
@@ -125,6 +138,40 @@ function gatherSync(root) {
   const ledgerTxt = readIf(LEDGER);
   const ledgerEntries = new Set(ledgerTxt.match(/ADR-\d+/g) || []).size;
   return { planes, ledgerEntries, ledgerLast: lastDateIn(ledgerTxt) };
+}
+
+/**
+ * 권한 규칙 목록 → 효과 표면 계수(순수). entriesByFile: {경로: {allow,deny,ask}}.
+ * 의미 분류(어느 규칙이 위험한가)는 하지 않는다 — 규칙 목록 자체가 평면 밖이라 등급을 매길 근거가 없다.
+ * 구조만 센다: 몇 개인가 · 도구별로 몇 개인가 · 몇 개가 와일드카드(prefix 매칭이라 경계가 흐린 것)인가.
+ * 도구 이름은 **규칙에서 도출**한다 — 목록을 박으면 새 효과 표면(PowerShell·WebFetch…)이 조용히 누락된다.
+ */
+function computeEffectSurface(entriesByFile = {}) {
+  const out = { files: [], allow: 0, deny: 0, ask: 0, wildcard: 0, byTool: {} };
+  for (const [file, perms] of Object.entries(entriesByFile)) {
+    out.files.push(file);
+    for (const k of ['allow', 'deny', 'ask']) out[k] += (perms && perms[k] ? perms[k].length : 0);
+    for (const rule of (perms && perms.allow) || []) {
+      const m = String(rule).match(/^([A-Za-z_][A-Za-z_0-9]*)\(/);
+      const tool = m ? m[1] : '(무형식)';
+      out.byTool[tool] = (out.byTool[tool] || 0) + 1;
+      if (String(rule).includes('*')) out.wildcard++;
+    }
+  }
+  out.byTool = Object.fromEntries(Object.entries(out.byTool).sort((a, b) => b[1] - a[1]));
+  return out;
+}
+
+/** 에이전트 설정의 권한 목록을 읽어 계수한다(관측만 — 판정·차단 없음). */
+function gatherEffectSurface(root) {
+  const byFile = {};
+  for (const rel of EFFECT_SETTINGS) {
+    const abs = path.join(root, rel);
+    if (!fs.existsSync(abs)) continue;
+    try { byFile[rel] = (JSON.parse(fs.readFileSync(abs, 'utf8')) || {}).permissions || {}; }
+    catch { byFile[rel] = {}; } // 파싱 실패도 관측 결과다 — 규칙 0으로 세고 파일명은 남긴다
+  }
+  return computeEffectSurface(byFile);
 }
 
 /** LSN frontmatter의 status·valid_reason 표면화([PRO-11] C2 축소형 — 기존 필드를 읽기만). */
@@ -156,6 +203,6 @@ function run(root) {
   return r.fails ? 1 : 0;
 }
 
-module.exports = { computeHealth, gather, gatherSync, gatherLessons, lastDateIn, CONTRACT };
+module.exports = { computeHealth, gather, gatherSync, gatherLessons, computeEffectSurface, gatherEffectSurface, lastDateIn, CONTRACT };
 
 if (require.main === module) process.exit(withContract(CONTRACT, () => run())());

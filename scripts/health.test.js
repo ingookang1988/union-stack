@@ -1,6 +1,6 @@
 // scripts/health.test.js
 // 순수 계산부(computeHealth) 단위 + gather() 스모크. 실행: node scripts/health.test.js
-const { computeHealth, gather } = require('./health');
+const { computeHealth, gather, computeEffectSurface } = require('./health');
 
 let pass = 0, fail = 0;
 function check(label, cond) { if (cond) pass++; else { fail++; console.error(`FAIL ${label}`); } }
@@ -37,9 +37,27 @@ check('ref integrity INFO', sz.dims.find(d => d.name === 'ref integrity').value.
 const g = gather();
 const nonLeakFails = g.dims.filter(d => d.status === 'FAIL' && d.name !== 'leakage gate').length;
 check('gather 커밋 평면 게이트 그린', nonLeakFails === 0);
-check('gather dims 12 (관측 3절 포함)', g.dims.length === 12);
+check('gather dims 13 (관측 4절 포함)', g.dims.length === 13);
 check('sync 절은 INFO(판정 없음)', g.dims.find(d => d.name === 'plane sync').status === 'INFO');
 check('tier 절은 INFO(관측만)', g.dims.find(d => d.name === 'tier distribution').status === 'INFO');
+
+// 효과 표면 관측(갭 분석 §3-C) — 순수 계수. 도구 이름은 규칙에서 도출되어야 한다(목록 하드코딩 금지).
+const es = computeEffectSurface({
+  'a.json': { allow: ['Bash(git push *)', 'Bash(node x.js)', 'WebFetch(domain:example.com)'], deny: ['Bash(rm *)'], ask: [] },
+  'b.json': { allow: ['PowerShell(ls)', '무형식규칙'] },
+});
+check('effect: allow 총계', es.allow === 5);
+check('effect: deny 총계', es.deny === 1);
+check('effect: wildcard 계수', es.wildcard === 1);
+check('effect: 도구를 데이터에서 도출(PowerShell·WebFetch 누락 없음)',
+  es.byTool.Bash === 2 && es.byTool.WebFetch === 1 && es.byTool.PowerShell === 1);
+check('effect: 괄호 없는 규칙은 (무형식)', es.byTool['(무형식)'] === 1);
+check('effect: 파일 2개 기록', es.files.length === 2);
+
+// 설정 파일이 없으면 "관측 불가"로 표기 — 없는 것을 0으로 단정하지 않는다.
+const noEffect = computeHealth({ index, domainsDefined: defined, guideCount: 5, namingViolations: 0, historyViolations: 0, leakageViolations: 0, effect: computeEffectSurface({}) });
+check('effect: 설정 없으면 관측 불가', noEffect.dims.find(d => d.name === 'effect surface').value.includes('관측 불가'));
+check('effect 절은 INFO(판정 없음)', noEffect.dims.find(d => d.name === 'effect surface').status === 'INFO');
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
