@@ -20,6 +20,25 @@ const { walkFiles } = require('./fs_walk');
 // 끝의 (\??)로 forward 마커를 포착: `[PLAN-09z]`=일반, `[PLAN-09z?]`=의도된 forward.
 const REF_RE = /\[([A-Z]{2,6})-([0-9][0-9a-z-]*)(\??)\]/g;
 
+// 행 정본 저장소([ADR-24]) — ADR은 archive_ledger의 *행*, GRANT는 GRANTS의 *행*이라 파일 색인에
+// 영원히 없다. 참조 대상이 실존하므로 known set에 편입한다(제외가 아니라 편입 — 제외하면
+// 유령 참조 [ADR-99] 오타가 영원히 통과한다). buildIndex에는 절대 넣지 않는다: ADR-16의
+// id "16"이 색인에 들어가면 계보 16을 오염시킨다(계수 도메인 앨리어싱의 역수입).
+const ROW_STORES = [
+  { rel: '.union-stack/archive_ledger.md', re: /^- \[\d{4}-\d{2}-\d{2}\]\[(ADR-\d+)\]:/gm },
+  { rel: '.union-stack/project/GRANTS.md', re: /^\|\s*(GRANT-\d+)\s*\|/gm },
+];
+
+/** 행 정본 텍스트에서 앵커 ID만 뽑는다(순수). 본문 속 *언급*은 앵커가 아니다 —
+ *  언급까지 넣으면 존재하지 않는 ADR을 참조한 문장이 스스로를 해소해 검출력을 잃는다. */
+function rowAnchors(text, re) {
+  const out = [];
+  let m;
+  re.lastIndex = 0;
+  while ((m = re.exec(String(text || ''))) !== null) out.push(m[1]);
+  return out;
+}
+
 /** 텍스트에서 참조 추출(순수). forward=true 면 의도된 미래참조(게이트 면제). */
 function extractRefs(text) {
   const out = [];
@@ -44,6 +63,11 @@ function findBroken(refs, knownSet) {
 // gateOnly=true면 정화-면제 파일(_GUIDE·방법론·더미)은 건너뛴다(게이팅 대상만 수집).
 function gather(root = path.resolve(__dirname, '..'), gateOnly = false) {
   const known = new Set(buildIndex(root).map(d => `${d.domain}-${d.id}`));
+  for (const s of ROW_STORES) {
+    let txt = '';
+    try { txt = fs.readFileSync(path.join(root, s.rel), 'utf8'); } catch { continue; }
+    for (const id of rowAnchors(txt, s.re)) known.add(id);
+  }
   const broken = [];
   walkFiles(root, '.union-stack', rel => {
     if (!rel.endsWith('.md')) return;
@@ -82,6 +106,6 @@ function run(root) {
   return 0;
 }
 
-module.exports = { extractRefs, findBroken, gather, gatherGating, run };
+module.exports = { extractRefs, findBroken, rowAnchors, ROW_STORES, gather, gatherGating, run };
 
 if (require.main === module) process.exit(run());
