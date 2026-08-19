@@ -115,20 +115,27 @@ function gather(root = path.resolve(__dirname, '..')) {
   const historyViolations = fs.existsSync(hp) ? historyViolationsOf(fs.readFileSync(hp, 'utf8')).length : 0;
   const leakageViolations = collectFiles(root)
     .filter(rel => !isSanitized(rel, fs.readFileSync(path.join(root, rel), 'utf8'))).length;
-  const oversize = [];
+  // 크기는 *전부* 수집하고 초과분만 게이트로 넘긴다. 상한 근접(append-only 원장 등)은
+  // 불리언 게이트가 넘는 순간에만 말하므로, 헤드룸을 보려면 분포가 필요하다(대시보드 소비).
+  const sizes = [];
   walkFiles(root, '.union-stack', rel => {
     if (!rel.endsWith('.md')) return;
     let kb = 0;
-    try { kb = Math.round(fs.statSync(path.join(root, rel)).size / 1024); } catch { return; }
-    if (kb > SIZE_CAP_KB) oversize.push({ file: rel, kb });
+    try { kb = +(fs.statSync(path.join(root, rel)).size / 1024).toFixed(1); } catch { return; }
+    sizes.push({ file: rel, kb });
   });
+  sizes.sort((a, b) => b.kb - a.kb);
+  const oversize = sizes.filter(s => s.kb > SIZE_CAP_KB).map(s => ({ file: s.file, kb: Math.round(s.kb) }));
   const brokenRefs = gatherBrokenRefs(root).length;
   const budget = gatherBudget(root);
-  return computeHealth({
+  const sync = gatherSync(root);
+  const r = computeHealth({
     index, domainsDefined: [...VALID_DOMAINS], guideCount: countGuides(root),
     namingViolations, historyViolations, leakageViolations, oversize, brokenRefs, budget,
-    sync: gatherSync(root), lessons: gatherLessons(root), effect: gatherEffectSurface(root),
+    sync, lessons: gatherLessons(root), effect: gatherEffectSurface(root),
   });
+  // 판정(dims) 외에 원자료도 함께 낸다 — 대시보드가 같은 수집을 두 번 하지 않도록(합성 원칙).
+  return { ...r, sizes, sizeCapKb: SIZE_CAP_KB, sync };
 }
 
 /** 평면별 최종 기입 날짜 + ledger 항목 수를 모은다(관측만 — [PRO-11] C3). */

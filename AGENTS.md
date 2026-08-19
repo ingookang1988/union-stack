@@ -168,5 +168,5 @@ this file only pins the deterministic core. The detail lives in the structure.
 - **[TOOL-22]** blocks-index (재제안 차단 표식의 상시 주입 인덱스) — 원장·제안의 `blocks:`/`reopen_when:` 표식을 모아 AGENTS.md 마커 블록에 컴파일한다 — 이미 결정된 방향의 재제안을 다음 세션이 반복하지 않게([PRO-14]). (`scripts/blocks-index.js`)
 - **[TOOL-23]** work-close (작업 종료 의례 — 진입 의례의 거울) — WO를 닫을 때 상위 축 흔적(`closed_by`)과 증거(`evidence`)를 검사해 미충족을 CLARIFY로 표면화하고, `sprint/next.md` 작업대 뷰를 WO 문서에서 재생성한다([PRO-15]). (`scripts/work-close.js`)
 - **[TOOL-24]** lineage-tree (계보 트리 렌더러) — 평면 전체를 루만 계보 포레스트로 그려 자기완결 HTML 1장으로 낸다. 큰/낯선 평면에서의 (`scripts/lineage-tree.js`)
-- **[TOOL-25]** dashboard (평면 대시보드 — 관측 표면 합성) — 관측 표면 4개를 자기완결 HTML 1장으로 **합성**한다: Health 게이트+관측([TOOL-04]) · (`scripts/dashboard.js`)
+- **[TOOL-25]** dashboard (평면 대시보드 — 관측 표면 합성) — 관측 표면을 자기완결 HTML 1장으로 **합성**한다 — 스탯 타일 4개 + 카드 7절: (`scripts/dashboard.js`)
 <!-- tools-index:end -->

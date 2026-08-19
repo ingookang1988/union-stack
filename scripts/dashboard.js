@@ -79,6 +79,61 @@ function budgetSection(b) {
   ${b.rows.map(bar).join('\n')}</section>`;
 }
 
+/** health.gather().sizes → 크기 헤드룸 바(순수, 상위 N건).
+ *  불리언 게이트(`0 > 30KB`)는 상한을 *넘는 순간*에만 말한다. append-only 원장처럼 줄어들 수
+ *  없는 파일은 임박을 미리 봐야 분할·로테이션을 제때 결정할 수 있다. */
+function sizeSection(sizes = [], capKb = 30, top = 6) {
+  if (!sizes.length) return '';
+  const rowsHtml = sizes.slice(0, top).map(s => {
+    const pct = Math.min(100, Math.round((s.kb / capKb) * 100));
+    const cls = s.kb > capKb ? ' bover' : pct >= 80 ? ' bnear' : '';
+    return `<div class="brow"><span class="bnm sz" title="${esc(s.file)}">${esc(s.file.split('/').pop())}</span>`
+      + `<span class="bbar"><span class="bfill${cls}" style="width:${pct}%"></span></span>`
+      + `<span class="bval${s.kb > capKb ? ' bad' : ''}">${s.kb}KB</span></div>`;
+  }).join('\n');
+  const near = sizes.filter(s => s.kb <= capKb && s.kb / capKb >= 0.8).length;
+  const over = sizes.filter(s => s.kb > capKb).length;
+  return `<section class="card" id="size"><h2>파일 크기 헤드룸 — 상한 ${capKb}KB</h2>
+  <div class="meta">${sizes.length} files · ${over ? `<span class="bad">초과 ${over}</span> · ` : ''}상한 80% 근접 ${near}건</div>
+  ${rowsHtml}</section>`;
+}
+
+/** health.gather().sync → 평면 신선도(순수). 무기입은 "지연"이 아니라 *죽은 평면*이라 따로 표시. */
+function syncSection(sync, today) {
+  if (!sync) return '';
+  const days = d => {
+    const ms = Date.parse(today + 'T00:00:00Z') - Date.parse(d + 'T00:00:00Z');
+    return Number.isFinite(ms) ? Math.round(ms / 86400000) : null;
+  };
+  const pill = p => {
+    if (!p.last) return `<span class="pill dead">${esc(p.name)}<b>무기입</b></span>`;
+    const n = days(p.last);
+    const cls = n === null ? '' : n >= 30 ? ' stale' : n >= 7 ? ' aging' : ' fresh';
+    return `<span class="pill${cls}" title="${esc(p.last)}">${esc(p.name)}<b>${n === null ? esc(p.last) : n === 0 ? '오늘' : n + '일'}</b></span>`;
+  };
+  const dead = sync.planes.filter(p => !p.last).length;
+  return `<section class="card" id="sync"><h2>평면 신선도 — 마지막 기입</h2>
+  <div class="meta">ledger ${sync.ledgerEntries} entries · last ${esc(sync.ledgerLast || '무기입')}`
+    + `${dead ? ` · <span class="bad">무기입 ${dead}면</span>` : ''}</div>
+  <div class="pills">${sync.planes.map(pill).join('')}</div></section>`;
+}
+
+/** health.gather() effect surface 절의 byTool → 도구별 막대(순수). 한 줄 텍스트를 스캔 가능하게. */
+function effectSection(dim) {
+  if (!dim || !dim.note) return '';
+  const pairs = dim.note.split('←')[0].trim().split(/\s+/)
+    .map(t => { const i = t.lastIndexOf(':'); return i > 0 ? { tool: t.slice(0, i), n: +t.slice(i + 1) } : null; })
+    .filter(p => p && Number.isFinite(p.n));
+  if (!pairs.length) return '';
+  const max = Math.max(...pairs.map(p => p.n));
+  const bars = pairs.map(p => `<div class="brow"><span class="bnm">${esc(p.tool)}</span>`
+    + `<span class="bbar"><span class="bfill" style="width:${Math.round((p.n / max) * 100)}%"></span></span>`
+    + `<span class="bval">${p.n}</span></div>`).join('\n');
+  return `<section class="card" id="effect"><h2>효과 표면 — 도구별 allow 규칙</h2>
+  <div class="meta">${esc(dim.value)}</div>
+  ${bars}</section>`;
+}
+
 /** work-close.gather() 결과 → 활성 작업대(순수). 활성 판정은 export 된 ACTIVE 소비. */
 function worktableSection(wos) {
   const act = wos.filter(w => !w.malformed && ACTIVE.has(w.status));
@@ -140,21 +195,32 @@ const DASH_CSS = `
   .bbar { flex:1; max-width:260px; height:8px; background:var(--line); border-radius:4px; overflow:hidden; }
   .bfill { display:block; height:100%; background:#2a78d6; }
   .bover { background:#b42318; }
+  .bnear { background:#b54708; }
   .bval { color:var(--muted); font-family:ui-monospace, Consolas, monospace; }
+  .bnm.sz { min-width:0; flex:0 0 210px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+            font-family:ui-monospace, Consolas, monospace; font-size:11.5px; }
+  .pills { display:flex; flex-wrap:wrap; gap:8px; margin:10px 18px 0; }
+  .pill { display:inline-flex; align-items:baseline; gap:6px; padding:4px 10px; border-radius:999px;
+          border:1px solid var(--line); background:#fafbfc; font-size:11.5px; color:var(--muted); }
+  .pill b { font-family:ui-monospace, Consolas, monospace; color:var(--ink); }
+  .pill.fresh { border-color:#a6e0c1; background:#f0fbf5; } .pill.fresh b { color:#067647; }
+  .pill.aging { border-color:#f0d08a; background:#fffaf0; } .pill.aging b { color:#b54708; }
+  .pill.stale, .pill.dead { border-color:#f1bcb7; background:#fef6f5; } .pill.stale b, .pill.dead b { color:#b42318; }
   .card .plane { font:12.5px/1.45 ui-monospace, Consolas, monospace; }
   .card .plane section { padding:10px 18px; }
   .card .plane > .meta, .card .plane > .legend, .card .plane > .flt { margin:8px 18px 0; }
 `;
 
-/** 수집된 4표면 → 자기완결 HTML(순수 — FS 접근 없음). */
+/** 수집된 표면 → 자기완결 HTML(순수 — FS 접근 없음). */
 function render(data, { title = 'plane' } = {}) {
-  const { index, health, budget, wos } = data;
+  const { index, health, budget, wos, today } = data;
+  const effectDim = (health.dims || []).find(d => d.name === 'effect surface');
   return `<!doctype html>
 <meta charset="utf-8">
 <title>dashboard — ${esc(title)}</title>
 <style>${PLANE_CSS}${DASH_CSS}</style>
 <nav><b>${esc(title)} — 평면 대시보드</b>
-  <a href="#health">Health</a><a href="#budget">예산</a><a href="#wo">작업대</a><a href="#plane">계보</a></nav>
+  <a href="#health">Health</a><a href="#budget">예산</a><a href="#wo">작업대</a><a href="#size">크기</a><a href="#plane">계보</a></nav>
 <main>
 ${tilesSection(data)}
 <div class="grid">
@@ -162,7 +228,12 @@ ${healthSection(health)}
 <div class="col">
 ${budgetSection(budget)}
 ${worktableSection(wos)}
+${syncSection(health.sync, today)}
 </div>
+</div>
+<div class="grid">
+${sizeSection(health.sizes, health.sizeCapKb)}
+${effectSection(effectDim)}
 </div>
 <section class="card" id="plane"><h2>계보 — 평면 전체</h2>
 <div class="plane">${planeBody(index)}</div>
@@ -172,12 +243,15 @@ ${worktableSection(wos)}
 `;
 }
 
-/** 4표면 수집(read-only). */
-function gatherAll(root = path.resolve(__dirname, '..')) {
-  return { index: buildIndex(root), health: gatherHealth(root), budget: gatherBudget(root), wos: gatherWos(root) };
+/** 표면 수집(read-only). `today`는 신선도 경과일 계산용 — 순수 렌더에 주입한다. */
+function gatherAll(root = path.resolve(__dirname, '..'), today = new Date().toISOString().slice(0, 10)) {
+  return { index: buildIndex(root), health: gatherHealth(root), budget: gatherBudget(root), wos: gatherWos(root), today };
 }
 
-module.exports = { tilesSection, healthSection, budgetSection, worktableSection, render, gatherAll, MARKS };
+module.exports = {
+  tilesSection, healthSection, budgetSection, worktableSection,
+  sizeSection, syncSection, effectSection, render, gatherAll, MARKS,
+};
 
 if (require.main === module) {
   const args = process.argv.slice(2);

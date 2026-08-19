@@ -1,7 +1,8 @@
 // scripts/dashboard.test.js
 // 섹션 함수(순수) 단위 + 실평면 합성 스모크. 대시보드는 *합성*이므로 여기서는 그리기만 검증한다 —
 // 데이터의 옳음은 각 소스 도구의 테스트(health·context-budget·work-close·lineage-tree)가 소유한다.
-const { tilesSection, healthSection, budgetSection, worktableSection, render, gatherAll } = require('./dashboard');
+const { tilesSection, healthSection, budgetSection, worktableSection,
+  sizeSection, syncSection, effectSection, render, gatherAll } = require('./dashboard');
 
 let pass = 0, fail = 0;
 function check(label, cond) { if (cond) pass++; else { fail++; console.error(`FAIL ${label}`); } }
@@ -57,10 +58,41 @@ check('worktable: 제목 이스케이프', !ws.includes('<b>x</b>') && ws.includ
 const wm = worktableSection([{ id: null, file: 'sprint/broken.md', malformed: true, closed_by: [] }]);
 check('worktable: malformed 경고', wm.includes('frontmatter 없는 WO 1건'));
 
+// sizeSection — 헤드룸: 초과·근접·정상 3단계, 빈 입력은 조각 없음
+check('size: 빈 입력 → 조각 없음', sizeSection([], 30) === '');
+const ss = sizeSection([
+  { file: 'a/over.md', kb: 35 }, { file: 'a/near.md', kb: 27 }, { file: 'a/ok.md', kb: 3 },
+], 30);
+check('size: 초과 강조', ss.includes('bover') && ss.includes('초과 1'));
+check('size: 80% 근접 계수', ss.includes('근접 1건') && ss.includes('bnear'));
+check('size: 바 폭 상한 100%', ss.includes('width:100%') && !ss.includes('width:116%'));
+check('size: 파일명만 표기(경로는 title)', ss.includes('>over.md<') && ss.includes('title="a/over.md"'));
+
+// syncSection — 무기입은 "지연"이 아니라 죽은 평면, 경과일은 today 주입으로 결정적
+const sy = syncSection({
+  planes: [{ name: 'gap', last: null }, { name: 'evidence', last: '2026-08-18' }, { name: 'old', last: '2026-06-01' }],
+  ledgerEntries: 26, ledgerLast: '2026-08-18',
+}, '2026-08-18');
+check('sync: 무기입 별도 표시', sy.includes('무기입') && sy.includes('pill dead'));
+check('sync: 당일은 "오늘"', sy.includes('오늘') && sy.includes('fresh'));
+check('sync: 30일 이상은 stale', sy.includes('stale') && sy.includes('78일'));
+check('sync: 무기입 카운트', sy.includes('무기입 1면'));
+check('sync: 없는 입력 → 조각 없음', syncSection(null, '2026-08-18') === '');
+
+// effectSection — byTool 텍스트를 막대로, 최대값 기준 정규화
+const es2 = effectSection({ value: 'allow 92', note: 'Bash:41 WebFetch:40 Skill:2  ← .claude/settings.local.json' });
+check('effect: 도구 3종 파싱', (es2.match(/class="brow"/g) || []).length === 3);
+check('effect: 최대값이 100%', es2.includes('width:100%'));
+check('effect: 파일 경로는 막대가 되지 않음', !es2.includes('settings.local.json<'));
+check('effect: 없는 입력 → 조각 없음', effectSection(null) === '' && effectSection({ value: 'x' }) === '');
+
 // render — 실평면 합성 스모크
 const data = gatherAll();
 const html = render(data, { title: 'real' });
-check('합성: 4섹션 전부', ['id="health"', 'id="budget"', 'id="wo"', 'id="plane"'].every(s => html.includes(s)));
+check('합성: 7섹션 전부',
+  ['id="health"', 'id="budget"', 'id="wo"', 'id="sync"', 'id="size"', 'id="effect"', 'id="plane"'].every(s => html.includes(s)));
+check('합성: 크기 헤드룸이 원장을 잡는다', html.includes('archive_ledger.md'));
+check('합성: 신선도 pill', html.includes('class="pills"') && html.includes('evidence'));
 check('합성: health 차원 등장', html.includes('naming gate') && html.includes('effect surface'));
 check('합성: 활성 WO 등장', html.includes('[WO-10a-1]'));
 check('합성: 계보 트리 + 필터 포함', html.includes('계보 트리 — 구조가 있는 노드') && html.includes('class="flt"'));
