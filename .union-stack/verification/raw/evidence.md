@@ -10,3 +10,4 @@
 - [2026-08-19][EVD-ci] gates green @ 637bc83 (run 32205117606) — naming·history·permission·handoff·tests·health
 - [2026-08-19][EVD-ci] gates green @ 88c8b73 (run 32205618094) — naming·history·permission·handoff·tests·health
 - [2026-08-19][EVD-ci] gates green @ 99046dd (run 32207556166) — naming·history·permission·handoff·tests·health
+- [2026-08-19][EVD-ci] gates green @ 1442c3e (run 32214214545) — naming·history·permission·handoff·tests·health
