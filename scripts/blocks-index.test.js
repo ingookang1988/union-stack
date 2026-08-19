@@ -77,5 +77,19 @@ check('실레포 항목 전부 reopen_when 보유', real.every(i => i.reopen_whe
 // --- 계약 완전성 ---
 check('CONTRACT 필수 필드 완비', validateContract(CONTRACT).length === 0);
 
+// --- parseLedger: 원장 실행만(예시 행·하위 메타 행·본문 언급 제외) — 시간축 페이지 소비 ---
+const { parseLedger } = require('./blocks-index');
+const ledgerFix = [
+  '- (예시) [2026-01-01][ADR-01]: 예시 행.',
+  '- [2026-08-18][ADR-23]: 실행 하나.',
+  '  - [ADR-23] blocks: "x" · reopen_when: "y"',
+  '본문 속 [ADR-99] 언급.',
+  '- [2026-08-19][ADR-24]: 실행 둘 — 상세.',
+].join('\n');
+const rows = parseLedger(ledgerFix);
+check('parseLedger 실행 2건', rows.length === 2);
+check('parseLedger 날짜·id·본문', rows[0].date === '2026-08-18' && rows[0].id === 'ADR-23' && rows[1].text.startsWith('실행 둘'));
+check('parseLedger 빈 입력', parseLedger('').length === 0);
+
 console.log(`blocks-index.test: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

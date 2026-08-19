@@ -57,6 +57,40 @@ function isEmptyCell(c) {
  * 순수 함수 — FS 접근 없음. 반환: [{line, fact}] (line은 1-기준).
  * (일반화 확장점: 컬럼 규칙을 인자로 빼면 lessons/proposals에도 재사용 가능.)
  */
+/**
+ * 분기점 표 → 항목 배열(순수) — 시간축 페이지가 소비한다.
+ * findViolations 와 같은 표 인식 규칙을 쓴다(파서 정본은 이 파일 하나 — 중복 파서는 드리프트).
+ * 반환: [{date, fact, reason, note, example}] — "(예시)" 행은 example: true 로 표시만 하고 거르지 않는다.
+ */
+function parseEntries(md) {
+  const lines = String(md || '').split(/\r?\n/);
+  const out = [];
+  for (let i = 0; i < lines.length - 1; i++) {
+    if (!isTableRow(lines[i]) || isSeparatorRow(lines[i])) continue;
+    if (!isSeparatorRow(lines[i + 1])) continue;
+    const header = splitCells(lines[i]);
+    const factCol = header.findIndex(h => FACT_HEADER.test(h));
+    if (factCol === -1) continue;
+    const reasonCol = header.findIndex(h => REASON_HEADER.test(h));
+    const dateCol = header.findIndex(h => /날짜|date/i.test(h));
+    const noteCol = header.findIndex(h => /시사점|고려|note/i.test(h));
+    for (let j = i + 2; j < lines.length && isTableRow(lines[j]); j++) {
+      if (isSeparatorRow(lines[j])) continue;
+      const row = splitCells(lines[j]);
+      const fact = row[factCol] || '';
+      if (isEmptyCell(fact)) continue;
+      out.push({
+        date: dateCol >= 0 ? (row[dateCol] || '') : '',
+        fact,
+        reason: reasonCol >= 0 ? (row[reasonCol] || '') : '',
+        note: noteCol >= 0 ? (row[noteCol] || '') : '',
+        example: /\(예시\)|example/i.test((row[dateCol] || '') + ' ' + fact),
+      });
+    }
+  }
+  return out;
+}
+
 function findViolations(md) {
   const lines = md.split(/\r?\n/);
   const violations = [];
@@ -104,6 +138,6 @@ function run(root = path.resolve(__dirname, '..')) {
   return 0;
 }
 
-module.exports = { findViolations, run, CONTRACT, HISTORY_PATH };
+module.exports = { findViolations, parseEntries, run, CONTRACT, HISTORY_PATH };
 
 if (require.main === module) process.exit(withContract(CONTRACT, () => run())()); // run(root) 시그니처 — argv 전달 금지

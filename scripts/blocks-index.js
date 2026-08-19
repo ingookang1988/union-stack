@@ -148,6 +148,20 @@ function run(argv = process.argv.slice(2), root = path.resolve(__dirname, '..'))
   return outcome;
 }
 
-module.exports = { stripFences, extractBlocks, frontmatterId, buildIndex, inject, gather, CONTRACT, MAX_ENTRIES };
+/**
+ * 원장 실행(row) 파싱(순수) — 시간축 페이지가 소비한다. 앵커 규칙은 ref-linter 의 행 정본과
+ * 동일하다(`- [날짜][ADR-N]:` 실행만 — 예시 행·본문 언급·하위 메타 행은 앵커가 아니다).
+ * 반환: [{date, id, text}] — text 는 첫 문장 요지 판단을 소비자에 맡기고 원문 그대로 둔다.
+ */
+function parseLedger(txt) {
+  const out = [];
+  const re = /^- \[(\d{4}-\d{2}-\d{2})\]\[(ADR-\d+)\]: (.*)$/gm;
+  let m;
+  while ((m = re.exec(String(txt || ''))) !== null) out.push({ date: m[1], id: m[2], text: m[3] });
+  return out;
+}
+
+module.exports = {
+  parseLedger, stripFences, extractBlocks, frontmatterId, buildIndex, inject, gather, CONTRACT, MAX_ENTRIES };
 
 if (require.main === module) process.exit(toShellExit(withContract(CONTRACT, run)()));

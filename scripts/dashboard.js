@@ -19,6 +19,8 @@ const { gather: gatherHealth } = require('./health');
 const { gather: gatherBudget } = require('./context-budget');
 const { gather: gatherWos, checkClosure, frontmatter, field, ACTIVE } = require('./work-close');
 const { analyze: analyzeHandoff, HANDOFF_PATH } = require('./handoff-linter');
+const { parseLedger, gather: gatherBlocks } = require('./blocks-index');
+const { parseEntries: parseHistory } = require('./history-linter');
 const { walkFiles } = require('./fs_walk');
 const { LOCKED } = require('./query');
 const { planeBody, PLANE_CSS, FILTER_JS } = require('./lineage-tree');
@@ -114,7 +116,7 @@ function syncSection(sync, today) {
     return `<span class="pill${cls}" title="${esc(p.last)}">${esc(p.name)}<b>${n === null ? esc(p.last) : n === 0 ? '오늘' : n + '일'}</b></span>`;
   };
   const dead = sync.planes.filter(p => !p.last).length;
-  return `<section class="card" id="sync"><h2>평면 신선도 — 마지막 기입</h2>
+  return `<section class="card" id="sync"><h2>평면 신선도 — 마지막 기입<a class="more" data-nav="time" href="#/time">자세히 →</a></h2>
   <div class="meta">ledger ${sync.ledgerEntries} entries · last ${esc(sync.ledgerLast || '무기입')}`
     + `${dead ? ` · <span class="bad">무기입 ${dead}면</span>` : ''}</div>
   <div class="pills">${sync.planes.map(pill).join('')}</div></section>`;
@@ -241,6 +243,100 @@ function sprintView(sprint, today) {
   ${active.map(woCard).join('')}
   ${wos.filter(w => w.malformed).map(woCard).join('')}
   ${hoCard}`;
+}
+
+/**
+ * 시간축 수집 — 원장(전술 결정) + HISTORY(전략 분기점) + LSN(오답노트) + 재제안 차단.
+ * 파서는 각 소유 도구의 export 소비: parseLedger([TOOL-22] 관할)·parseHistory(history-linter)·
+ * gatherBlocks([TOOL-22])·LSN frontmatter 는 work-close 의 순수 헬퍼(frontmatter/field)로 읽는다.
+ */
+function gatherTime(root) {
+  const readIf = rel => { try { return fs.readFileSync(path.join(root, rel), 'utf8'); } catch { return ''; } };
+  const adrs = parseLedger(readIf('.union-stack/archive_ledger.md'));
+  const history = parseHistory(readIf('.union-stack/project/HISTORY.md'));
+  const lessons = [];
+  walkFiles(root, '.union-stack/reference/lessons', rel => {
+    if (!rel.endsWith('.md') || rel.endsWith('_GUIDE.md')) return;
+    const fm = frontmatter(readIf(rel));
+    if (fm == null) { lessons.push({ file: rel, malformed: true }); return; }
+    lessons.push({
+      file: rel, id: field(fm, 'id'), title: field(fm, 'title'), status: field(fm, 'status'),
+      occurrences: field(fm, 'occurrences'), valid_reason: field(fm, 'valid_reason'),
+    });
+  });
+  return { adrs, history, lessons, blocks: gatherBlocks(root) };
+}
+
+/**
+ * 시간축 **전용 페이지**(순수). 격자 §3.2가 식별한 **두 번째 빈칸**이 이 축이다 —
+ * "같은 실수의 반복"은 여러 스프린트에 걸쳐서만 보이고 어느 단일 스냅샷에도 나타나지 않는다.
+ * E1 실측이 근거를 보탠다: 하네스 페이오프가 가장 큰 구간이 정확히 비국소 지식(과거 실패·폐기
+ * 결정)이었고, 그래서 [ADR-04]가 시간축 평면의 제거를 금지했다. 세 층을 편다:
+ *   LSN(사전 경고 — 진입 의례가 선주입) · 원장(전술 결정 + 재제안 차단) · HISTORY(전략 분기점).
+ */
+function timeView(time, today) {
+  if (!time) return '';
+  const { adrs, history, lessons, blocks } = time;
+  const realHistory = history.filter(e => !e.example);
+  const blockIds = new Set(blocks.map(b => b.id));
+  const byDate = {};
+  for (const a of adrs) byDate[a.date] = (byDate[a.date] || 0) + 1;
+  const dates = Object.keys(byDate).sort();
+  const maxN = Math.max(1, ...Object.values(byDate));
+  const densityRows = dates.map(d =>
+    `<div class="brow"><span class="bnm">${esc(d)}</span>`
+    + `<span class="bbar"><span class="bfill" style="width:${Math.round((byDate[d] / maxN) * 100)}%"></span></span>`
+    + `<span class="bval">${byDate[d]}</span></div>`).join('');
+  const gist = t => {
+    const cut = t.split(' — ')[0];
+    return cut.length > 72 ? cut.slice(0, 72) + '…' : cut;
+  };
+  const recent = adrs.slice(-8).reverse().map(a =>
+    `<div class="crow"><span class="nm">${esc(a.id)}</span><span class="note">${esc(a.date)}</span>`
+    + `${blockIds.has(a.id) ? '<span class="pill dead">⛔<b>재제안 차단</b></span>' : ''}`
+    + `<span class="fvals t" title="${esc(a.text.slice(0, 300))}">${esc(gist(a.text))}</span></div>`).join('');
+  const blockRows = blocks.map(b =>
+    `<div class="frow"><span class="flabel">⛔ ${esc(b.id)}</span><span class="fvals t"><b>${esc(b.blocks)}</b>`
+    + `${b.reopen_when ? `<br><span class="note">재개 조건: ${esc(b.reopen_when)}</span>` : ''}</span></div>`).join('');
+  const lsnCards = lessons.map(l => l.malformed
+    ? `<div class="crow"><span class="nm">${esc(l.file.split('/').pop())}</span><span class="bad">frontmatter 없음</span></div>`
+    : `<div class="frow"><span class="flabel">${esc(l.id || '?')}</span><span class="fvals t">${esc(l.title || '')}`
+      + `${l.occurrences ? ` <span class="pill aging">반복<b>${esc(l.occurrences)}회</b></span>` : ''}`
+      + `${l.valid_reason ? `<br><span class="note">유효 사유: ${esc(l.valid_reason)}</span>` : ''}</span></div>`).join('');
+  const histRows = history.map(e =>
+    `<div class="frow${e.example ? ' dim' : ''}"><span class="flabel">${esc(e.date)}</span>`
+    + `<span class="fvals t"><b>${esc(e.fact)}</b><br><span class="note">왜: ${esc(e.reason)}</span>`
+    + `${e.note ? `<br><span class="note">시사점: ${esc(e.note)}</span>` : ''}</span></div>`).join('');
+  return `<div class="tiles">
+  <div class="tile"><div class="tl">전술 결정</div><div class="tv">${adrs.length}</div><div class="ts">archive_ledger ADR</div></div>
+  <div class="tile"><div class="tl">전략 분기점</div><div class="tv">${realHistory.length}</div><div class="ts">HISTORY (예시 ${history.length - realHistory.length} 별도)</div></div>
+  <div class="tile"><div class="tl">오답노트</div><div class="tv">${lessons.length}</div><div class="ts">LSN — 진입 의례가 선주입</div></div>
+  <div class="tile"><div class="tl">재제안 차단</div><div class="tv ${blocks.length ? 'warn' : ''}">${blocks.length}</div><div class="ts">blocks-index → AGENTS.md</div></div>
+  </div>
+  <section class="card"><h2>왜 이 페이지가 있는가</h2>
+  <div class="meta">시간축은 격자가 식별한 <b>두 번째 빈칸</b>이다 — "같은 실수의 반복"은 여러 스프린트에
+  걸쳐서만 보이고 어느 단일 스냅샷에도 나타나지 않는다. E1 실측: 하네스 페이오프가 가장 큰 구간이
+  정확히 <b>비국소 지식</b>(과거 실패·폐기 결정)이었고, 그래서 [ADR-04]가 이 평면의 제거를 금지했다.
+  세 층이다: <b>LSN</b>(사전 경고 — 진입 의례가 선주입) · <b>원장</b>(전술 결정 + 재제안 차단) ·
+  <b>HISTORY</b>(전략 분기점 — 사실+근거 한 쌍).</div></section>
+  <div class="grid">
+  <section class="card"><h2>결정 밀도 — 날짜별 ADR</h2>
+  <div class="meta">${adrs.length} 결정 / ${dates.length} 일</div>
+  ${densityRows}</section>
+  <section class="card"><h2>재제안 차단 — [PRO-14]</h2>
+  <div class="meta">결정된 것을 다시 꺼내지 마라 — 재개 조건이 충족됐다면 그 근거를 먼저 제시하라</div>
+  ${blockRows || '<div class="meta">차단 항목 없음</div>'}</section>
+  </div>
+  <section class="card"><h2>최근 결정 — 원장 끝 8건</h2>
+  ${recent}</section>
+  <div class="grid">
+  <section class="card"><h2>오답노트 — LSN</h2>
+  <div class="meta">같은 계보 2~3회 반복 실패만 등재([ADR-11] — 환경 사실은 사적 메모리로)</div>
+  ${lsnCards || '<div class="meta">등재 없음</div>'}</section>
+  <section class="card"><h2>전략 분기점 — HISTORY</h2>
+  <div class="meta">사실+근거 한 쌍 — 금지가 아니라 경고. 근거가 회귀 판단의 핵심이다</div>
+  ${histRows || '<div class="meta">등재 없음</div>'}</section>
+  </div>`;
 }
 
 /** 개요용 당위 요약 카드(순수) — 등급·드리프트·concern 만 압축. 세부는 arch 페이지로 링크한다. */
@@ -416,6 +512,7 @@ const DASH_CSS = `
          border-radius:8px; background:#fafbfc; }
   .ctr .frow { margin:6px 0 0; }
   .ctrh { font-size:12px; font-weight:600; font-family:ui-monospace, Consolas, monospace; }
+  .frow.dim { opacity:.55; }
   .tiles { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:14px;
            margin-bottom:14px; }
   .tile { background:#fff; border:1px solid var(--line); border-radius:10px;
@@ -479,6 +576,7 @@ const VIEWS = [
   { id: 'overview', label: '개요' },
   { id: 'arch', label: '당위(ARCH)' },
   { id: 'sprint', label: '스프린트' },
+  { id: 'time', label: '시간축' },
 ];
 
 /** 수집된 표면 → 자기완결 HTML(순수 — FS 접근 없음). */
@@ -510,6 +608,7 @@ ${effectSection(effectDim)}
 </section>`,
     arch: normView(health.norms, health.sync, health.concerns),
     sprint: sprintView(data.sprint, today),
+    time: timeView(data.time, today),
   };
   return `<!doctype html>
 <meta charset="utf-8">
@@ -560,14 +659,14 @@ function gatherAll(root = path.resolve(__dirname, '..'), today = new Date().toIS
   const wos = gatherWos(root);
   return {
     index: buildIndex(root), health: gatherHealth(root), budget: gatherBudget(root),
-    wos, sprint: gatherSprint(root, wos), today,
+    wos, sprint: gatherSprint(root, wos), time: gatherTime(root), today,
   };
 }
 
 module.exports = {
   tilesSection, healthSection, budgetSection, worktableSection,
   sizeSection, syncSection, effectSection, contractSection, normCard, normView,
-  gatherSprint, sprintView, render, gatherAll, VIEWS, MARKS,
+  gatherSprint, sprintView, gatherTime, timeView, render, gatherAll, VIEWS, MARKS,
 };
 
 if (require.main === module) {

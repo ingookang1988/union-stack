@@ -3,7 +3,7 @@
 // 데이터의 옳음은 각 소스 도구의 테스트(health·context-budget·work-close·lineage-tree)가 소유한다.
 const { tilesSection, healthSection, budgetSection, worktableSection,
   sizeSection, syncSection, effectSection, contractSection, normCard, normView,
-  gatherSprint, sprintView, render, gatherAll, VIEWS } = require('./dashboard');
+  gatherSprint, sprintView, gatherTime, timeView, render, gatherAll, VIEWS } = require('./dashboard');
 
 let pass = 0, fail = 0;
 function check(label, cond) { if (cond) pass++; else { fail++; console.error(`FAIL ${label}`); } }
@@ -152,8 +152,8 @@ check('normCard: arch 로 가는 자세히 링크', nc.includes('data-nav="arch"
 check('normCard: 규범 없으면 조각 없음', normCard({ total: 0, norms: [] }) === '');
 
 // VIEWS — 축 하나 = 페이지 하나. 새 축 추가는 이 배열에 한 줄. 계보는 개요가 보유(별도 페이지 아님).
-check('views: 3개 정의(개요·arch·sprint)', VIEWS.length === 3 && VIEWS[0].id === 'overview');
-check('views: arch·sprint 포함', VIEWS.some(v => v.id === 'arch') && VIEWS.some(v => v.id === 'sprint'));
+check('views: 4개 정의(개요·arch·sprint·time)', VIEWS.length === 4 && VIEWS[0].id === 'overview');
+check('views: 축 전부 포함', ['arch', 'sprint', 'time'].every(id => VIEWS.some(v => v.id === id)));
 
 // sprintView — 축의 짝은 종료 의례: WO 닫힘 조건 + HANDOFF 인계 상태
 check('sprint: 없는 입력 → 조각 없음', sprintView(null) === '');
@@ -187,6 +187,37 @@ check('sprint: HANDOFF 80% 근접 호박', sp.includes('bnear'));
 const spNoHo = sprintView({ wos: [], handoff: null, archived: 0 }, '2026-08-19');
 check('sprint: HANDOFF 부재는 끊긴 인계로 표시', spNoHo.includes('인계가 끊겨 있다'));
 
+// timeView — 시간축 3층: LSN(사전 경고) · 원장(전술+차단) · HISTORY(전략)
+check('time: 없는 입력 → 조각 없음', timeView(null) === '');
+const tmFix = {
+  adrs: [
+    { date: '2026-08-18', id: 'ADR-23', text: '결정 하나 — 상세는 생략' },
+    { date: '2026-08-18', id: 'ADR-24', text: '결정 둘' },
+    { date: '2026-08-19', id: 'ADR-25', text: 'x'.repeat(100) },
+  ],
+  history: [
+    { date: '(예시) 2026-01', fact: '더미', reason: '이유', note: '', example: true },
+    { date: '2026-06-15', fact: 'v6.0 승격', reason: '법칙 확인', note: '후속 필수', example: false },
+  ],
+  lessons: [
+    { file: 'l/LSN-01a_x.md', id: 'LSN-01a', title: '반복 함정<b>x</b>', status: 'Active', occurrences: '3', valid_reason: '아직 미강제' },
+    { file: 'l/broken.md', malformed: true },
+  ],
+  blocks: [{ id: 'ADR-25', blocks: '분리 재제안', reopen_when: '오탐 실측 시' }],
+};
+const tm = timeView(tmFix, '2026-08-19');
+check('time: 타일 — 전술/전략/오답/차단', tm.includes('>3<') && tm.includes('전략 분기점') && tm.includes('재제안 차단'));
+check('time: 전략 타일은 예시 제외 계수', tm.includes('예시 1 별도'));
+check('time: 밀도 — 날짜별 계수', tm.includes('2026-08-18') && tm.includes('3 결정 / 2 일'));
+check('time: 밀도 최대값 100%', tm.includes('width:100%'));
+check('time: 최근 결정 요지 절단(72자+…)', tm.includes('…'));
+check('time: 차단 표식이 결정 옆에', tm.includes('⛔') && tm.includes('재개 조건: 오탐 실측 시'));
+check('time: LSN 반복 횟수·유효 사유', tm.includes('반복') && tm.includes('3회') && tm.includes('아직 미강제'));
+check('time: LSN 제목 이스케이프', !tm.includes('<b>x</b>') && tm.includes('&lt;b&gt;'));
+check('time: malformed LSN 표시', tm.includes('frontmatter 없음'));
+check('time: HISTORY 사실+근거 쌍', tm.includes('v6.0 승격') && tm.includes('왜: 법칙 확인') && tm.includes('시사점: 후속 필수'));
+check('time: HISTORY 예시 행은 흐리게', tm.includes('frow dim'));
+
 // render — 실평면 합성 스모크
 const data = gatherAll();
 const html = render(data, { title: 'real' });
@@ -198,8 +229,10 @@ check('합성: 개요의 9섹션 전부',
 check('합성: 개요가 계보 트리 보유', ovHtml.includes('계보 트리 — 구조가 있는 노드') && ovHtml.includes('class="flt"'));
 check('합성: 개요 당위 카드에서 arch 진입 링크', ovHtml.includes('data-nav="arch"'));
 // 뷰 라우팅 — 클릭이 정본이고 해시는 부가(data: URL 뷰어 대비).
-check('라우팅: 뷰 3개 + data-nav 5개(나브 3 + 카드 2)', (html.match(/class="view"/g) || []).length === 3
-  && (html.match(/data-nav="/g) || []).length === 5);
+check('라우팅: 뷰 4개 + data-nav 7개(나브 4 + 카드 3)', (html.match(/class="view"/g) || []).length === 4
+  && (html.match(/data-nav="/g) || []).length === 7);
+check('합성: 시간축 뷰가 실원장을 잡는다', html.includes('data-view="time"') && html.includes('결정 밀도'));
+check('합성: 신선도 카드에서 time 진입 링크', ovHtml.includes('data-nav="time"'));
 check('합성: 스프린트 뷰가 실 WO·HANDOFF 를 잡는다',
   html.includes('data-view="sprint"') && html.includes('HANDOFF — 세션 이어달리기'));
 check('합성: 작업대 카드에서 sprint 진입 링크', ovHtml.includes('data-nav="sprint"'));

@@ -39,6 +39,21 @@ check('무관 표 무시', findViolations(other).length, 0);
 // HISTORY 본문 없음(표 없음) → 위반 0
 check('표 없음', findViolations('# 제목\n그냥 텍스트').length, 0);
 
+// --- parseEntries: 분기점 표 → 항목(예시 행은 표시만) — 시간축 페이지 소비 ---
+const { parseEntries } = require('./history-linter');
+const histFix = [
+  '| 날짜 | 분기점(사실) | 근거(왜) | 시사점 |',
+  '|---|---|---|---|',
+  '| (예시) 2026-01 | (예시) 더미 | (예시) 이유 | 참고 |',
+  '| 2026-06-15 | v6.0 승격 | 법칙 확인 | 후속 필수 |',
+].join('\n');
+const ents = parseEntries(histFix);
+check('parseEntries 2건(예시 포함)', ents.length, 2);
+check('parseEntries 예시 표시', [ents[0].example, ents[1].example], [true, false]);
+check('parseEntries 필드', [ents[1].date, ents[1].fact, ents[1].reason, ents[1].note],
+  ['2026-06-15', 'v6.0 승격', '법칙 확인', '후속 필수']);
+check('parseEntries 빈 입력', parseEntries(''), []);
+
 // --- 통합: 현재 레포 HISTORY.md → 통과(exit 0) ---
 check('현재 레포 통과', run(), 0);
 
