@@ -2,7 +2,8 @@
 // 섹션 함수(순수) 단위 + 실평면 합성 스모크. 대시보드는 *합성*이므로 여기서는 그리기만 검증한다 —
 // 데이터의 옳음은 각 소스 도구의 테스트(health·context-budget·work-close·lineage-tree)가 소유한다.
 const { tilesSection, healthSection, budgetSection, worktableSection,
-  sizeSection, syncSection, effectSection, contractSection, normCard, normView, render, gatherAll, VIEWS } = require('./dashboard');
+  sizeSection, syncSection, effectSection, contractSection, normCard, normView,
+  gatherSprint, sprintView, render, gatherAll, VIEWS } = require('./dashboard');
 
 let pass = 0, fail = 0;
 function check(label, cond) { if (cond) pass++; else { fail++; console.error(`FAIL ${label}`); } }
@@ -151,8 +152,40 @@ check('normCard: arch 로 가는 자세히 링크', nc.includes('data-nav="arch"
 check('normCard: 규범 없으면 조각 없음', normCard({ total: 0, norms: [] }) === '');
 
 // VIEWS — 축 하나 = 페이지 하나. 새 축 추가는 이 배열에 한 줄. 계보는 개요가 보유(별도 페이지 아님).
-check('views: 2개 정의(개요·arch)', VIEWS.length === 2 && VIEWS[0].id === 'overview');
-check('views: arch 포함', VIEWS.some(v => v.id === 'arch'));
+check('views: 3개 정의(개요·arch·sprint)', VIEWS.length === 3 && VIEWS[0].id === 'overview');
+check('views: arch·sprint 포함', VIEWS.some(v => v.id === 'arch') && VIEWS.some(v => v.id === 'sprint'));
+
+// sprintView — 축의 짝은 종료 의례: WO 닫힘 조건 + HANDOFF 인계 상태
+check('sprint: 없는 입력 → 조각 없음', sprintView(null) === '');
+const spFix = {
+  wos: [
+    { id: '01a-1', file: 'sprint/a.md', title: '열린 것<b>x</b>', status: 'Draft', parent: 'PLAN-01a',
+      evidence: 'none — 아직', closed_by: [], malformed: false,
+      closure: { issues: [{ code: 'no-trace', outcome: 'CLARIFY', msg: '흔적이 비었다' }], info: [] } },
+    { id: '02b-1', file: 'sprint/b.md', title: '닫힐 수 있는 것', status: 'Verifying', parent: 'PLAN-02b',
+      evidence: 'npm test 32/34', closed_by: ['.union-stack/feature/live.md'],
+      malformed: false, closure: { issues: [], info: ['부모 전이 후보'] } },
+    { id: null, file: 'sprint/broken.md', malformed: true, closed_by: [] },
+  ],
+  handoff: { session: 's-2026', date: '2026-08-19T00:00:00Z', verification: '32/34 통과',
+    findings: [], tokens: 1249, budget: 1500 },
+  archived: 3,
+};
+const sp = sprintView(spFix, '2026-08-19');
+check('sprint: 타일 — 충족/활성 비율', sp.includes('1/2') && sp.includes('종료 의례 통과 가능'));
+check('sprint: 잠금 타일', sp.includes('Verifying 🔒'));
+check('sprint: 아카이브 계수', sp.includes('>3<'));
+check('sprint: 닫힘 미충족 사유(work-close CLARIFY)', sp.includes('닫힘 미충족') && sp.includes('흔적이 비었다'));
+check('sprint: 충족 WO 는 명시', sp.includes('지금 닫아도 종료 의례를 통과한다'));
+check('sprint: 증거 3분 — none 은 사유 명시', sp.includes('none — 사유 명시') && sp.includes('>있음<'));
+check('sprint: 상위 흔적 파일명', sp.includes('live.md'));
+check('sprint: 부모 전이 참고', sp.includes('부모 전이 후보'));
+check('sprint: 제목 이스케이프', !sp.includes('<b>x</b>') && sp.includes('&lt;b&gt;'));
+check('sprint: malformed 카드', sp.includes('frontmatter 없음'));
+check('sprint: HANDOFF 5부·토큰·검증란', sp.includes('완비') && sp.includes('1249/1500') && sp.includes('32/34 통과'));
+check('sprint: HANDOFF 80% 근접 호박', sp.includes('bnear'));
+const spNoHo = sprintView({ wos: [], handoff: null, archived: 0 }, '2026-08-19');
+check('sprint: HANDOFF 부재는 끊긴 인계로 표시', spNoHo.includes('인계가 끊겨 있다'));
 
 // render — 실평면 합성 스모크
 const data = gatherAll();
@@ -165,8 +198,11 @@ check('합성: 개요의 9섹션 전부',
 check('합성: 개요가 계보 트리 보유', ovHtml.includes('계보 트리 — 구조가 있는 노드') && ovHtml.includes('class="flt"'));
 check('합성: 개요 당위 카드에서 arch 진입 링크', ovHtml.includes('data-nav="arch"'));
 // 뷰 라우팅 — 클릭이 정본이고 해시는 부가(data: URL 뷰어 대비).
-check('라우팅: 뷰 2개 + data-nav 3개(나브 2 + 카드 1)', (html.match(/class="view"/g) || []).length === 2
-  && (html.match(/data-nav="/g) || []).length === 3);
+check('라우팅: 뷰 3개 + data-nav 5개(나브 3 + 카드 2)', (html.match(/class="view"/g) || []).length === 3
+  && (html.match(/data-nav="/g) || []).length === 5);
+check('합성: 스프린트 뷰가 실 WO·HANDOFF 를 잡는다',
+  html.includes('data-view="sprint"') && html.includes('HANDOFF — 세션 이어달리기'));
+check('합성: 작업대 카드에서 sprint 진입 링크', ovHtml.includes('data-nav="sprint"'));
 check('라우팅: 클릭 핸들러가 있다(해시 미지원 뷰어 대비)', html.includes("addEventListener('click'"));
 check('라우팅: 해시는 부가로만', html.includes('history.replaceState'));
 check('합성: 당위 뷰가 실규범을 잡는다', html.includes('ARCH-00') && html.includes('verification 첫 화살표'));

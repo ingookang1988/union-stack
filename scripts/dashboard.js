@@ -17,7 +17,9 @@ const path = require('path');
 const { buildIndex } = require('./zfs_index');
 const { gather: gatherHealth } = require('./health');
 const { gather: gatherBudget } = require('./context-budget');
-const { gather: gatherWos, ACTIVE } = require('./work-close');
+const { gather: gatherWos, checkClosure, frontmatter, field, ACTIVE } = require('./work-close');
+const { analyze: analyzeHandoff, HANDOFF_PATH } = require('./handoff-linter');
+const { walkFiles } = require('./fs_walk');
 const { LOCKED } = require('./query');
 const { planeBody, PLANE_CSS, FILTER_JS } = require('./lineage-tree');
 
@@ -145,6 +147,100 @@ function contractSection(c) {
     + `${c.unresolved.length ? ` · <span class="bad">미해소 ${c.unresolved.length}</span>` : ''}`
     + `${undeclared > 0 ? ` · 미선언 ${undeclared}` : ''}</div>
   ${rows || '<div class="meta">선언된 간선 없음 — [PRO-16] §5 반증 조건 관측 대상</div>'}</section>`;
+}
+
+/**
+ * 스프린트 축(actual × action) 수집 — WO 닫힘 조건 + HANDOFF 인계 상태.
+ * 전부 기존 export 소비: checkClosure([TOOL-23])는 traceTexts 를 호출부가 읽어 넘기는 계약이라
+ * 여기(FS 층)서 closed_by 가 가리킨 파일을 읽는다. HANDOFF 는 handoff-linter.analyze 로 판정한다.
+ */
+function gatherSprint(root, wos) {
+  const enriched = wos.map(wo => {
+    const traceTexts = {};
+    for (const rel of wo.closed_by || []) {
+      try { traceTexts[rel] = fs.readFileSync(path.join(root, rel), 'utf8'); } catch { /* 부재는 checkClosure 가 잡는다 */ }
+    }
+    const siblings = wos.filter(w => w.parent && w.parent === wo.parent);
+    return { ...wo, closure: checkClosure(wo, traceTexts, siblings) };
+  });
+  let handoff = null;
+  try {
+    const txt = fs.readFileSync(path.join(root, HANDOFF_PATH), 'utf8');
+    const fm = frontmatter(txt);
+    handoff = {
+      session: field(fm, 'session_id'), date: field(fm, 'date'),
+      verification: field(fm, 'verification'), ...analyzeHandoff(txt),
+    };
+  } catch { /* HANDOFF 부재도 상태다 — 카드가 "없음"으로 그린다 */ }
+  let archived = 0;
+  walkFiles(root, '.union-stack/sprint/archived', rel => { if (/WO-.*_.*[.]md$/.test(rel)) archived++; });
+  return { wos: enriched, handoff, archived };
+}
+
+/**
+ * 스프린트 축 **전용 페이지**(순수). 이 축의 짝은 **종료 의례**다 — 진입에는 3중 장치
+ * (upward-fetch·check-prereqs·blast-radius)가 있고 종료는 [PRO-15]의 work-close 하나다.
+ * WO 는 선언으로 닫히지 않는다: 상위 축 흔적(closed_by)과 증거(evidence)가 디프에서 검사
+ * 가능해야 한다. 그래서 이 페이지는 WO 마다 그 닫힘 조건의 현재 상태를 편다.
+ * HANDOFF 는 세션 사이의 이어달리기(휘발·최신 하나)라 이 축의 시간 방향 절반이다.
+ */
+function sprintView(sprint, today) {
+  if (!sprint) return '';
+  const { wos, handoff, archived } = sprint;
+  const active = wos.filter(w => !w.malformed && ACTIVE.has(w.status));
+  const closable = active.filter(w => w.closure && !w.closure.issues.length);
+  const locked = wos.filter(w => w.status === 'Verifying').length;
+  const evPill = w => {
+    if (!w.evidence) return '<span class="pill dead">증거<b>미기입</b></span>';
+    if (/^none/.test(w.evidence.trim())) return `<span class="pill aging" title="${esc(w.evidence)}">증거<b>none — 사유 명시</b></span>`;
+    return `<span class="pill fresh" title="${esc(w.evidence)}">증거<b>있음</b></span>`;
+  };
+  const woCard = w => {
+    if (w.malformed) {
+      return `<section class="card"><h2>${esc(w.file.split('/').pop())}</h2>
+  <div class="meta bad">frontmatter 없음 — status·evidence·closed_by 를 읽을 수 없다</div></section>`;
+    }
+    const issues = (w.closure && w.closure.issues) || [];
+    const infos = (w.closure && w.closure.info) || [];
+    const traces = (w.closed_by || []).length
+      ? w.closed_by.map(t => `<code>${esc(t.split('/').pop())}</code>`).join('')
+      : '<span class="note">없음</span>';
+    return `<section class="card norm">
+    <h2>[WO-${esc(w.id)}] <span class="ntitle">${esc(w.title || '')}</span></h2>
+    <div class="meta"><span class="pill ${w.status === 'Verifying' ? 'aging' : 'fresh'}">status<b>${esc(w.status || '없음')}</b></span>
+      <span class="pill">부모<b>${esc(w.parent || '미기입')}</b></span>${evPill(w)}</div>
+    <div class="frow"><span class="flabel">상위 흔적</span><span class="fvals">${traces}</span></div>
+    ${issues.length
+      ? `<div class="frow"><span class="flabel scope">닫힘 미충족</span><span class="fvals t">${issues.map(i => esc(i.msg)).join('<br>')}</span></div>`
+      : `<div class="frow"><span class="flabel">닫힘 조건</span><span class="fvals t"><span class="ok">충족</span> — 지금 닫아도 종료 의례를 통과한다</span></div>`}
+    ${infos.length ? `<div class="frow"><span class="flabel">참고</span><span class="fvals t">${infos.map(esc).join('<br>')}</span></div>` : ''}
+  </section>`;
+  };
+  const hoCard = handoff
+    ? `<section class="card"><h2>HANDOFF — 세션 이어달리기</h2>
+  <div class="meta"><span class="pill ${handoff.findings.length ? 'dead' : 'fresh'}">5부<b>${handoff.findings.length ? '누락 ' + handoff.findings.length : '완비'}</b></span>
+    <span class="pill">세션<b>${esc(handoff.session || '?')}</b></span>
+    <span class="pill" title="${esc(handoff.date || '')}">일자<b>${esc((handoff.date || '').slice(0, 10) || '?')}</b></span></div>
+  <div class="brow"><span class="bnm">tokens</span>
+    <span class="bbar"><span class="bfill${handoff.tokens > handoff.budget ? ' bover' : handoff.tokens / handoff.budget >= 0.8 ? ' bnear' : ''}" style="width:${Math.min(100, Math.round((handoff.tokens / handoff.budget) * 100))}%"></span></span>
+    <span class="bval${handoff.tokens > handoff.budget ? ' bad' : ''}">${handoff.tokens}/${handoff.budget}</span></div>
+  ${handoff.verification ? `<div class="frow"><span class="flabel">검증란</span><span class="fvals t">${esc(handoff.verification)}</span></div>` : ''}
+  </section>`
+    : '<section class="card"><h2>HANDOFF</h2><div class="meta bad">없음 — 인계가 끊겨 있다</div></section>';
+  return `<div class="tiles">
+  <div class="tile"><div class="tl">활성 WO</div><div class="tv">${active.length}</div><div class="ts">Draft · Active · Verifying</div></div>
+  <div class="tile"><div class="tl">닫힘 조건 충족</div><div class="tv ${closable.length ? 'good' : ''}">${closable.length}/${active.length}</div><div class="ts">종료 의례 통과 가능</div></div>
+  <div class="tile"><div class="tl">잠금</div><div class="tv ${locked ? 'warn' : ''}">${locked}</div><div class="ts">Verifying 🔒</div></div>
+  <div class="tile"><div class="tl">아카이브</div><div class="tv">${archived}</div><div class="ts">Closed 보존(삭제 금지)</div></div>
+  </div>
+  <section class="card"><h2>왜 이 페이지가 있는가</h2>
+  <div class="meta">이 축의 짝은 <b>종료 의례</b>다 — 진입에는 3중 장치(upward-fetch·check-prereqs·blast-radius)가
+  있는데 종료는 [PRO-15]의 work-close 하나다. WO 는 선언으로 닫히지 않는다: <b>상위 축 흔적(closed_by)</b>과
+  <b>증거(evidence)</b>가 디프에서 검사 가능해야 한다. 아래는 WO 마다 그 닫힘 조건의 현재 상태이고,
+  HANDOFF 는 이 축의 시간 방향 절반(세션 사이 이어달리기)이다.</div></section>
+  ${active.map(woCard).join('')}
+  ${wos.filter(w => w.malformed).map(woCard).join('')}
+  ${hoCard}`;
 }
 
 /** 개요용 당위 요약 카드(순수) — 등급·드리프트·concern 만 압축. 세부는 arch 페이지로 링크한다. */
@@ -277,13 +373,13 @@ function worktableSection(wos) {
   const act = wos.filter(w => !w.malformed && ACTIVE.has(w.status));
   const bad = wos.filter(w => w.malformed);
   if (!act.length && !bad.length) {
-    return `<section class="card" id="wo"><h2>작업대 — 활성 WO</h2><div class="meta">활성 WO 없음</div></section>`;
+    return `<section class="card" id="wo"><h2>작업대 — 활성 WO<a class="more" data-nav="sprint" href="#/sprint">자세히 →</a></h2><div class="meta">활성 WO 없음</div></section>`;
   }
   const tr = w => `<tr><td class="nm">[WO-${w.id}]</td><td>${esc(w.title || '')}</td>`
     + `<td>${esc(w.parent || '')}</td><td>${esc(w.status || '')}</td><td class="note">${esc(w.evidence || '')}</td></tr>`;
   const warn = bad.length
     ? `<div class="meta bad">frontmatter 없는 WO ${bad.length}건: ${bad.map(w => esc(w.file)).join(' ')}</div>` : '';
-  return `<section class="card" id="wo"><h2>작업대 — 활성 WO</h2>${warn}
+  return `<section class="card" id="wo"><h2>작업대 — 활성 WO<a class="more" data-nav="sprint" href="#/sprint">자세히 →</a></h2>${warn}
   <table class="tbl"><tr class="th"><td>WO</td><td>제목</td><td>부모</td><td>상태</td><td>증거</td></tr>
   ${act.map(tr).join('\n')}</table></section>`;
 }
@@ -382,6 +478,7 @@ const DASH_CSS = `
 const VIEWS = [
   { id: 'overview', label: '개요' },
   { id: 'arch', label: '당위(ARCH)' },
+  { id: 'sprint', label: '스프린트' },
 ];
 
 /** 수집된 표면 → 자기완결 HTML(순수 — FS 접근 없음). */
@@ -412,6 +509,7 @@ ${effectSection(effectDim)}
 <div class="plane">${planeBody(index)}</div>
 </section>`,
     arch: normView(health.norms, health.sync, health.concerns),
+    sprint: sprintView(data.sprint, today),
   };
   return `<!doctype html>
 <meta charset="utf-8">
@@ -459,12 +557,17 @@ const ROUTER_JS = `
 
 /** 표면 수집(read-only). `today`는 신선도 경과일 계산용 — 순수 렌더에 주입한다. */
 function gatherAll(root = path.resolve(__dirname, '..'), today = new Date().toISOString().slice(0, 10)) {
-  return { index: buildIndex(root), health: gatherHealth(root), budget: gatherBudget(root), wos: gatherWos(root), today };
+  const wos = gatherWos(root);
+  return {
+    index: buildIndex(root), health: gatherHealth(root), budget: gatherBudget(root),
+    wos, sprint: gatherSprint(root, wos), today,
+  };
 }
 
 module.exports = {
   tilesSection, healthSection, budgetSection, worktableSection,
-  sizeSection, syncSection, effectSection, contractSection, normCard, normView, render, gatherAll, VIEWS, MARKS,
+  sizeSection, syncSection, effectSection, contractSection, normCard, normView,
+  gatherSprint, sprintView, render, gatherAll, VIEWS, MARKS,
 };
 
 if (require.main === module) {
