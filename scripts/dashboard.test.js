@@ -1,10 +1,24 @@
 // scripts/dashboard.test.js
 // 섹션 함수(순수) 단위 + 실평면 합성 스모크. 대시보드는 *합성*이므로 여기서는 그리기만 검증한다 —
 // 데이터의 옳음은 각 소스 도구의 테스트(health·context-budget·work-close·lineage-tree)가 소유한다.
-const { healthSection, budgetSection, worktableSection, render, gatherAll } = require('./dashboard');
+const { tilesSection, healthSection, budgetSection, worktableSection, render, gatherAll } = require('./dashboard');
 
 let pass = 0, fail = 0;
 function check(label, cond) { if (cond) pass++; else { fail++; console.error(`FAIL ${label}`); } }
+
+// tilesSection — 스탯 타일: 게이트 통과/실패, 잠금 카운트, 예산 초과 강조
+const tileData = {
+  index: [{ domain: 'A', id: '1', status: 'Verifying' }, { domain: 'B', id: '2', status: 'Draft' }],
+  health: { fails: 0, warns: 1 },
+  budget: { total: 100, totalCap: 4000, over: 0 },
+  wos: [{ id: '1', status: 'Draft', malformed: false }],
+};
+const ts = tilesSection(tileData);
+check('tiles: 4개', (ts.match(/class="tile"/g) || []).length === 4);
+check('tiles: 게이트 통과(good)', ts.includes('통과') && ts.includes('tv good'));
+check('tiles: 잠금 카운트', ts.includes('1 Verifying'));
+const tsBad = tilesSection({ ...tileData, health: { fails: 2, warns: 0 }, budget: { total: 5000, totalCap: 4000, over: 1 } });
+check('tiles: 게이트 실패(bad) + 예산 초과', tsBad.includes('2 실패') && tsBad.includes('초과 1'));
 
 // healthSection — 판정 마크는 글리프+단어(색 단독 금지), FAIL 이 보인다
 const hFix = {
