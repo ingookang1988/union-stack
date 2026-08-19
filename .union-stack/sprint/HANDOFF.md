@@ -46,6 +46,8 @@ version: 1.0
   오버레이 자체의 수요를 재검토할 것(`consumers:`와 같은 문법).
 - **규범↔현실 화살표 미발사**: `gap`·`state` 무기입이라 규범 3건 중 **0건이 현실과 대조된 적 없다**.
   당위 절이 이를 표면화한다. verification 평면을 살릴지는 별도 판단.
+- **축 페이지 보류 2건(기각 아님)**: 계약(CON) 축은 실계약 3건+ 또는 간선 10건+, 기획(PLAN) 축은
+  PLAN ≥ 5 에서 착수 — 재개 조건·내용 후보는 [TOOL-25] 카드 "예정 축" 절이 정본. 여기 복제 금지.
 - **관측 지표 셋**: `tier distribution` `draft:` 0 이탈 · `effect surface` deny 0·ask 0([ADR-23]) ·
   [ADR-25] 재개 조건은 `lock exposure`가 트립와이어 · 크기 헤드룸에서 `archive_ledger` 27/30KB.
 - 재제안 금지 목록은 **AGENTS.md의 `blocks-index` 블록**이 소유한다 — 여기 복제하지 말 것([ADR-18]).
