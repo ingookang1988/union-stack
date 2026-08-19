@@ -147,6 +147,50 @@ function contractSection(c) {
   ${rows || '<div class="meta">선언된 간선 없음 — [PRO-16] §5 반증 조건 관측 대상</div>'}</section>`;
 }
 
+/**
+ * health.gather() 의 norms·sync·concerns → 당위 축(ARCH) 세부 절(순수).
+ *
+ * 이 축의 짝은 `verification` 의 **첫 화살표(규범↔현실 = gap)** 다. 그래서 목록이 아니라
+ * "규범이 무엇이고, 지켜지는지 누가 보는가"를 낸다 — 나열은 계보 트리가 이미 한다.
+ * 셋을 병치한다: ①집행 등급 ②드리프트 검증 상태 ③`concern:` 오버레이 채택([PRO-04]).
+ *
+ * ⚠ **인용 ≠ 집행.** 등급은 문자열 언급 기반 추정이므로 판정이 아니라 관측이다([ADR-07] 함정).
+ */
+function normSection(norms, sync, concerns) {
+  if (!norms || !norms.total) return '';
+  const GRADE = {
+    gated: { cls: 'fresh', label: '게이트' },
+    cited: { cls: 'aging', label: '인용만' },
+    isolated: { cls: 'dead', label: '고립' },
+  };
+  const rows = norms.norms.map(n => {
+    const g = GRADE[n.grade] || GRADE.isolated;
+    const who = n.gates.length ? n.gates.map(f => f.split('/').pop()).join(' ') : `코드 ${n.codeCites} · 평면 ${n.planeCites}`;
+    return `<div class="crow"><span class="nm" title="${esc(n.file)}">${esc(n.key)}</span>`
+      + `<span class="pill ${g.cls}"><b>${g.label}</b></span>`
+      + `<span class="note">${esc(who)}</span></div>`;
+  }).join('\n');
+  // 드리프트 화살표: gap·state 가 무기입이면 규범이 현실과 대조된 적이 **없다**.
+  const drift = (sync ? sync.planes.filter(p => ['gap', 'state'].includes(p.name)) : []);
+  const driftLine = drift.length
+    ? drift.map(p => `<span class="pill ${p.last ? 'fresh' : 'dead'}">${esc(p.name)}<b>${esc(p.last || '무기입')}</b></span>`).join('')
+    : '';
+  const verified = drift.filter(p => p.last).length;
+  const tags = concerns && concerns.tagged
+    ? Object.entries(concerns.byTag).map(([t, n]) => `<span class="pill fresh">${esc(t)}<b>${n}</b></span>`).join('')
+    : `<span class="pill dead">concern 태그<b>사용 0</b></span>`;
+  return `<section class="card" id="norm"><h2>당위 축 — 규범과 그 집행</h2>
+  <div class="meta">규범 ${norms.total} · 게이트 ${norms.gated} · 인용만 ${norms.cited}`
+    + `${norms.isolated ? ` · <span class="bad">고립 ${norms.isolated}</span>` : ''}`
+    + ` <span class="note">— 인용은 집행이 아니다(관측)</span></div>
+  ${rows}
+  <div class="meta" style="margin-top:12px">규범↔현실 검증(verification 첫 화살표)`
+    + `${verified === 0 ? ` · <span class="bad">대조된 적 없음</span>` : ''}</div>
+  <div class="pills">${driftLine}</div>
+  <div class="meta" style="margin-top:12px">횡단 오버레이 <span class="note">[PRO-04]</span></div>
+  <div class="pills">${tags}</div></section>`;
+}
+
 /** health.gather() effect surface 절의 byTool → 도구별 막대(순수). 한 줄 텍스트를 스캔 가능하게. */
 function effectSection(dim) {
   if (!dim || !dim.note) return '';
@@ -252,7 +296,7 @@ function render(data, { title = 'plane' } = {}) {
 <title>dashboard — ${esc(title)}</title>
 <style>${PLANE_CSS}${DASH_CSS}</style>
 <nav><b>${esc(title)} — 평면 대시보드</b>
-  <a href="#health">Health</a><a href="#budget">예산</a><a href="#wo">작업대</a><a href="#size">크기</a><a href="#contract">계약</a><a href="#plane">계보</a></nav>
+  <a href="#health">Health</a><a href="#budget">예산</a><a href="#wo">작업대</a><a href="#norm">당위</a><a href="#size">크기</a><a href="#contract">계약</a><a href="#plane">계보</a></nav>
 <main>
 ${tilesSection(data)}
 <div class="grid">
@@ -264,7 +308,10 @@ ${syncSection(health.sync, today)}
 </div>
 </div>
 <div class="grid">
+<div class="col">
+${normSection(health.norms, health.sync, health.concerns)}
 ${sizeSection(health.sizes, health.sizeCapKb)}
+</div>
 <div class="col">
 ${contractSection(health.contracts)}
 ${effectSection(effectDim)}
@@ -285,7 +332,7 @@ function gatherAll(root = path.resolve(__dirname, '..'), today = new Date().toIS
 
 module.exports = {
   tilesSection, healthSection, budgetSection, worktableSection,
-  sizeSection, syncSection, effectSection, contractSection, render, gatherAll, MARKS,
+  sizeSection, syncSection, effectSection, contractSection, normSection, render, gatherAll, MARKS,
 };
 
 if (require.main === module) {

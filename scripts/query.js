@@ -92,6 +92,51 @@ function contractEdges(index) {
   };
 }
 
+// 규범 도메인 — 격자의 당위(ought) 칸. verification 의 첫 화살표(규범↔현실)의 한쪽 끝이다.
+const NORM_DOMAINS = new Set(['ARCH', 'INF']);
+
+/**
+ * 규범 → 집행자 관측(순수) — 당위 축의 세부.
+ *
+ * 이 레포는 [PHASE-02] E3 에서 **의례 자발 수행률 0%**를 자기 데이터로 실측했다 — 산문 규칙만으론
+ * 강제되지 않는다. 따라서 "어느 규범이 산문뿐인가"는 이미 참으로 증명된 위험을 가리킨다.
+ *
+ * ⚠ **인용 ≠ 집행.** 문자열 언급으로 추정하므로 [ADR-07]이 겪은 계측 오염과 같은 함정이 있다.
+ * 그래서 판정이 아니라 관측이고, 등급도 "집행됨"이 아니라 "게이트 있음"으로 읽어야 한다.
+ *
+ * enforcers: [{ file, isGate, mentions: ['ARCH-00', …] }] — 호출부가 TOOL 카드의 `impl:` 경로에서
+ * 읽어 넘긴다(스크립트 위치를 가정하지 않기 위해 — 카드가 실행 자산의 정본이다).
+ * planeCites: { 'ARCH-00': n } — 평면 본문의 브래킷 인용 수.
+ */
+function normEnforcement(index, enforcers = [], planeCites = {}) {
+  const norms = index.filter(d => NORM_DOMAINS.has(d.domain)).map(d => {
+    const key = `${d.domain}-${d.id}`;
+    const citedBy = enforcers.filter(e => (e.mentions || []).includes(key));
+    const gates = citedBy.filter(e => e.isGate);
+    const plane = planeCites[key] || 0;
+    const grade = gates.length ? 'gated' : (citedBy.length || plane) ? 'cited' : 'isolated';
+    return {
+      key, file: d.file, status: d.status || null, tier: d.tier || null, grade,
+      gates: gates.map(e => e.file), codeCites: citedBy.length, planeCites: plane,
+    };
+  }).sort((a, b) => a.key.localeCompare(b.key));
+  const count = g => norms.filter(n => n.grade === g).length;
+  return { norms, total: norms.length, gated: count('gated'), cited: count('cited'), isolated: count('isolated') };
+}
+
+/** `concern:` 오버레이 채택 관측(순수) — [PRO-04]가 승인했으나 사용 실태를 볼 계기가 없었다. */
+function concernUsage(index) {
+  const byTag = {};
+  let tagged = 0;
+  for (const d of index) {
+    const tags = d.concerns || [];
+    if (!tags.length) continue;
+    tagged++;
+    for (const t of tags) byTag[t] = (byTag[t] || 0) + 1;
+  }
+  return { tagged, total: index.length, byTag };
+}
+
 // 과거·결정 라우팅(P1-A 결정 트리). find()가 첫 매칭을 반환하므로 *더 구체적인* 분기가 앞선다.
 const ROUTES = [
   { keys: ['ephemeral', 'session', 'progress', 'handoff', 'relay'], destination: '.union-stack/sprint/HANDOFF.md', tier: 'Wiki (volatile)', note: '다음 세션이 이어받을 휘발성 진행' },
@@ -111,4 +156,4 @@ function whereToRecord(kind) {
   return { kind, match: r ? strip(r) : null, all: ROUTES.map(strip) };
 }
 
-module.exports = { upwardFetch, blastRadius, contractEdges, whereToRecord, CONTEXT_DOMAINS, LOCKED };
+module.exports = { upwardFetch, blastRadius, contractEdges, normEnforcement, concernUsage, whereToRecord, CONTEXT_DOMAINS, LOCKED, NORM_DOMAINS };

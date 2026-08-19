@@ -1,6 +1,6 @@
 // scripts/query.test.js
 // 순수 조회 로직 단위 테스트(합성 색인 — 레포 비의존). 실행: node scripts/query.test.js
-const { upwardFetch, blastRadius, contractEdges, whereToRecord } = require('./query');
+const { upwardFetch, blastRadius, contractEdges, normEnforcement, concernUsage, whereToRecord } = require('./query');
 
 let pass = 0, fail = 0;
 function check(label, got, exp) {
@@ -68,6 +68,32 @@ const ceDup = contractEdges([
 check('ce 동일계보 간선을 무의미로 표기', [ceDup.redundant, ceDup.byContract[0].redundant], [1, ['FLOW-01a']]);
 check('ce 선언 없으면 0', contractEdges([{ domain: 'CON', id: '9', file: 'x.md' }]).edges, 0);
 check('ce 빈 평면', contractEdges([]).contracts, 0);
+
+// --- normEnforcement: 당위 축 집행 등급(인용 != 집행 — 관측) ---
+const nIndex = [
+  { domain: 'ARCH', id: '00', status: 'Active', file: 'architecture/ARCH-00_x.md' },
+  { domain: 'ARCH', id: '01', status: 'Active', file: 'architecture/ARCH-01_y.md' },
+  { domain: 'INF', id: '01', status: 'Active', file: 'architecture/infra/INF-01_z.md' },
+  { domain: 'PLAN', id: '01', file: 'plan/PLAN-01.md' },   // 규범 아님 — 안 들어와야 한다
+];
+const ne = normEnforcement(nIndex,
+  [{ file: 'scripts/g.js', isGate: true, mentions: ['ARCH-00'] },
+   { file: 'scripts/x.js', isGate: false, mentions: ['ARCH-01'] }],
+  { 'INF-01': 2 });
+check('ne 규범 도메인만(ARCH·INF)', ne.total, 3);
+check('ne 등급 3분', [ne.gated, ne.cited, ne.isolated], [1, 2, 0]);
+check('ne 게이트 출처', ne.norms.find(n => n.key === 'ARCH-00').gates, ['scripts/g.js']);
+check('ne 게이트 아닌 인용은 cited', ne.norms.find(n => n.key === 'ARCH-01').grade, 'cited');
+check('ne 평면 인용만 있어도 cited', ne.norms.find(n => n.key === 'INF-01').grade, 'cited');
+check('ne 아무도 안 보면 isolated', normEnforcement(nIndex).isolated, 3);
+check('ne 규범 없으면 0', normEnforcement([{ domain: 'PLAN', id: '01', file: 'p.md' }]).total, 0);
+
+// --- concernUsage: [PRO-04] 오버레이 채택 ---
+check('cu 미사용', concernUsage([{ domain: 'ARCH', id: '00' }]), { tagged: 0, total: 1, byTag: {} });
+check('cu 태그 집계', concernUsage([
+  { domain: 'ARCH', id: '00', concerns: ['security', 'observability'] },
+  { domain: 'INF', id: '01', concerns: ['security'] },
+]), { tagged: 2, total: 2, byTag: { security: 2, observability: 1 } });
 
 // --- whereToRecord ---
 check('route pivot→HISTORY', whereToRecord('pivot').match.destination, '.union-stack/project/HISTORY.md');

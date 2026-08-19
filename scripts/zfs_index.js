@@ -26,9 +26,12 @@ function readFront(full) {
     if (!fm) return { status: null, tier: null };
     const g = k => { const m = fm[1].match(new RegExp('^\\s*' + k + ':\\s*(.+?)\\s*$', 'm')); return m ? m[1].trim() : null; };
     const tier = g('tier');
-    return { status: g('status'), tier: tier ? tier.toLowerCase() : null, consumers: parseConsumers(fm[1]) };
+    return {
+      status: g('status'), tier: tier ? tier.toLowerCase() : null,
+      consumers: parseConsumers(fm[1]), concerns: parseList(fm[1], 'concern'),
+    };
   } catch {
-    return { status: null, tier: null, consumers: [] };
+    return { status: null, tier: null, consumers: [], concerns: [] };
   }
 }
 
@@ -38,12 +41,15 @@ function readFront(full) {
  * 인라인 `[A, B]`와 블록 `- A` 둘 다 받는다(work-close 의 listField 와 같은 관용).
  * 값은 `DOMAIN-id` 표기이며 브래킷을 붙여도 벗긴다.
  */
-function parseConsumers(fm) {
+function parseConsumers(fm) { return parseList(fm, 'consumers'); }
+
+/** frontmatter 목록 필드 파싱(순수). 인라인 `[A, B]`와 블록 `- A` 둘 다, 따옴표·브래킷은 벗긴다. */
+function parseList(fm, key) {
   const s = String(fm || '');
   const norm = v => v.trim().replace(/^["'[]+|["'\]]+$/g, '').trim();
-  const inline = s.match(/^[ \t]*consumers:[ \t]*\[(.*?)\][ \t]*$/m);
+  const inline = s.match(new RegExp('^[ \\t]*' + key + ':[ \\t]*\\[(.*?)\\][ \\t]*$', 'm'));
   if (inline) return inline[1].split(',').map(norm).filter(Boolean);
-  const head = s.match(/^[ \t]*consumers:[ \t]*$/m);
+  const head = s.match(new RegExp('^[ \\t]*' + key + ':[ \\t]*$', 'm'));
   if (!head) return [];
   const out = [];
   for (const line of s.slice(head.index + head[0].length).split(/\r?\n/).slice(1)) {
@@ -64,7 +70,8 @@ function collect(dir, root, out) {
     const parsed = parse(entry); // {domain, id, slug} 또는 null(가이드·매니페스트)
     if (!parsed) return;
     const front = readFront(path.join(root, rel));
-    out.push({ file: rel, ...parsed, status: front.status, tier: front.tier, consumers: front.consumers || [] });
+    out.push({ file: rel, ...parsed, status: front.status, tier: front.tier,
+      consumers: front.consumers || [], concerns: front.concerns || [] });
   });
 }
 
@@ -75,4 +82,4 @@ function buildIndex(root = path.resolve(__dirname, '..')) {
   return out;
 }
 
-module.exports = { buildIndex, readStatus, readFront, parseConsumers, SCAN_DIRS };
+module.exports = { buildIndex, readStatus, readFront, parseConsumers, parseList, SCAN_DIRS };

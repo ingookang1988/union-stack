@@ -37,7 +37,12 @@ check('ref integrity INFO', sz.dims.find(d => d.name === 'ref integrity').value.
 const g = gather();
 const nonLeakFails = g.dims.filter(d => d.status === 'FAIL' && d.name !== 'leakage gate').length;
 check('gather 커밋 평면 게이트 그린', nonLeakFails === 0);
-check('gather dims 14 (관측 5절 포함)', g.dims.length === 14);
+check('gather dims 15 (관측 6절 포함)', g.dims.length === 15);
+// 당위 축 관측 — 인용 != 집행이므로 판정 없는 INFO.
+const nDim = g.dims.find(d => d.name === 'norm enforcement');
+check('norm enforcement 절은 INFO', nDim.status === 'INFO');
+check('norm enforcement 값에 규범·게이트', /규범 \d+ · 게이트 \d+/.test(nDim.value));
+check('norms·concerns 원자료도 함께 낸다', Array.isArray(g.norms.norms) && typeof g.concerns.tagged === 'number');
 // 계약 간선 관측([PRO-16] §5 반증 계기) — 판정 없이 채택·무결성만 병치한다.
 const ceDim = g.dims.find(d => d.name === 'contract edges');
 check('contract edges 절은 INFO(판정 없음)', ceDim.status === 'INFO');
