@@ -148,46 +148,81 @@ function contractSection(c) {
 }
 
 /**
- * health.gather() 의 norms·sync·concerns → 당위 축(ARCH) 세부 절(순수).
+ * 당위 축(ARCH) **전용 페이지**(순수). 개요의 요약 카드가 아니라 세부 뷰다.
  *
- * 이 축의 짝은 `verification` 의 **첫 화살표(규범↔현실 = gap)** 다. 그래서 목록이 아니라
- * "규범이 무엇이고, 지켜지는지 누가 보는가"를 낸다 — 나열은 계보 트리가 이미 한다.
- * 셋을 병치한다: ①집행 등급 ②드리프트 검증 상태 ③`concern:` 오버레이 채택([PRO-04]).
+ * 이 축의 짝은 verification 의 첫 화살표(규범↔현실=gap)이므로, 목록이 아니라
+ * "규범이 무엇을 말하고, 지켜지는지 누가 보는가"를 낸다. 규범마다 넷을 편다:
+ *   제목·티어·크기 · **절 구조**(파일을 열지 않고 내용을 가늠) ·
+ *   **집행자의 계약**(특히 `scope` — [PRO-11]의 존재 이유가 "무엇을 *안* 보는지가 호출부에서
+ *   읽혀야 한다"이고 규범 페이지가 그 호출부다) · **인용처 목록**(계수를 이동 가능한 정보로).
  *
- * ⚠ **인용 ≠ 집행.** 등급은 문자열 언급 기반 추정이므로 판정이 아니라 관측이다([ADR-07] 함정).
+ * ⚠ **인용 ≠ 집행.** 문자열 언급 기반 추정이라 판정이 아니라 관측이다([ADR-07] 계측 오염 함정).
  */
-function normSection(norms, sync, concerns) {
-  if (!norms || !norms.total) return '';
+function normView(norms, sync, concerns) {
+  if (!norms || !norms.total) {
+    return `<section class="card"><h2>당위 축 — 규범과 그 집행</h2>
+  <div class="meta">규범 문서(ARCH·INF) 없음 — 이 축은 아직 비어 있다</div></section>`;
+  }
   const GRADE = {
-    gated: { cls: 'fresh', label: '게이트' },
-    cited: { cls: 'aging', label: '인용만' },
-    isolated: { cls: 'dead', label: '고립' },
+    gated: { cls: 'fresh', label: '게이트 있음', why: '판정 계약을 선언한 실행 자산이 이 규범을 참조한다' },
+    cited: { cls: 'aging', label: '인용만', why: '아는 곳은 있으나 아무것도 판정하지 않는다 — 산문 규범' },
+    isolated: { cls: 'dead', label: '고립', why: '평면·코드 어디서도 인용하지 않는다 — 죽은 규범' },
   };
-  const rows = norms.norms.map(n => {
-    const g = GRADE[n.grade] || GRADE.isolated;
-    const who = n.gates.length ? n.gates.map(f => f.split('/').pop()).join(' ') : `코드 ${n.codeCites} · 평면 ${n.planeCites}`;
-    return `<div class="crow"><span class="nm" title="${esc(n.file)}">${esc(n.key)}</span>`
-      + `<span class="pill ${g.cls}"><b>${g.label}</b></span>`
-      + `<span class="note">${esc(who)}</span></div>`;
-  }).join('\n');
-  // 드리프트 화살표: gap·state 가 무기입이면 규범이 현실과 대조된 적이 **없다**.
-  const drift = (sync ? sync.planes.filter(p => ['gap', 'state'].includes(p.name)) : []);
-  const driftLine = drift.length
-    ? drift.map(p => `<span class="pill ${p.last ? 'fresh' : 'dead'}">${esc(p.name)}<b>${esc(p.last || '무기입')}</b></span>`).join('')
+  const fileList = (label, files) => files.length
+    ? `<div class="frow"><span class="flabel">${label}</span><span class="fvals">`
+      + files.map(f => `<code title="${esc(f)}">${esc(f.split('/').pop())}</code>`).join('') + '</span></div>'
     : '';
+  const contractBlock = c => `<div class="ctr">
+    <div class="ctrh">${esc(c.gate || c.file)}</div>
+    ${c.predicate ? `<div class="frow"><span class="flabel">판정</span><span class="fvals t">${esc(c.predicate)}</span></div>` : ''}
+    ${c.scope ? `<div class="frow"><span class="flabel scope">사각지대</span><span class="fvals t">${esc(c.scope)}</span></div>` : ''}
+    ${c.outcomes && c.outcomes.length ? `<div class="frow"><span class="flabel">결과</span><span class="fvals">${c.outcomes.map(o => `<code>${esc(o)}</code>`).join('')}</span></div>` : ''}
+    ${c.failure_mode ? `<div class="frow"><span class="flabel">실패 시</span><span class="fvals t">${esc(c.failure_mode)}</span></div>` : ''}
+  </div>`;
+  const card = n => {
+    const g = GRADE[n.grade] || GRADE.isolated;
+    return `<section class="card norm">
+    <h2>${esc(n.key)} <span class="ntitle">${esc(n.title || '')}</span></h2>
+    <div class="meta"><span class="pill ${g.cls}"><b>${g.label}</b></span>
+      <span class="note">${esc(g.why)}</span></div>
+    <div class="meta"><span class="note">${esc(n.file)} · ${n.kb}KB · status ${esc(n.status || '없음')} · tier ${esc(n.tier || '미기입')}</span></div>
+    ${n.headings.length ? `<div class="frow"><span class="flabel">절 구조</span><span class="fvals">${n.headings.map(h => `<code>${esc(h)}</code>`).join('')}</span></div>` : ''}
+    ${n.gateContracts.length ? n.gateContracts.map(contractBlock).join('')
+      : `<div class="frow"><span class="flabel">집행</span><span class="fvals t">판정하는 게이트 없음</span></div>`}
+    ${fileList('코드 인용', n.cites)}
+    ${fileList('평면 인용', n.planeFiles)}
+  </section>`;
+  };
+  // 드리프트 화살표: gap·state 가 무기입이면 규범이 현실과 대조된 적이 **없다**.
+  const drift = sync ? sync.planes.filter(p => ['gap', 'state'].includes(p.name)) : [];
   const verified = drift.filter(p => p.last).length;
+  const driftPills = drift.map(p =>
+    `<span class="pill ${p.last ? 'fresh' : 'dead'}">${esc(p.name)}<b>${esc(p.last || '무기입')}</b></span>`).join('');
   const tags = concerns && concerns.tagged
     ? Object.entries(concerns.byTag).map(([t, n]) => `<span class="pill fresh">${esc(t)}<b>${n}</b></span>`).join('')
     : `<span class="pill dead">concern 태그<b>사용 0</b></span>`;
-  return `<section class="card" id="norm"><h2>당위 축 — 규범과 그 집행</h2>
-  <div class="meta">규범 ${norms.total} · 게이트 ${norms.gated} · 인용만 ${norms.cited}`
-    + `${norms.isolated ? ` · <span class="bad">고립 ${norms.isolated}</span>` : ''}`
-    + ` <span class="note">— 인용은 집행이 아니다(관측)</span></div>
-  ${rows}
-  <div class="meta" style="margin-top:12px">규범↔현실 검증(verification 첫 화살표)`
-    + `${verified === 0 ? ` · <span class="bad">대조된 적 없음</span>` : ''}</div>
-  <div class="pills">${driftLine}</div>
-  <div class="meta" style="margin-top:12px">횡단 오버레이 <span class="note">[PRO-04]</span></div>
+  return `<div class="tiles">
+  <div class="tile"><div class="tl">규범</div><div class="tv">${norms.total}</div><div class="ts">ARCH + INF</div></div>
+  <div class="tile"><div class="tl">게이트 있음</div><div class="tv ${norms.gated ? 'good' : 'bad'}">${norms.gated}</div><div class="ts">판정 계약이 참조</div></div>
+  <div class="tile"><div class="tl">산문뿐</div><div class="tv ${norms.cited ? 'warn' : ''}">${norms.cited}</div><div class="ts">인용만 · 판정 없음</div></div>
+  <div class="tile"><div class="tl">현실과 대조</div><div class="tv ${verified ? 'good' : 'bad'}">${verified}/${drift.length || 0}</div><div class="ts">verification 첫 화살표</div></div>
+  </div>
+  <section class="card"><h2>왜 이 절이 있는가</h2>
+  <div class="meta">이 축의 짝은 <b>verification 의 첫 화살표(규범↔현실 = gap)</b>다. 그래서 나열이 아니라
+  "지켜지는지 누가 보는가"를 낸다 — 나열은 계보 뷰가 이미 한다.
+  근거는 이 레포 자신의 데이터다: <b>[PHASE-02] E3 가 의례 자발 수행률 0%를 실측</b>해 산문 규칙만으론
+  강제되지 않음을 확증했다. <span class="bad">단 인용은 집행이 아니다</span> — 아래 등급은 문자열 언급
+  기반 추정이므로 판정이 아니라 관측이다([ADR-07] 계측 오염 함정).</div></section>
+  ${norms.norms.map(card).join('\n')}
+  <section class="card"><h2>규범 ↔ 현실 검증 <span class="note">verification 첫 화살표</span></h2>
+  <div class="meta">${verified === 0
+    ? `<span class="bad">규범 ${norms.total}건 중 0건이 현실과 대조된 적 없다</span> — gap·state 가 무기입이다`
+    : `대조 기록 있음`}</div>
+  <div class="pills">${driftPills}</div></section>
+  <section class="card"><h2>횡단 오버레이 <span class="note">[PRO-04] concern:</span></h2>
+  <div class="meta">${concerns && concerns.tagged
+    ? `${concerns.tagged}/${concerns.total} 문서에 태그됨`
+    : `<span class="bad">승인됐으나 사용 0</span> — 관측이 없으면 폐기 판단도 못 한다(consumers: 와 같은 문법)`}</div>
   <div class="pills">${tags}</div></section>`;
 }
 
@@ -232,8 +267,26 @@ const DASH_CSS = `
         border-bottom:1px solid var(--line); padding:12px 24px; display:flex; gap:18px;
         align-items:baseline; z-index:2; }
   nav b { font-size:14px; margin-right:auto; }
-  nav a { color:var(--muted); text-decoration:none; font-size:12.5px; }
-  nav a:hover { color:var(--ink); }
+  nav a { color:var(--muted); text-decoration:none; font-size:12.5px; padding:4px 10px;
+          border-radius:6px; }
+  nav a:hover { color:var(--ink); background:#f1f2f4; }
+  nav a.on { color:#fff; background:#2a78d6; font-weight:600; }
+  .view[hidden] { display:none; }
+  .card.norm > h2 { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;
+                    font-family:ui-monospace, Consolas, monospace; }
+  .ntitle { font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans KR",sans-serif;
+            font-weight:400; color:var(--muted); font-size:12.5px; }
+  .frow { display:flex; gap:10px; margin:8px 18px 0; align-items:baseline; font-size:12.5px; }
+  .flabel { flex:0 0 74px; color:var(--faint); font-size:11.5px; }
+  .flabel.scope { color:#b54708; font-weight:600; }
+  .fvals { display:flex; flex-wrap:wrap; gap:5px; min-width:0; }
+  .fvals.t { display:block; color:var(--ink); line-height:1.5; }
+  .fvals code { background:#f1f2f4; border-radius:4px; padding:1px 6px; font-size:11.5px;
+                font-family:ui-monospace, Consolas, monospace; }
+  .ctr { margin:10px 18px 0; padding:10px 12px; border:1px solid var(--line);
+         border-radius:8px; background:#fafbfc; }
+  .ctr .frow { margin:6px 0 0; }
+  .ctrh { font-size:12px; font-weight:600; font-family:ui-monospace, Consolas, monospace; }
   .tiles { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:14px;
            margin-bottom:14px; }
   .tile { background:#fff; border:1px solid var(--line); border-radius:10px;
@@ -287,18 +340,24 @@ const DASH_CSS = `
   .card .plane > .meta, .card .plane > .legend, .card .plane > .flt { margin:8px 18px 0; }
 `;
 
+/**
+ * 뷰 정의 — 축 하나가 페이지 하나다. 새 축을 추가하려면 여기에 한 줄을 더한다.
+ * 라우팅은 해시(`#/arch`)로 한다: 사용자에겐 고유 URL·뒤로가기·북마크가 있는 **별도 페이지**이면서,
+ * 산출물은 zero-dep 자기완결 **1개 파일**로 남는다(gitignore 항목·링크 관리가 늘지 않는다).
+ * 파일 분리로 바꾸려면 이 배열을 파일별로 렌더하고 href 만 바꾸면 된다 — 뷰 함수는 그대로다.
+ */
+const VIEWS = [
+  { id: 'overview', label: '개요' },
+  { id: 'arch', label: '당위(ARCH)' },
+  { id: 'plane', label: '계보' },
+];
+
 /** 수집된 표면 → 자기완결 HTML(순수 — FS 접근 없음). */
 function render(data, { title = 'plane' } = {}) {
   const { index, health, budget, wos, today } = data;
   const effectDim = (health.dims || []).find(d => d.name === 'effect surface');
-  return `<!doctype html>
-<meta charset="utf-8">
-<title>dashboard — ${esc(title)}</title>
-<style>${PLANE_CSS}${DASH_CSS}</style>
-<nav><b>${esc(title)} — 평면 대시보드</b>
-  <a href="#health">Health</a><a href="#budget">예산</a><a href="#wo">작업대</a><a href="#norm">당위</a><a href="#size">크기</a><a href="#contract">계약</a><a href="#plane">계보</a></nav>
-<main>
-${tilesSection(data)}
+  const body = {
+    overview: `${tilesSection(data)}
 <div class="grid">
 ${healthSection(health)}
 <div class="col">
@@ -308,22 +367,59 @@ ${syncSection(health.sync, today)}
 </div>
 </div>
 <div class="grid">
-<div class="col">
-${normSection(health.norms, health.sync, health.concerns)}
 ${sizeSection(health.sizes, health.sizeCapKb)}
-</div>
 <div class="col">
 ${contractSection(health.contracts)}
 ${effectSection(effectDim)}
 </div>
-</div>
-<section class="card" id="plane"><h2>계보 — 평면 전체</h2>
+</div>`,
+    arch: normView(health.norms, health.sync, health.concerns),
+    plane: `<section class="card"><h2>계보 — 평면 전체</h2>
 <div class="plane">${planeBody(index)}</div>
-</section>
+</section>`,
+  };
+  return `<!doctype html>
+<meta charset="utf-8">
+<title>dashboard — ${esc(title)}</title>
+<style>${PLANE_CSS}${DASH_CSS}</style>
+<nav><b>${esc(title)}</b>
+  ${VIEWS.map(v => `<a href="#/${v.id}" data-nav="${v.id}">${esc(v.label)}</a>`).join('')}</nav>
+<main>
+${VIEWS.map(v => `<div class="view" data-view="${v.id}" hidden>\n${body[v.id] || ''}\n</div>`).join('\n')}
 </main>
-<script>${FILTER_JS}</script>
+<script>${ROUTER_JS}${FILTER_JS}</script>
 `;
 }
+
+// 뷰 라우터 — 축 하나 = 페이지 하나.
+// **클릭이 정본이고 해시는 부가다.** 해시만으로 전환하면 `data:` URL 임베드처럼 해시가 유지되지 않는
+// 뷰어에서 첫 뷰에 갇혀 나머지 축에 영영 도달할 수 없다(실측: 프리뷰 패널에서 재현).
+// 그래서 클릭으로 직접 전환하고, 해시는 지원되는 환경에서만 북마크·뒤로가기를 얹는 보너스로 둔다.
+const ROUTER_JS = `
+(function () {
+  const views = [...document.querySelectorAll('.view')];
+  const navs = [...document.querySelectorAll('nav a[data-nav]')];
+  if (!views.length) return;
+  function show(want) {
+    const hit = views.some(v => v.dataset.view === want) ? want : views[0].dataset.view;
+    views.forEach(v => { v.hidden = v.dataset.view !== hit; });
+    navs.forEach(a => a.classList.toggle('on', a.dataset.nav === hit));
+    document.title = document.title.split(' — ')[0] + ' — ' + hit;
+    scrollTo(0, 0);
+  }
+  function fromHash() {
+    const h = location.hash || '';
+    return h.slice(0, 2) === '#/' ? h.slice(2) : '';
+  }
+  navs.forEach(a => a.addEventListener('click', e => {
+    e.preventDefault();
+    show(a.dataset.nav);
+    try { history.replaceState(null, '', '#/' + a.dataset.nav); } catch (_) { /* data: URL 등 — 무시 */ }
+  }));
+  addEventListener('hashchange', () => show(fromHash()));
+  show(fromHash());
+})();
+`;
 
 /** 표면 수집(read-only). `today`는 신선도 경과일 계산용 — 순수 렌더에 주입한다. */
 function gatherAll(root = path.resolve(__dirname, '..'), today = new Date().toISOString().slice(0, 10)) {
@@ -332,7 +428,7 @@ function gatherAll(root = path.resolve(__dirname, '..'), today = new Date().toIS
 
 module.exports = {
   tilesSection, healthSection, budgetSection, worktableSection,
-  sizeSection, syncSection, effectSection, contractSection, normSection, render, gatherAll, MARKS,
+  sizeSection, syncSection, effectSection, contractSection, normView, render, gatherAll, VIEWS, MARKS,
 };
 
 if (require.main === module) {

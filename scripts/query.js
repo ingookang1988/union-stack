@@ -108,16 +108,25 @@ const NORM_DOMAINS = new Set(['ARCH', 'INF']);
  * 읽어 넘긴다(스크립트 위치를 가정하지 않기 위해 — 카드가 실행 자산의 정본이다).
  * planeCites: { 'ARCH-00': n } — 평면 본문의 브래킷 인용 수.
  */
-function normEnforcement(index, enforcers = [], planeCites = {}) {
+function normEnforcement(index, enforcers = [], planeCites = {}, docs = {}) {
   const norms = index.filter(d => NORM_DOMAINS.has(d.domain)).map(d => {
     const key = `${d.domain}-${d.id}`;
     const citedBy = enforcers.filter(e => (e.mentions || []).includes(key));
     const gates = citedBy.filter(e => e.isGate);
-    const plane = planeCites[key] || 0;
-    const grade = gates.length ? 'gated' : (citedBy.length || plane) ? 'cited' : 'isolated';
+    // planeCites 는 {count, files} 또는 (구형) 숫자를 받는다 — 호출부 형태에 의존하지 않는다.
+    const pc = planeCites[key];
+    const plane = typeof pc === 'number' ? { count: pc, files: [] } : (pc || { count: 0, files: [] });
+    const grade = gates.length ? 'gated' : (citedBy.length || plane.count) ? 'cited' : 'isolated';
+    const doc = docs[key] || {};
     return {
       key, file: d.file, status: d.status || null, tier: d.tier || null, grade,
-      gates: gates.map(e => e.file), codeCites: citedBy.length, planeCites: plane,
+      title: doc.title || null, headings: doc.headings || [], kb: doc.kb || 0,
+      gates: gates.map(e => e.file),
+      // 집행자의 계약을 규범 옆에 둔다 — [PRO-11]의 존재 이유가 "무엇을 *안* 보는지(scope)가
+      // 호출부에서 읽혀야 한다"이고, 규범 페이지가 바로 그 호출부다.
+      gateContracts: gates.filter(e => e.contract).map(e => ({ file: e.file, ...e.contract })),
+      cites: citedBy.map(e => e.file),
+      codeCites: citedBy.length, planeCites: plane.count, planeFiles: plane.files,
     };
   }).sort((a, b) => a.key.localeCompare(b.key));
   const count = g => norms.filter(n => n.grade === g).length;

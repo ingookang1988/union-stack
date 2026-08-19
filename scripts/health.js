@@ -46,6 +46,33 @@ const LESSONS_DIR = '.union-stack/reference/lessons';
 // [ADR-08]의 논리는 "훅으로 *강제*하지 않는다"였지 "*관측*하지 않는다"가 아니었다. 그래서 게이트가 아니라 관측 1절이다.
 const EFFECT_SETTINGS = ['.claude/settings.json', '.claude/settings.local.json'];
 
+// 선두 HTML 주석을 건너뛰고 frontmatter 블록만 잡는다(zfs_index.readFront 와 같은 규칙).
+const FRONTMATTER_RE = /^(?:\s|<!--[\s\S]*?-->)*---\r?\n([\s\S]*?)\r?\n---/;
+
+/**
+ * 소스에서 게이트 계약 필드를 **정적 파싱**한다(순수 — 실행하지 않는다).
+ *
+ * `require()` 로 `CONTRACT` 를 읽는 방법도 있으나(gate-contract.test.js 가 그렇게 한다), 여기서는
+ * *발견된* 파일을 다루므로 부작용 위험이 있다 — 어답터 레포의 스크립트가 main 가드 없이 뭔가를
+ * 실행할 수 있다. read-only 불변식을 지키려고 문자열 파싱을 택했고, 그래서 **깨지기 쉽다**:
+ * 파싱 실패는 필드 누락으로 조용히 축약된다(오탐보다 미탐이 안전한 표시용 데이터).
+ */
+function parseContract(txt) {
+  const m = String(txt || '').match(/const CONTRACT\s*=\s*\{([\s\S]*?)\n\};/);
+  if (!m) return null;
+  const body = m[1];
+  const str = k => {
+    const r = body.match(new RegExp('^\\s*' + k + ':\\s*([\'"])([\\s\\S]*?)\\1\\s*,?\\s*$', 'm'));
+    return r ? r[2] : null;
+  };
+  const arr = k => {
+    const r = body.match(new RegExp('^\\s*' + k + ':\\s*\\[(.*?)\\]', 'm'));
+    return r ? r[1].split(',').map(x => x.trim().replace(/^['"]|['"]$/g, '')).filter(Boolean) : [];
+  };
+  const out = { gate: str('gate'), input: str('input'), predicate: str('predicate'), scope: str('scope'), failure_mode: str('failure_mode'), outcomes: arr('outcomes') };
+  return out.gate || out.predicate || out.scope ? out : null;
+}
+
 /** 본문에서 가장 늦은 YYYY-MM-DD를 뽑는다(순수). 없으면 null — "무기입"으로 표기된다. */
 function lastDateIn(txt) {
   const ds = String(txt || '').match(/\b20\d{2}-\d{2}-\d{2}\b/g);
@@ -150,7 +177,7 @@ function gather(root = path.resolve(__dirname, '..')) {
   const budget = gatherBudget(root);
   const sync = gatherSync(root);
   const contracts = contractEdges(index);
-  const norms = normEnforcement(index, gatherEnforcers(root), gatherPlaneCites(root));
+  const norms = normEnforcement(index, gatherEnforcers(root), gatherPlaneCites(root), gatherNormDocs(root, index));
   const r = computeHealth({
     index, domainsDefined: [...VALID_DOMAINS], guideCount: countGuides(root),
     namingViolations, historyViolations, leakageViolations, oversize, brokenRefs, budget,
@@ -228,7 +255,7 @@ function gatherEnforcers(root) {
       try { txt = fs.readFileSync(path.join(root, rel), 'utf8'); } catch { return; }
       const mentions = [...new Set((txt.match(/(?:ARCH|INF)-[0-9][0-9a-z-]*/g) || []))];
       if (!mentions.length) return;
-      out.push({ file: rel, isGate: /CONTRACT\s*=\s*\{/.test(txt), mentions });
+      out.push({ file: rel, isGate: /CONTRACT\s*=\s*\{/.test(txt), mentions, contract: parseContract(txt) });
     });
   }
   return out.sort((a, b) => a.file.localeCompare(b.file));
@@ -241,11 +268,34 @@ function gatherPlaneCites(root) {
     if (!rel.endsWith('.md')) return;
     let txt = '';
     try { txt = fs.readFileSync(path.join(root, rel), 'utf8'); } catch { return; }
+    const seen = new Set();
     for (const r of extractRefs(txt)) {
-      if (NORM_DOMAINS.has(r.domain)) cites[r.raw] = (cites[r.raw] || 0) + 1;
+      if (!NORM_DOMAINS.has(r.domain) || seen.has(r.raw)) continue;
+      seen.add(r.raw); // 한 파일이 같은 규범을 여러 번 인용해도 "인용한 파일 1개"로 센다
+      const e = cites[r.raw] || (cites[r.raw] = { count: 0, files: [] });
+      e.count++;
+      e.files.push(rel);
     }
   });
   return cites;
+}
+
+/** 규범 문서의 제목·절 구조·크기(관측만) — "이 규범이 무엇을 말하는가"를 파일 열지 않고 보게 한다. */
+function gatherNormDocs(root, index) {
+  const out = {};
+  for (const d of index) {
+    if (!NORM_DOMAINS.has(d.domain)) continue;
+    let txt = '';
+    try { txt = fs.readFileSync(path.join(root, d.file), 'utf8'); } catch { continue; }
+    const fm = txt.match(FRONTMATTER_RE);
+    const t = fm && fm[1].match(/^[ 	]*title:[ 	]*(.+?)[ 	]*$/m);
+    out[`${d.domain}-${d.id}`] = {
+      title: t ? t[1].replace(/^["']|["']$/g, '') : null,
+      headings: (txt.match(/^##[ 	]+.+$/gm) || []).map(h => h.replace(/^##[ 	]+/, '').trim()),
+      kb: +(Buffer.byteLength(txt, 'utf8') / 1024).toFixed(1),
+    };
+  }
+  return out;
 }
 
 /** LSN frontmatter의 status·valid_reason 표면화([PRO-11] C2 축소형 — 기존 필드를 읽기만). */
@@ -277,6 +327,6 @@ function run(root) {
   return r.fails ? 1 : 0;
 }
 
-module.exports = { computeHealth, gather, gatherSync, gatherLessons, computeEffectSurface, gatherEffectSurface, lastDateIn, CONTRACT };
+module.exports = { computeHealth, gather, gatherSync, gatherLessons, computeEffectSurface, gatherEffectSurface, parseContract, lastDateIn, CONTRACT };
 
 if (require.main === module) process.exit(withContract(CONTRACT, () => run())());

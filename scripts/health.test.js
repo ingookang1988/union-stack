@@ -1,6 +1,6 @@
 // scripts/health.test.js
 // 순수 계산부(computeHealth) 단위 + gather() 스모크. 실행: node scripts/health.test.js
-const { computeHealth, gather, computeEffectSurface } = require('./health');
+const { computeHealth, gather, computeEffectSurface, parseContract } = require('./health');
 
 let pass = 0, fail = 0;
 function check(label, cond) { if (cond) pass++; else { fail++; console.error(`FAIL ${label}`); } }
@@ -43,6 +43,23 @@ const nDim = g.dims.find(d => d.name === 'norm enforcement');
 check('norm enforcement 절은 INFO', nDim.status === 'INFO');
 check('norm enforcement 값에 규범·게이트', /규범 \d+ · 게이트 \d+/.test(nDim.value));
 check('norms·concerns 원자료도 함께 낸다', Array.isArray(g.norms.norms) && typeof g.concerns.tagged === 'number');
+// 당위 페이지의 재료 — 제목·절 구조·인용처·게이트 계약이 실제로 채워지는가.
+const a00 = g.norms.norms.find(n => n.key === 'ARCH-00');
+check('규범 제목·절 구조 수집', !!a00.title && a00.headings.length > 0);
+check('평면 인용처가 파일 목록으로', Array.isArray(a00.planeFiles) && a00.planeFiles.length > 0);
+check('게이트 계약의 scope 를 정적 파싱', a00.gateContracts.length > 0 && !!a00.gateContracts[0].scope);
+
+// parseContract — 실행 없이 소스에서 계약 필드를 뽑는다(read-only 불변식).
+const pc = parseContract(`const CONTRACT = {
+  gate: 'X Gate (x)',
+  predicate: 'p 조건',
+  scope: 's 사각지대',
+  outcomes: ['PASS', 'REJECT'],
+  failure_mode: 'f 실패',
+};`);
+check('parseContract 필드 추출', pc.gate === 'X Gate (x)' && pc.scope === 's 사각지대');
+check('parseContract outcomes 배열', JSON.stringify(pc.outcomes) === '["PASS","REJECT"]');
+check('parseContract 없으면 null', parseContract('const X = 1;') === null);
 // 계약 간선 관측([PRO-16] §5 반증 계기) — 판정 없이 채택·무결성만 병치한다.
 const ceDim = g.dims.find(d => d.name === 'contract edges');
 check('contract edges 절은 INFO(판정 없음)', ceDim.status === 'INFO');

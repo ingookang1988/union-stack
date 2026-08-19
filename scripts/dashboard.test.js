@@ -2,7 +2,7 @@
 // 섹션 함수(순수) 단위 + 실평면 합성 스모크. 대시보드는 *합성*이므로 여기서는 그리기만 검증한다 —
 // 데이터의 옳음은 각 소스 도구의 테스트(health·context-budget·work-close·lineage-tree)가 소유한다.
 const { tilesSection, healthSection, budgetSection, worktableSection,
-  sizeSection, syncSection, effectSection, contractSection, normSection, render, gatherAll } = require('./dashboard');
+  sizeSection, syncSection, effectSection, contractSection, normView, render, gatherAll, VIEWS } = require('./dashboard');
 
 let pass = 0, fail = 0;
 function check(label, cond) { if (cond) pass++; else { fail++; console.error(`FAIL ${label}`); } }
@@ -101,36 +101,59 @@ check('contract: 미선언 계약 수', cs.includes('미선언 2'));
 const csEmpty = contractSection({ contracts: 2, declaring: 0, edges: 0, resolved: 0, redundant: 0, unresolved: [], byContract: [] });
 check('contract: 간선 0이면 반증 조건 관측 문구', csEmpty.includes('[PRO-16] §5'));
 
-// normSection — 당위 축: 집행 등급 3분 + 드리프트 화살표 + concern 채택
-check('norm: 규범 없으면 조각 없음', normSection({ total: 0, norms: [] }) === '');
-const ns = normSection(
+// normView — 당위 축 전용 페이지: 등급 3분 + 절 구조 + 게이트 계약 + 인용처 + 드리프트 + concern
+check('norm: 규범 없으면 안내 카드', normView({ total: 0, norms: [] }).includes('이 축은 아직 비어 있다'));
+const nv = normView(
   { total: 3, gated: 1, cited: 1, isolated: 1, norms: [
-    { key: 'ARCH-00', file: 'a.md', grade: 'gated', gates: ['scripts/leakage-guard.js'], codeCites: 4, planeCites: 2 },
-    { key: 'ARCH-01', file: 'b.md', grade: 'cited', gates: [], codeCites: 0, planeCites: 2 },
-    { key: 'INF-02', file: 'c.md', grade: 'isolated', gates: [], codeCites: 0, planeCites: 0 },
+    { key: 'ARCH-00', file: 'a/ARCH-00_x.md', title: 'ZFS naming', status: 'Active', tier: null, kb: 3.1,
+      grade: 'gated', headings: ['Filename formula', 'Rules'],
+      gates: ['scripts/leakage-guard.js'],
+      gateContracts: [{ file: 'scripts/leakage-guard.js', gate: 'Leakage Gate', predicate: '마커 보유',
+        scope: '마커의 존재만 본다 — 기밀을 이해하지 않는다', outcomes: ['PASS', 'REJECT'], failure_mode: '목록 출력 후 REJECT' }],
+      cites: ['scripts/leakage-guard.js'], codeCites: 1, planeCites: 2, planeFiles: ['p/PRO-02_x.md'] },
+    { key: 'ARCH-01', file: 'b.md', title: null, status: 'Active', tier: 'draft', kb: 0.7,
+      grade: 'cited', headings: [], gates: [], gateContracts: [], cites: [], codeCites: 0, planeCites: 2, planeFiles: ['x.md'] },
+    { key: 'INF-02', file: 'c.md', title: null, status: null, tier: null, kb: 1,
+      grade: 'isolated', headings: [], gates: [], gateContracts: [], cites: [], codeCites: 0, planeCites: 0, planeFiles: [] },
   ] },
   { planes: [{ name: 'gap', last: null }, { name: 'state', last: null }, { name: 'evidence', last: '2026-08-19' }] },
   { tagged: 0, total: 10, byTag: {} });
-check('norm: 등급 3분 표기', ns.includes('게이트') && ns.includes('인용만') && ns.includes('고립 1'));
-check('norm: 게이트 출처는 파일명', ns.includes('leakage-guard.js'));
-check('norm: 인용≠집행 경고', ns.includes('인용은 집행이 아니다'));
-check('norm: 드리프트 무기입이면 "대조된 적 없음"', ns.includes('대조된 적 없음'));
-check('norm: 드리프트는 gap·state만(evidence 제외)', ns.includes('>gap<') && !ns.includes('>evidence<'));
-check('norm: concern 미사용 표기', ns.includes('사용 0'));
-const nsTagged = normSection(
-  { total: 1, gated: 1, cited: 0, isolated: 0, norms: [{ key: 'ARCH-00', file: 'a.md', grade: 'gated', gates: ['g.js'], codeCites: 1, planeCites: 0 }] },
+check('norm: 타일 4개', (nv.match(/class="tile"/g) || []).length === 4);
+check('norm: 등급 3분 라벨', nv.includes('게이트 있음') && nv.includes('인용만') && nv.includes('고립'));
+check('norm: 절 구조 표기', nv.includes('Filename formula') && nv.includes('Rules'));
+check('norm: 게이트 계약의 scope 를 규범 옆에', nv.includes('사각지대') && nv.includes('마커의 존재만 본다'));
+check('norm: 계약 결과값', nv.includes('PASS') && nv.includes('REJECT'));
+check('norm: 게이트 없으면 명시', nv.includes('판정하는 게이트 없음'));
+check('norm: 인용처를 파일명으로', nv.includes('PRO-02_x.md') && nv.includes('leakage-guard.js'));
+check('norm: 인용≠집행 경고', nv.includes('인용은 집행이 아니다'));
+check('norm: 드리프트 무기입이면 "대조된 적 없다"', nv.includes('0건이 현실과 대조된 적 없다'));
+check('norm: 드리프트는 gap·state만(evidence 제외)', nv.includes('>gap<') && !nv.includes('>evidence<'));
+check('norm: concern 미사용 표기', nv.includes('사용 0'));
+check('norm: title 없으면 빈 문자열로 축약', nv.includes('ARCH-01'));
+const nvOk = normView(
+  { total: 1, gated: 1, cited: 0, isolated: 0, norms: [{ key: 'ARCH-00', file: 'a.md', title: 't', status: 'Active', tier: null, kb: 1,
+    grade: 'gated', headings: [], gates: ['g.js'], gateContracts: [], cites: ['g.js'], codeCites: 1, planeCites: 0, planeFiles: [] }] },
   { planes: [{ name: 'gap', last: '2026-08-19' }, { name: 'state', last: '2026-08-19' }] },
   { tagged: 2, total: 5, byTag: { security: 2 } });
-check('norm: 검증됐으면 경고 없음', !nsTagged.includes('대조된 적 없음'));
-check('norm: concern 태그 집계 표기', nsTagged.includes('security'));
+check('norm: 검증됐으면 경고 없음', !nvOk.includes('대조된 적 없다') && nvOk.includes('대조 기록 있음'));
+check('norm: concern 태그 집계 표기', nvOk.includes('security'));
+
+// VIEWS — 축 하나 = 페이지 하나. 새 축 추가는 이 배열에 한 줄.
+check('views: 3개 정의', VIEWS.length === 3 && VIEWS[0].id === 'overview');
+check('views: arch 포함', VIEWS.some(v => v.id === 'arch'));
 
 // render — 실평면 합성 스모크
 const data = gatherAll();
 const html = render(data, { title: 'real' });
 // 항상 있는 6절. `effect`는 **환경 의존**이라 여기 넣지 않는다 — 근거는 아래 조건부 단언.
-check('합성: 항상 있는 8섹션',
-  ['id="health"', 'id="budget"', 'id="wo"', 'id="sync"', 'id="size"', 'id="contract"', 'id="norm"', 'id="plane"'].every(s => html.includes(s)));
-check('합성: 당위 절이 실규범을 잡는다', html.includes('ARCH-00') && html.includes('당위 축 — 규범과 그 집행'));
+check('합성: 개요의 6섹션',
+  ['id="health"', 'id="budget"', 'id="wo"', 'id="sync"', 'id="size"', 'id="contract"'].every(s => html.includes(s)));
+// 뷰 라우팅 — 축마다 별도 페이지. 클릭이 정본이고 해시는 부가(data: URL 뷰어 대비).
+check('라우팅: 뷰 3개 + 나브 3개', (html.match(/class="view"/g) || []).length === 3
+  && (html.match(/data-nav="/g) || []).length === 3);
+check('라우팅: 클릭 핸들러가 있다(해시 미지원 뷰어 대비)', html.includes("addEventListener('click'"));
+check('라우팅: 해시는 부가로만', html.includes('history.replaceState'));
+check('합성: 당위 뷰가 실규범을 잡는다', html.includes('ARCH-00') && html.includes('verification 첫 화살표'));
 check('합성: 계약 절이 health 원자료를 소비', html.includes('계약 간선 — 계보 밖 소비자'));
 // effect surface 는 gitignore 된 .claude/settings*.json 에서 온다 — CI 체크아웃엔 없다.
 // 따라서 "있으면 그린다 / 없으면 조용히 빠진다"가 계약이고, 둘 다 단언한다(무가정 원칙의 연장).
