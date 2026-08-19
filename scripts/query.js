@@ -53,6 +53,45 @@ function blastRadius(id, index) {
   return { id, affected, locked, blocked: locked.length > 0, viaContract, unresolvedConsumers: unresolved };
 }
 
+/**
+ * 계약 간선 전수 조사(순수) — [PRO-16]의 채택·무결성 관측.
+ *
+ * 두 가지를 낸다.
+ *  ① **채택**: [PRO-16] §5가 "`consumers:`가 6개월간 실계약에 안 달리면 필드 폐기"라는 반증 조건을
+ *     걸었는데 그것을 볼 계기가 없었다. 선언 문서 수·간선 수가 그 계기다.
+ *  ② **무결성**: 미해소 소비자는 오타이며, 오타 하나가 잠금 Fail-close 보호를 *조용히* 무력화한다
+ *     (blast-radius 는 그 계약을 콕 집어 돌려야만 보인다 — 평면 전수 조사가 없었다).
+ * 판정하지 않는다 — 관측만 한다([PRO-11] §4 측도 금지).
+ */
+function contractEdges(index) {
+  const declaring = index.filter(d => (d.consumers || []).length);
+  const unresolved = [];
+  const byContract = declaring.map(src => {
+    const resolved = [];
+    for (const raw of src.consumers) {
+      const cid = parseId(raw);
+      const hit = cid ? index.filter(d => isDescendant(cid, d.id)) : [];
+      if (hit.length) resolved.push(raw);
+      else unresolved.push({ ref: raw, from: `${src.domain}-${src.id}`, file: src.file });
+    }
+    // 같은 계보 소비자는 계보 산술이 이미 덮으므로 간선이 무의미하다 — 표면화해 오해를 막는다.
+    const redundant = resolved.filter(raw => {
+      const cid = parseId(raw);
+      return cid && (isDescendant(src.id, cid) || isDescendant(cid, src.id));
+    });
+    return { id: `${src.domain}-${src.id}`, file: src.file, consumers: src.consumers, resolved, redundant };
+  }).sort((a, b) => a.id.localeCompare(b.id));
+  return {
+    contracts: index.filter(d => d.domain === 'CON').length,
+    declaring: declaring.length,
+    edges: declaring.reduce((n, d) => n + d.consumers.length, 0),
+    resolved: byContract.reduce((n, c) => n + c.resolved.length, 0),
+    unresolved,
+    redundant: byContract.reduce((n, c) => n + c.redundant.length, 0),
+    byContract,
+  };
+}
+
 // 과거·결정 라우팅(P1-A 결정 트리). find()가 첫 매칭을 반환하므로 *더 구체적인* 분기가 앞선다.
 const ROUTES = [
   { keys: ['ephemeral', 'session', 'progress', 'handoff', 'relay'], destination: '.union-stack/sprint/HANDOFF.md', tier: 'Wiki (volatile)', note: '다음 세션이 이어받을 휘발성 진행' },
@@ -72,4 +111,4 @@ function whereToRecord(kind) {
   return { kind, match: r ? strip(r) : null, all: ROUTES.map(strip) };
 }
 
-module.exports = { upwardFetch, blastRadius, whereToRecord, CONTEXT_DOMAINS, LOCKED };
+module.exports = { upwardFetch, blastRadius, contractEdges, whereToRecord, CONTEXT_DOMAINS, LOCKED };

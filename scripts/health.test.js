@@ -37,7 +37,12 @@ check('ref integrity INFO', sz.dims.find(d => d.name === 'ref integrity').value.
 const g = gather();
 const nonLeakFails = g.dims.filter(d => d.status === 'FAIL' && d.name !== 'leakage gate').length;
 check('gather 커밋 평면 게이트 그린', nonLeakFails === 0);
-check('gather dims 13 (관측 4절 포함)', g.dims.length === 13);
+check('gather dims 14 (관측 5절 포함)', g.dims.length === 14);
+// 계약 간선 관측([PRO-16] §5 반증 계기) — 판정 없이 채택·무결성만 병치한다.
+const ceDim = g.dims.find(d => d.name === 'contract edges');
+check('contract edges 절은 INFO(판정 없음)', ceDim.status === 'INFO');
+check('contract edges 값에 계약·선언·간선', /계약 \d+ · 선언 \d+ · 간선 \d+/.test(ceDim.value));
+check('contracts 원자료도 함께 낸다', Array.isArray(g.contracts.byContract));
 check('sync 절은 INFO(판정 없음)', g.dims.find(d => d.name === 'plane sync').status === 'INFO');
 check('tier 절은 INFO(관측만)', g.dims.find(d => d.name === 'tier distribution').status === 'INFO');
 

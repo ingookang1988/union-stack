@@ -118,6 +118,35 @@ function syncSection(sync, today) {
   <div class="pills">${sync.planes.map(pill).join('')}</div></section>`;
 }
 
+/**
+ * health.gather().contracts → 계약 간선 절(순수). [PRO-16]
+ *
+ * **그래프를 그리지 않는다.** 현재 실간선이 1건이라 화살표 하나를 그리는 꼴이고, 그건 표본 없는
+ * 시각화를 기각한 기준(PLAN 히트맵·WO 종료추적)과 어긋난다. 대신 [PRO-16] §5의 반증 조건
+ * ("consumers 가 실계약에 안 달리면 필드 폐기")을 **볼 계기**와, 오타 소비자가 잠금 보호를 조용히
+ * 무력화하는 것을 잡는 **무결성 표면**을 낸다. 그래프는 간선이 쌓인 뒤의 일이다.
+ */
+function contractSection(c) {
+  if (!c || !c.contracts) return '';
+  const rows = c.byContract.map(x => {
+    const chips = x.consumers.map(r => {
+      const bad = c.unresolved.some(u => u.from === x.id && u.ref === r);
+      const dup = x.redundant.includes(r);
+      const cls = bad ? ' dead' : dup ? ' aging' : ' fresh';
+      const tag = bad ? '미해소' : dup ? '동일계보' : '해소';
+      return `<span class="pill${cls}">${esc(r)}<b>${tag}</b></span>`;
+    }).join('');
+    return `<div class="crow"><span class="nm" title="${esc(x.file)}">${esc(x.id)}</span>`
+      + `<span class="carrow">→</span><span class="pills inline">${chips}</span></div>`;
+  }).join('\n');
+  const undeclared = c.contracts - c.declaring;
+  return `<section class="card" id="contract"><h2>계약 간선 — 계보 밖 소비자</h2>
+  <div class="meta">계약 ${c.contracts} · 선언 ${c.declaring} · 간선 ${c.edges}`
+    + `${c.unresolved.length ? ` · <span class="bad">미해소 ${c.unresolved.length}</span>` : ''}`
+    + `${undeclared > 0 ? ` · 미선언 ${undeclared}` : ''}</div>
+  ${rows || '<div class="meta">선언된 간선 없음 — [PRO-16] §5 반증 조건 관측 대상</div>'}</section>`;
+}
+
 /** health.gather() effect surface 절의 byTool → 도구별 막대(순수). 한 줄 텍스트를 스캔 가능하게. */
 function effectSection(dim) {
   if (!dim || !dim.note) return '';
@@ -200,6 +229,9 @@ const DASH_CSS = `
   .bnm.sz { min-width:0; flex:0 0 210px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
             font-family:ui-monospace, Consolas, monospace; font-size:11.5px; }
   .pills { display:flex; flex-wrap:wrap; gap:8px; margin:10px 18px 0; }
+  .pills.inline { margin:0; }
+  .crow { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:8px 18px 0; }
+  .carrow { color:var(--faint); }
   .pill { display:inline-flex; align-items:baseline; gap:6px; padding:4px 10px; border-radius:999px;
           border:1px solid var(--line); background:#fafbfc; font-size:11.5px; color:var(--muted); }
   .pill b { font-family:ui-monospace, Consolas, monospace; color:var(--ink); }
@@ -220,7 +252,7 @@ function render(data, { title = 'plane' } = {}) {
 <title>dashboard — ${esc(title)}</title>
 <style>${PLANE_CSS}${DASH_CSS}</style>
 <nav><b>${esc(title)} — 평면 대시보드</b>
-  <a href="#health">Health</a><a href="#budget">예산</a><a href="#wo">작업대</a><a href="#size">크기</a><a href="#plane">계보</a></nav>
+  <a href="#health">Health</a><a href="#budget">예산</a><a href="#wo">작업대</a><a href="#size">크기</a><a href="#contract">계약</a><a href="#plane">계보</a></nav>
 <main>
 ${tilesSection(data)}
 <div class="grid">
@@ -233,7 +265,10 @@ ${syncSection(health.sync, today)}
 </div>
 <div class="grid">
 ${sizeSection(health.sizes, health.sizeCapKb)}
+<div class="col">
+${contractSection(health.contracts)}
 ${effectSection(effectDim)}
+</div>
 </div>
 <section class="card" id="plane"><h2>계보 — 평면 전체</h2>
 <div class="plane">${planeBody(index)}</div>
@@ -250,7 +285,7 @@ function gatherAll(root = path.resolve(__dirname, '..'), today = new Date().toIS
 
 module.exports = {
   tilesSection, healthSection, budgetSection, worktableSection,
-  sizeSection, syncSection, effectSection, render, gatherAll, MARKS,
+  sizeSection, syncSection, effectSection, contractSection, render, gatherAll, MARKS,
 };
 
 if (require.main === module) {

@@ -2,7 +2,7 @@
 // 섹션 함수(순수) 단위 + 실평면 합성 스모크. 대시보드는 *합성*이므로 여기서는 그리기만 검증한다 —
 // 데이터의 옳음은 각 소스 도구의 테스트(health·context-budget·work-close·lineage-tree)가 소유한다.
 const { tilesSection, healthSection, budgetSection, worktableSection,
-  sizeSection, syncSection, effectSection, render, gatherAll } = require('./dashboard');
+  sizeSection, syncSection, effectSection, contractSection, render, gatherAll } = require('./dashboard');
 
 let pass = 0, fail = 0;
 function check(label, cond) { if (cond) pass++; else { fail++; console.error(`FAIL ${label}`); } }
@@ -86,12 +86,28 @@ check('effect: 최대값이 100%', es2.includes('width:100%'));
 check('effect: 파일 경로는 막대가 되지 않음', !es2.includes('settings.local.json<'));
 check('effect: 없는 입력 → 조각 없음', effectSection(null) === '' && effectSection({ value: 'x' }) === '');
 
+// contractSection — 그래프가 아니라 채택·무결성 표면([PRO-16] §5 계기)
+check('contract: 계약 없으면 조각 없음', contractSection({ contracts: 0, byContract: [], unresolved: [] }) === '');
+check('contract: null 안전', contractSection(null) === '');
+const cs = contractSection({
+  contracts: 3, declaring: 1, edges: 3, resolved: 2, redundant: 1,
+  unresolved: [{ ref: 'FLOW-99z', from: 'CON-05', file: 'c.md' }],
+  byContract: [{ id: 'CON-05', file: 'c.md', consumers: ['FLOW-07b', 'FLOW-05a', 'FLOW-99z'], resolved: ['FLOW-07b', 'FLOW-05a'], redundant: ['FLOW-05a'] }],
+});
+check('contract: 미해소 강조', cs.includes('미해소 1') && cs.includes('pill dead'));
+check('contract: 동일계보를 무의미로 표기', cs.includes('동일계보') && cs.includes('pill aging'));
+check('contract: 해소는 fresh', cs.includes('pill fresh'));
+check('contract: 미선언 계약 수', cs.includes('미선언 2'));
+const csEmpty = contractSection({ contracts: 2, declaring: 0, edges: 0, resolved: 0, redundant: 0, unresolved: [], byContract: [] });
+check('contract: 간선 0이면 반증 조건 관측 문구', csEmpty.includes('[PRO-16] §5'));
+
 // render — 실평면 합성 스모크
 const data = gatherAll();
 const html = render(data, { title: 'real' });
 // 항상 있는 6절. `effect`는 **환경 의존**이라 여기 넣지 않는다 — 근거는 아래 조건부 단언.
-check('합성: 항상 있는 6섹션',
-  ['id="health"', 'id="budget"', 'id="wo"', 'id="sync"', 'id="size"', 'id="plane"'].every(s => html.includes(s)));
+check('합성: 항상 있는 7섹션',
+  ['id="health"', 'id="budget"', 'id="wo"', 'id="sync"', 'id="size"', 'id="contract"', 'id="plane"'].every(s => html.includes(s)));
+check('합성: 계약 절이 health 원자료를 소비', html.includes('계약 간선 — 계보 밖 소비자'));
 // effect surface 는 gitignore 된 .claude/settings*.json 에서 온다 — CI 체크아웃엔 없다.
 // 따라서 "있으면 그린다 / 없으면 조용히 빠진다"가 계약이고, 둘 다 단언한다(무가정 원칙의 연장).
 const effDim = data.health.dims.find(d => d.name === 'effect surface');

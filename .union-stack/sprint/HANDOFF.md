@@ -21,7 +21,8 @@ version: 1.0
   영향권으로 냄(잠금 검사도 합집합 위) · `blast-radius` CLI가 간선 출처와 미해소 소비자를 표기
 - 평면: `contracts/_GUIDE`·`feature/_GUIDE`에 판별식(GRANT-02) · `CON-00`에 동작 예시(계보 00→01 횡단)
   · `CON-01`·`FLOW-01a` 더미 갱신(관찰 대 약속 분리)
-- 도구: `[TOOL-24]` lineage-tree(`npm run tree`) · `[TOOL-25]` dashboard(`npm run dash`)
+- 도구: `[TOOL-24]` lineage-tree(`npm run tree`) · `[TOOL-25]` dashboard v1.2(타일 4 + 카드 8절,
+  `contract edges` 관측 신설 — health 차원 + 대시보드 절, `npm run dash`)
 - 작업: `[WO-10a-1]` E6 A/B(Draft) — 인간 실행 대기
 ## 3. 다음 작업 (단일 진입점)
 → **`context-budget.js`에 AGENTS.md 계측 추가** — 상시 주입 파일 중 최대인 AGENTS.md가 예산
@@ -29,7 +30,8 @@ version: 1.0
   주의: AGENTS.md는 예산 3종과 성격이 다르다(분할·압축 불가한 단일 진입 파일) — 상한 신설이 아니라
   **관측 표시**가 먼저인지 [PRO-13]의 예산 문법에 맞춰 판단하고 시작할 것.
 ## 4. 미해결 / 주의
-- **[PRO-16] 반증 관측**: `consumers:`가 6개월간 어느 *실*계약에도 안 달리면 수요가 없는 것 → 필드 폐기.
+- **[PRO-16] 반증 관측**(계기 완비): `health`의 `contract edges` 절과 대시보드 계약 카드가 채택·무결성을
+  본다. 6개월간 어느 *실*계약에도 안 달리면 수요가 없는 것 → 필드 폐기.
   정당한 계약 편집이 반복 차단되면 자손 포함을 철회하고 선언된 노드만 잠근다([ADR-08] 마찰 논리).
 - **[PRO-16] §4 보류**: 호환성 의미론(breaking/additive·CDC 연동)은 실계약 3건 + 깨진 변경 1회 실측 후.
   현재 CON 2건이 **둘 다 더미**라 지금 지으면 YAGNI 위반이다.
@@ -44,7 +46,7 @@ version: 1.0
 - 재제안 금지 목록은 **AGENTS.md의 `blocks-index` 블록**이 소유한다 — 여기 복제하지 말 것([ADR-18]).
 ## 5. 검증 상태
 - 테스트 **34스위트 중 32 통과 · 2 실패**(`leakage-guard`·`ref-linter` — 미커밋 fdt 귀속).
-  신규: `query.test.js` 23단언(계약 간선 8건 — 합집합·자손 포함·잠금 발동·미해소·역방향 아님) ·
+  신규: `query.test.js` 30단언(계약 간선 8 + 전수 조사 7) · `dashboard.test.js` 47단언 ·
   `zfs_index.test.js` 17단언(consumers 파싱 5건).
 - lint 7종 통과 · `permission-guard --strict` 범위 통과 · 부트스트랩 1967/4000 tok.
 - 실동작 확인: `node scripts/blast-radius.js CON-00` → 계보 `00`에서 계보 `01`의 소비자 5건을 영향권에

@@ -1,6 +1,6 @@
 // scripts/query.test.js
 // 순수 조회 로직 단위 테스트(합성 색인 — 레포 비의존). 실행: node scripts/query.test.js
-const { upwardFetch, blastRadius, whereToRecord } = require('./query');
+const { upwardFetch, blastRadius, contractEdges, whereToRecord } = require('./query');
 
 let pass = 0, fail = 0;
 function check(label, got, exp) {
@@ -53,6 +53,21 @@ check('계약: 잠금은 소비자 쪽', con.locked.map(l => l.id), ['07b']);
 check('계약: 미해소 소비자 표면화', con.unresolvedConsumers.map(u => u.ref), ['FLOW-99z']);
 // 방향은 한쪽만 — 소비자에서 계약을 역으로 끌어오지 않는다(정본이 둘이면 드리프트).
 check('계약: 역방향 아님', blastRadius('01a', cIndex).affected.map(a => a.domain), ['FLOW']);
+
+// --- contractEdges: 채택·무결성 전수 조사([PRO-16] §5 반증 계기) ---
+const ce = contractEdges(cIndex);
+check('ce 계약 수', ce.contracts, 1);
+check('ce 선언 문서·간선 수', [ce.declaring, ce.edges], [1, 3]);
+check('ce 해소/미해소 분리', [ce.resolved, ce.unresolved.length], [2, 1]);
+check('ce 미해소 출처 표기', ce.unresolved[0], { ref: 'FLOW-99z', from: 'CON-05', file: 'contracts/CON-05_api.md' });
+// 같은 계보 소비자는 계보 산술이 이미 덮으므로 간선이 무의미하다 — 오해 방지로 표면화.
+const ceDup = contractEdges([
+  { domain: 'CON', id: '01', file: 'c.md', consumers: ['FLOW-01a'] },
+  { domain: 'FLOW', id: '01a', file: 'f.md' },
+]);
+check('ce 동일계보 간선을 무의미로 표기', [ceDup.redundant, ceDup.byContract[0].redundant], [1, ['FLOW-01a']]);
+check('ce 선언 없으면 0', contractEdges([{ domain: 'CON', id: '9', file: 'x.md' }]).edges, 0);
+check('ce 빈 평면', contractEdges([]).contracts, 0);
 
 // --- whereToRecord ---
 check('route pivot→HISTORY', whereToRecord('pivot').match.destination, '.union-stack/project/HISTORY.md');

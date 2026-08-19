@@ -14,6 +14,7 @@ const { walkFiles } = require('./fs_walk');
 const { gather: gatherBrokenRefs } = require('./ref-linter');
 const { gather: gatherBudget } = require('./context-budget');
 
+const { contractEdges } = require('./query');
 const { withContract } = require('./gate-contract');
 
 const LOCKED = ['Verifying'];
@@ -22,7 +23,7 @@ const SIZE_CAP_KB = 30; // soft cap — 초과 시 분할/로테이션 권고
 // 계약 선언([PRO-11] — [GRAM-12c] 꼴).
 const CONTRACT = {
   gate: 'Health Scorecard Gate (health) — 집계',
-  input: '각 게이트의 순수 함수 재호출 결과 + .union-stack/ 구조 지표(크기·참조·예산·잠금·sync·lessons·tier·effect surface)',
+  input: '각 게이트의 순수 함수 재호출 결과 + .union-stack/ 구조 지표(크기·참조·예산·잠금·sync·lessons·tier·effect surface·contract edges)',
   predicate: '개별 게이트 FAIL 0건이면 건강. sync·lessons·tier 절은 판정 없는 관측 병치([PRO-11] §4 측도 금지)',
   scope: '자기 준수도만 잰다 — 하네스 효능(true A/B)은 eval/PROTOCOL.md 소관. 관측 절은 stale "판정"을 하지 않는다',
   outcomes: ['PASS', 'REJECT'],
@@ -50,7 +51,7 @@ function lastDateIn(txt) {
 }
 
 /** 순수 계산: 1차 지표 → 차원별 평가 리포트. (FS 비의존 → 테스트 용이) */
-function computeHealth({ index, domainsDefined, guideCount, namingViolations, historyViolations, leakageViolations, oversize = [], brokenRefs = 0, budget = null, sync = null, lessons = null, effect = null }) {
+function computeHealth({ index, domainsDefined, guideCount, namingViolations, historyViolations, leakageViolations, oversize = [], brokenRefs = 0, budget = null, sync = null, lessons = null, effect = null, contracts = null }) {
   const used = new Set(index.map(d => d.domain));
   const unused = domainsDefined.filter(d => !used.has(d));
   const locked = index.filter(d => LOCKED.includes(d.status));
@@ -93,6 +94,15 @@ function computeHealth({ index, domainsDefined, guideCount, namingViolations, hi
         ? Object.entries(effect.byTool).map(([t, n]) => `${t}:${n}`).join(' ') + '  ← ' + effect.files.join(' ')
         : '' });
   }
+  if (contracts) {
+    // [PRO-16] 채택·무결성 관측. 반증 조건("consumers 가 실계약에 안 달리면 폐기")을 볼 계기이자,
+    // 오타 소비자가 잠금 보호를 조용히 무력화하는 것을 평면 전수로 잡는 자리다.
+    const bits = [`계약 ${contracts.contracts}`, `선언 ${contracts.declaring}`, `간선 ${contracts.edges}`];
+    if (contracts.unresolved.length) bits.push(`미해소 ${contracts.unresolved.length}`);
+    if (contracts.redundant) bits.push(`무의미(동일계보) ${contracts.redundant}`);
+    dims.push({ name: 'contract edges', status: 'INFO', value: bits.join(' · '),
+      note: contracts.unresolved.map(u => `${u.ref}←${u.from}`).join(' ') });
+  }
   const tiers = { draft: 0, reviewed: 0, ratified: 0, untagged: 0 };
   index.forEach(d => { tiers[d.tier && tiers[d.tier] !== undefined ? d.tier : 'untagged']++; });
   dims.push({ name: 'tier distribution', status: 'INFO',
@@ -129,13 +139,14 @@ function gather(root = path.resolve(__dirname, '..')) {
   const brokenRefs = gatherBrokenRefs(root).length;
   const budget = gatherBudget(root);
   const sync = gatherSync(root);
+  const contracts = contractEdges(index);
   const r = computeHealth({
     index, domainsDefined: [...VALID_DOMAINS], guideCount: countGuides(root),
     namingViolations, historyViolations, leakageViolations, oversize, brokenRefs, budget,
-    sync, lessons: gatherLessons(root), effect: gatherEffectSurface(root),
+    sync, lessons: gatherLessons(root), effect: gatherEffectSurface(root), contracts,
   });
   // 판정(dims) 외에 원자료도 함께 낸다 — 대시보드가 같은 수집을 두 번 하지 않도록(합성 원칙).
-  return { ...r, sizes, sizeCapKb: SIZE_CAP_KB, sync };
+  return { ...r, sizes, sizeCapKb: SIZE_CAP_KB, sync, contracts };
 }
 
 /** 평면별 최종 기입 날짜 + ledger 항목 수를 모은다(관측만 — [PRO-11] C3). */
