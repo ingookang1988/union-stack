@@ -89,8 +89,16 @@ check('effect: 없는 입력 → 조각 없음', effectSection(null) === '' && e
 // render — 실평면 합성 스모크
 const data = gatherAll();
 const html = render(data, { title: 'real' });
-check('합성: 7섹션 전부',
-  ['id="health"', 'id="budget"', 'id="wo"', 'id="sync"', 'id="size"', 'id="effect"', 'id="plane"'].every(s => html.includes(s)));
+// 항상 있는 6절. `effect`는 **환경 의존**이라 여기 넣지 않는다 — 근거는 아래 조건부 단언.
+check('합성: 항상 있는 6섹션',
+  ['id="health"', 'id="budget"', 'id="wo"', 'id="sync"', 'id="size"', 'id="plane"'].every(s => html.includes(s)));
+// effect surface 는 gitignore 된 .claude/settings*.json 에서 온다 — CI 체크아웃엔 없다.
+// 따라서 "있으면 그린다 / 없으면 조용히 빠진다"가 계약이고, 둘 다 단언한다(무가정 원칙의 연장).
+const effDim = data.health.dims.find(d => d.name === 'effect surface');
+const hasSettings = !!(effDim && effDim.note);
+check('합성: effect 절은 설정 유무를 따른다', html.includes('id="effect"') === hasSettings);
+check('합성: 설정 없으면 health 가 "관측 불가"로 적는다',
+  hasSettings || effDim.value.includes('관측 불가'));
 check('합성: 크기 헤드룸이 원장을 잡는다', html.includes('archive_ledger.md'));
 check('합성: 신선도 pill', html.includes('class="pills"') && html.includes('evidence'));
 check('합성: health 차원 등장', html.includes('naming gate') && html.includes('effect surface'));
