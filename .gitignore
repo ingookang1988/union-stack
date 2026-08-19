@@ -6,3 +6,4 @@ node_modules/
 
 # lineage-tree output (TOOL-24) — generated view, never committed
 lineage-tree.html
+dashboard.html

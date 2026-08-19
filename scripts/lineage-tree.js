@@ -104,17 +104,43 @@ function filterHtml(index) {
   return `<div class="flt">${sts.map(s => box(s, s, count[s])).join('')}${missing ? box('', '(없음)', missing) : ''}</div>`;
 }
 
-/** 색인 → 자기완결 HTML(순수 — FS 접근 없음). */
-function render(index, { title = 'plane' } = {}) {
+/** 색인 → 평면 뷰 본문 조각(순수). 범례+필터+트리/카탈로그 2절 — 단독 페이지와 대시보드가 공유.
+ *  (로직 1벌 표면 N개 — query.js 와 같은 원칙. 조각에는 <style>/<script> 가 없다:
+ *   호스트 페이지가 PLANE_CSS·FILTER_JS 를 한 번만 싣는다.) */
+function planeBody(index) {
   const colors = assignColors(index);
   const roots = forest(index);
   const trees = roots.filter(n => n.kids.length || n.docs.length > 1);
   const solo = roots.filter(n => !n.kids.length && n.docs.length === 1);
   const legend = Object.entries(colors).map(([d, c]) => `<span class="chip" style="--c:${c}">${d}</span>`).join('');
+  return `<div class="meta">${index.length} docs · ${roots.length} lineage nodes (${trees.length} trees · ${solo.length} solo) · ${Object.keys(colors).length} domains</div>
+  <div class="legend">${legend}</div>
+  ${filterHtml(index)}
+<section>
+  <h2>계보 트리 — 구조가 있는 노드</h2>
+  ${trees.map(n => nodeHtml(n, colors)).join('\n')}
+</section>
+<section>
+  <h2>단독 노드 — 자식·형제 문서 없음 (카탈로그)</h2>
+  <div class="solo-grid">${solo.map(n => nodeHtml(n, colors)).join('\n')}</div>
+</section>`;
+}
+
+/** 색인 → 자기완결 HTML(순수 — FS 접근 없음). */
+function render(index, { title = 'plane' } = {}) {
   return `<!doctype html>
 <meta charset="utf-8">
 <title>lineage — ${esc(title)}</title>
-<style>
+<style>${PLANE_CSS}</style>
+<header>
+  <h1>${esc(title)} — 계보 트리</h1>
+</header>
+<div class="plane">${planeBody(index)}</div>
+<script>${FILTER_JS}</script>
+`;
+}
+
+const PLANE_CSS = `
   :root { --ink:#1a1a1a; --muted:#6b7280; --faint:#9ca3af; --line:#e5e7eb; --bg:#fff; }
   body { margin:0; background:var(--bg); color:var(--ink);
          font: 13px/1.45 ui-monospace, Consolas, monospace; }
@@ -148,23 +174,11 @@ function render(index, { title = 'plane' } = {}) {
   .solo-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:1px 20px; }
   .solo-grid .row { padding-left:0; }
   .solo-grid .nid { font-weight:400; color:var(--muted); min-width:34px; }
-</style>
-<header>
-  <h1>${esc(title)} — 계보 트리</h1>
-  <div class="meta">${index.length} docs · ${roots.length} lineage nodes (${trees.length} trees · ${solo.length} solo) · ${Object.keys(colors).length} domains</div>
-  <div class="legend">${legend}</div>
-  ${filterHtml(index)}
-</header>
-<section>
-  <h2>계보 트리 — 구조가 있는 노드</h2>
-  ${trees.map(n => nodeHtml(n, colors)).join('\n')}
-</section>
-<section>
-  <h2>단독 노드 — 자식·형제 문서 없음 (카탈로그)</h2>
-  <div class="solo-grid">${solo.map(n => nodeHtml(n, colors)).join('\n')}</div>
-</section>
-<script>
+  .plane > .meta, .plane > .legend, .plane > .flt { margin: 6px 24px 0; }
+`;
+
 // 상태 필터 — 어휘는 렌더 시 데이터에서 도출됐고, 여기선 체크 상태만 반영한다.
+const FILTER_JS = `
 (function () {
   const inputs = document.querySelectorAll('.flt input');
   if (!inputs.length) return;
@@ -179,11 +193,9 @@ function render(index, { title = 'plane' } = {}) {
   }
   inputs.forEach(i => i.addEventListener('change', apply));
 })();
-</script>
 `;
-}
 
-module.exports = { assignColors, forest, rows, docSpan, filterHtml, render, SLOTS, NEUTRAL };
+module.exports = { assignColors, forest, rows, docSpan, filterHtml, planeBody, render, PLANE_CSS, FILTER_JS, SLOTS, NEUTRAL };
 
 if (require.main === module) {
   const args = process.argv.slice(2);

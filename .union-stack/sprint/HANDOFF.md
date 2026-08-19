@@ -4,7 +4,7 @@
 session_id: tool24-lineage-tree-2026-08-18
 date: 2026-08-18T00:00:00Z
 author: agent
-verification: "33스위트 중 31 통과 · 2 실패(미커밋 fdt_canon 귀속) · lint 7종 통과 · TOOL-24 신규 24단언"
+verification: "34스위트 중 32 통과 · 2 실패(미커밋 fdt_canon 귀속) · lint 7종 통과 · TOOL-24 24단언 + TOOL-25 17단언"
 version: 1.0
 ---
 
@@ -17,7 +17,8 @@ version: 1.0
   부모를 최근접 실존 조상에 붙여 blast-radius 의미론과 일치시켰다(중간 세대 부재 시 루트 승격 결함 수리).
 ## 2. 변경 위치 (ID 목록 — Upward Fetching 진입점)
 - 규칙: `[ADR-25]` ID 공간 단일 유지(blocks 6건째) · `[ADR-24]` ref-linter 행 정본
-- 도구: `[TOOL-24]` lineage-tree 신설(스크립트+테스트+카드, `npm run tree`) · `[TOOL-04]` effect surface 절
+- 도구: `[TOOL-24]` lineage-tree(v1.1 — 필터·팔레트·접기, `npm run tree`) · `[TOOL-25]` dashboard 신설
+  (4표면 합성: health+예산+작업대+계보, `npm run dash`) · `[TOOL-04]` effect surface 절
 - 평면: `ARCH-00` §ID space 신설(Approved-by 커밋) · `spike/SPIKE-visualization_dashboard.md` **삭제**
   (②히트맵 보류·③참조그래프 기각 처분은 TOOL-24 카드 "언제 쓰지 않나"로 이관)
 - 작업: `[WO-10a-1]` E6 A/B(Draft) — 인간 실행 대기
@@ -36,6 +37,6 @@ version: 1.0
   **신규**: [ADR-25] 재개 조건(잠금 오탐/GC 오차단)은 `lock exposure`가 트립와이어.
 - 재제안 금지 목록은 **AGENTS.md의 `blocks-index` 블록**이 소유한다 — 여기 복제하지 말 것([ADR-18]).
 ## 5. 검증 상태
-- 테스트 **33스위트 중 31 통과 · 2 실패**(`leakage-guard`·`ref-linter` — 미커밋 fdt 귀속).
+- 테스트 **34스위트 중 32 통과 · 2 실패**(`leakage-guard`·`ref-linter` — 미커밋 fdt 귀속).
   신규: `lineage-tree.test.js` 24단언(101노드 적대 평면 렌더 = 성패 판정 회귀 고정 + 상태 필터 도출·팔레트 배정).
 - lint 7종 통과 · `permission-guard --strict` 범위 통과 · 산출물 gitignore 동작 확인(`git status` 무출현).
