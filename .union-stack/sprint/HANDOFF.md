@@ -4,7 +4,7 @@
 session_id: tool24-lineage-tree-2026-08-18
 date: 2026-08-18T00:00:00Z
 author: agent
-verification: "33스위트 중 31 통과 · 2 실패(미커밋 fdt_canon 귀속) · lint 7종 통과 · TOOL-24 신규 16단언"
+verification: "33스위트 중 31 통과 · 2 실패(미커밋 fdt_canon 귀속) · lint 7종 통과 · TOOL-24 신규 24단언"
 version: 1.0
 ---
 
@@ -37,5 +37,5 @@ version: 1.0
 - 재제안 금지 목록은 **AGENTS.md의 `blocks-index` 블록**이 소유한다 — 여기 복제하지 말 것([ADR-18]).
 ## 5. 검증 상태
 - 테스트 **33스위트 중 31 통과 · 2 실패**(`leakage-guard`·`ref-linter` — 미커밋 fdt 귀속).
-  신규: `lineage-tree.test.js` 16단언(101노드 적대 평면 렌더 = 스파이크 성패 판정을 회귀로 고정).
+  신규: `lineage-tree.test.js` 24단언(101노드 적대 평면 렌더 = 성패 판정 회귀 고정 + 상태 필터 도출·팔레트 배정).
 - lint 7종 통과 · `permission-guard --strict` 범위 통과 · 산출물 gitignore 동작 확인(`git status` 무출현).
