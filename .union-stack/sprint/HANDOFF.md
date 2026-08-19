@@ -1,42 +1,51 @@
 <!-- [Wiki] 세션 이어달리기. 세션을 마치는 에이전트가 덮어쓴다. 최신 하나만 유효.
      다음 세션 부트스트랩 시 가장 먼저 읽힘. -->
 ---
-session_id: tool24-lineage-tree-2026-08-18
-date: 2026-08-18T00:00:00Z
+session_id: contract-consumer-edge-2026-08-19
+date: 2026-08-19T00:00:00Z
 author: agent
-verification: "34스위트 중 32 통과 · 2 실패(미커밋 fdt_canon 귀속) · lint 7종 통과 · TOOL-24 24단언 + TOOL-25 37단언"
+verification: "34스위트 중 32 통과 · 2 실패(미커밋 fdt_canon 귀속) · lint 7종 통과 · query 23 + zfs_index 17단언"
 version: 1.0
 ---
 
 # Handoff → 다음 세션
 
 ## 1. 세션 요약 (1~3줄)
-- 인간 결정 2건 처리: ID 공간 **단일 유지 명문화**([ADR-25], ARCH-00 §ID space + 차단 목록 6건째) ·
-  ref-linter **행 정본 편입**([ADR-24], 미해소 114→53).
-- **[TOOL-24] lineage-tree 상륙** — 스파이크 출구 1 완료, 스파이크 파일 삭제(처분은 카드로 이관).
-  부모를 최근접 실존 조상에 붙여 blast-radius 의미론과 일치시켰다(중간 세대 부재 시 루트 승격 결함 수리).
+- **[PRO-16] 계약의 계보 밖 간선** — "계약이 축인가" 물음에 [PRO-04] 분할원리를 적용해 **기둥은 기각**하고
+  (CON이 이미 계약×상태 칸), 실측된 구조 공백 둘을 닫았다. 계약은 격자에서 **유일하게 트리가 아니라
+  그래프인 자산**이다 — 포함관계 아닌 당사자끼리 공유되므로 소비자는 늘 다른 계보에 산다.
+- 부수 산출: [TOOL-24] lineage-tree · [TOOL-25] dashboard(타일 4 + 카드 7절) 상륙, [ADR-24]·[ADR-25] 결정.
 ## 2. 변경 위치 (ID 목록 — Upward Fetching 진입점)
-- 규칙: `[ADR-25]` ID 공간 단일 유지(blocks 6건째) · `[ADR-24]` ref-linter 행 정본
-- 도구: `[TOOL-24]` lineage-tree(v1.1 — 필터·팔레트·접기, `npm run tree`) · `[TOOL-25]` dashboard 신설
-  (합성 대시보드: 타일 4 + 카드 7절, `npm run dash`) · `[TOOL-04]` effect surface 절
-- 평면: `ARCH-00` §ID space 신설(Approved-by 커밋) · `spike/SPIKE-visualization_dashboard.md` **삭제**
-  (②히트맵 보류·③참조그래프 기각 처분은 TOOL-24 카드 "언제 쓰지 않나"로 이관)
+- 규칙: `[PRO-16]` 계약 소비자 간선 + FLOW/CON 경계 판별식 · `[ADR-25]` ID 공간 · `[ADR-24]` 행 정본
+- 코드: `zfs_index.parseConsumers` 신설 · `query.blastRadius`가 **계보 자손 ∪ 선언된 소비자·그 자손**을
+  영향권으로 냄(잠금 검사도 합집합 위) · `blast-radius` CLI가 간선 출처와 미해소 소비자를 표기
+- 평면: `contracts/_GUIDE`·`feature/_GUIDE`에 판별식(GRANT-02) · `CON-00`에 동작 예시(계보 00→01 횡단)
+  · `CON-01`·`FLOW-01a` 더미 갱신(관찰 대 약속 분리)
+- 도구: `[TOOL-24]` lineage-tree(`npm run tree`) · `[TOOL-25]` dashboard(`npm run dash`)
 - 작업: `[WO-10a-1]` E6 A/B(Draft) — 인간 실행 대기
 ## 3. 다음 작업 (단일 진입점)
 → **`context-budget.js`에 AGENTS.md 계측 추가** — 상시 주입 파일 중 최대인 AGENTS.md가 예산
-  게이트 밖이다(대상은 project·profile·handoff뿐). 2세션째 이월되는 계측 공백이며 독립적인 소품.
+  게이트 밖이다(대상은 project·profile·handoff뿐). 3세션째 이월되는 계측 공백이며 독립적인 소품.
   주의: AGENTS.md는 예산 3종과 성격이 다르다(분할·압축 불가한 단일 진입 파일) — 상한 신설이 아니라
-  **관측 표시**가 먼저인지, [PRO-13]의 예산 문법에 맞춰 판단하고 시작할 것.
+  **관측 표시**가 먼저인지 [PRO-13]의 예산 문법에 맞춰 판단하고 시작할 것.
 ## 4. 미해결 / 주의
+- **[PRO-16] 반증 관측**: `consumers:`가 6개월간 어느 *실*계약에도 안 달리면 수요가 없는 것 → 필드 폐기.
+  정당한 계약 편집이 반복 차단되면 자손 포함을 철회하고 선언된 노드만 잠근다([ADR-08] 마찰 논리).
+- **[PRO-16] §4 보류**: 호환성 의미론(breaking/additive·CDC 연동)은 실계약 3건 + 깨진 변경 1회 실측 후.
+  현재 CON 2건이 **둘 다 더미**라 지금 지으면 YAGNI 위반이다.
+- **누설 가드가 약하다(실사례 발생)**: `MARKER`가 본문 어디든 "예시" 한 단어면 통과라, 이번 세션에
+  HANDOFF 문장을 고치자 우연히 있던 마커가 사라져 FAIL이 떴다. 실콘텐츠 판정을 단어 우연에
+  기대는 구조다 — 별건으로 다룰 것(METHODOLOGY 등재 대상 확대 또는 판정 기준 교체).
 - **미커밋 유지**: `ref/`와 `spike/SPIKE-fdt_canon_import_utility_analysis.md`. 공개 여부는 인간 판단.
-  이 파일 하나가 `leakage` FAIL 1 + `ref-linter --strict` 게이팅 + 실패 테스트 2스위트의 원인 전부
-  (fdt 제외 사본에서 둘 다 0 — 2회 실증). 다음 세션은 31/2로 읽을 것.
+  이 파일이 `leakage` FAIL + `ref-linter --strict` 게이팅 + 실패 테스트 2스위트의 원인이다(사본 실증 2회).
 - **[WO-10a-1] 인간 대기**: E6 10런은 top-level 세션 필요. 에이전트가 세션 내 실행 불가.
-- **관측 지표 셋**: `tier distribution` `draft:` 0 이탈 여부 · GRANT-02 3개월 생존 시 규칙 승격 검토 ·
-  [PRO-15] 반증(WO 생성 1건 — 첫 신호) · `effect surface` deny 0·ask 0·wildcard 13([ADR-23]) ·
-  **신규**: [ADR-25] 재개 조건(잠금 오탐/GC 오차단)은 `lock exposure`가 트립와이어.
+- **관측 지표 셋**: `tier distribution` `draft:` 0 이탈 · `effect surface` deny 0·ask 0([ADR-23]) ·
+  [ADR-25] 재개 조건은 `lock exposure`가 트립와이어 · 크기 헤드룸에서 `archive_ledger` 27/30KB.
 - 재제안 금지 목록은 **AGENTS.md의 `blocks-index` 블록**이 소유한다 — 여기 복제하지 말 것([ADR-18]).
 ## 5. 검증 상태
 - 테스트 **34스위트 중 32 통과 · 2 실패**(`leakage-guard`·`ref-linter` — 미커밋 fdt 귀속).
-  신규: `lineage-tree.test.js` 24단언(101노드 적대 평면 = 성패 판정 회귀 고정) · `dashboard.test.js` 37단언.
-- lint 7종 통과 · `permission-guard --strict` 범위 통과 · 산출물 gitignore 동작 확인(`git status` 무출현).
+  신규: `query.test.js` 23단언(계약 간선 8건 — 합집합·자손 포함·잠금 발동·미해소·역방향 아님) ·
+  `zfs_index.test.js` 17단언(consumers 파싱 5건).
+- lint 7종 통과 · `permission-guard --strict` 범위 통과 · 부트스트랩 1967/4000 tok.
+- 실동작 확인: `node scripts/blast-radius.js CON-00` → 계보 `00`에서 계보 `01`의 소비자 5건을 영향권에
+  포함(더미 예시 기준). 같은 계보 소비자는 간선이 무의미하다는 것도 실측 확인.

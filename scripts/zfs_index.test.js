@@ -1,7 +1,7 @@
 // scripts/zfs_index.test.js
 // 통합 테스트: 실제 레포의 예시 문서를 색인이 제대로 수집·파싱하는지.
 // (FS 의존이라 zfs_util.test.js와 분리.) 실행: node scripts/zfs_index.test.js
-const { buildIndex, readStatus } = require('./zfs_index');
+const { buildIndex, readStatus, readFront, parseConsumers } = require('./zfs_index');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -42,6 +42,14 @@ check('선두주석+frontmatter status 추출',
 check('본문 코드블록의 status 무시',
   readStatus(w('b.md', '# 문서\n\n예시:\n```\nstatus: Live\n```\n')) === null);
 check('frontmatter 없으면 null', readStatus(w('c.md', '# 그냥 문서\nstatus: Live\n')) === null);
+
+// consumers: 계약의 계보 밖 간선([PRO-16]) — 인라인·블록 둘 다, 브래킷은 벗긴다
+check('consumers 인라인', JSON.stringify(parseConsumers('consumers: [FLOW-01a, FLOW-07b]')) === '["FLOW-01a","FLOW-07b"]');
+check('consumers 블록', JSON.stringify(parseConsumers('consumers:\n  - FLOW-01a\n  - [FLOW-09c]\nnext: x')) === '["FLOW-01a","FLOW-09c"]');
+check('consumers 없으면 빈 배열', JSON.stringify(parseConsumers('status: Active')) === '[]');
+check('consumers 블록은 목록 끝에서 멈춘다', JSON.stringify(parseConsumers('consumers:\n  - A-01\nstatus: Active\n  - B-02')) === '["A-01"]');
+check('readFront 가 consumers 를 낸다',
+  JSON.stringify(readFront(w('d.md', '---\nstatus: Active\nconsumers: [FLOW-01a]\n---\n')).consumers) === '["FLOW-01a"]');
 fs.rmSync(tmp, { recursive: true, force: true });
 
 console.log(`\n${pass} passed, ${fail} failed`);

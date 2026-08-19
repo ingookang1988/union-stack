@@ -17,8 +17,13 @@ const r = blastRadius(id, buildIndex());
 if (json) { console.log(JSON.stringify(r, null, 2)); process.exit(r.blocked ? 1 : 0); }
 
 console.log(`# Blast Radius: ${r.id}`);
-console.log(`영향권 노드 ${r.affected.length}개:`);
-r.affected.forEach(d => console.log(`  [${d.domain}-${d.id}] ${d.status || '?'}  ${d.file}`));
+console.log(`영향권 노드 ${r.affected.length}개${r.viaContract.length ? ` (계약 소비자 ${r.viaContract.length}개 포함)` : ''}:`);
+r.affected.forEach(d =>
+  console.log(`  [${d.domain}-${d.id}] ${d.status || '?'}  ${d.file}${d.via ? `  ← 계약 ${d.via} 소비자` : ''}`));
+if (r.unresolvedConsumers.length) {
+  console.error(`\n미해소 consumers ${r.unresolvedConsumers.length}건 — 오타면 고치고, 아직 없는 문서면 만들 것:`);
+  r.unresolvedConsumers.forEach(u => console.error(`  ? ${u.ref}  ← ${u.from}`));
+}
 if (r.blocked) {
   console.error('\nFail-close: 잠금 상태(Verifying) 노드가 영향권에 있음 — 변경 보류.');
   r.locked.forEach(d => console.error(`  ✗ [${d.domain}-${d.id}] ${d.status}  ${d.file}`));

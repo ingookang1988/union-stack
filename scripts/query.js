@@ -1,7 +1,7 @@
 // scripts/query.js
 // plane 조회의 *순수* 핵심 로직 — CLI / MCP / skill 이 공유한다(로직 1벌, 표면 N개).
 // 전부 read-only. 쓰기는 노출하지 않는다(권한 tier·permission-guard 우회 방지).
-const { ancestorChain, isDescendant } = require('./zfs_util');
+const { ancestorChain, isDescendant, parseId } = require('./zfs_util');
 
 const CONTEXT_DOMAINS = new Set(['PLAN', 'FLOW', 'CON', 'ARCH', 'MTG']);
 const LOCKED = new Set(['Verifying']);
@@ -20,14 +20,37 @@ function upwardFetch(id, index) {
   return { id, chain, context, lessons };
 }
 
-/** Blast Radius: 대상의 모든 자손 + 잠금(Verifying) 여부. */
+/**
+ * Blast Radius: 대상의 모든 자손 **+ 선언된 계약 소비자와 그 자손** + 잠금(Verifying) 여부.
+ *
+ * 계보 자손만 보면 계약의 영향권을 구조적으로 못 본다([PRO-16] §2-A 실측): 계약은 정의상
+ * 포함관계가 *아닌* 당사자끼리 공유되므로(FE와 BE는 형제) 소비자는 늘 다른 계보에 있다.
+ * 그래서 `consumers:` 로 선언된 계보 밖 간선을 합집합한다. 자손까지 포함하는 것은 보수적
+ * 선택이다 — 잠금 검사는 놓치는 것보다 넓은 편이 안전하다([PRO-16] §3-2).
+ * 간선은 **계약 → 소비자 한 방향만** 선언한다(양방향은 정본이 둘이 되어 드리프트).
+ */
 function blastRadius(id, index) {
-  const affected = index
-    .filter(d => isDescendant(id, d.id))
-    .sort((a, b) => a.id.localeCompare(b.id))
-    .map(d => ({ domain: d.domain, id: d.id, status: d.status || null, file: d.file }));
+  const row = d => ({ domain: d.domain, id: d.id, status: d.status || null, file: d.file });
+  const lineage = index.filter(d => isDescendant(id, d.id));
+  const seen = new Set(lineage.map(d => d.file));
+  const viaContract = [];
+  const unresolved = [];
+  for (const src of lineage) {
+    for (const raw of src.consumers || []) {
+      const cid = parseId(raw);
+      const hit = cid ? index.filter(d => isDescendant(cid, d.id)) : [];
+      if (!hit.length) { unresolved.push({ ref: raw, from: src.file }); continue; }
+      for (const d of hit) {
+        if (seen.has(d.file)) continue;
+        seen.add(d.file);
+        viaContract.push({ ...row(d), via: `${src.domain}-${src.id}` });
+      }
+    }
+  }
+  const cmp = (a, b) => a.id.localeCompare(b.id);
+  const affected = [...lineage.map(row).sort(cmp), ...viaContract.sort(cmp)];
   const locked = affected.filter(d => LOCKED.has(d.status));
-  return { id, affected, locked, blocked: locked.length > 0 };
+  return { id, affected, locked, blocked: locked.length > 0, viaContract, unresolvedConsumers: unresolved };
 }
 
 // 과거·결정 라우팅(P1-A 결정 트리). find()가 첫 매칭을 반환하므로 *더 구체적인* 분기가 앞선다.

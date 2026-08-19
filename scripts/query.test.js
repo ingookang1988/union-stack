@@ -30,6 +30,29 @@ check('br affected ids', br.affected.map(a => a.id).sort(), ['01a', '01a', '01a'
 check('br not blocked', br.blocked, false);
 const brLocked = blastRadius('01b', index);
 check('br blocked(Live)', brLocked.blocked, true);
+check('br 계약 간선 없으면 viaContract 빈 배열', br.viaContract, []);
+
+// --- blastRadius: 계약의 계보 밖 소비자 간선([PRO-16]) ---
+// 계약은 포함관계 아닌 당사자끼리 공유되므로 소비자는 늘 다른 계보에 있다 — 트리 산술로는 안 보인다.
+const cIndex = [
+  { domain: 'CON', id: '05', status: 'Active', file: 'contracts/CON-05_api.md',
+    consumers: ['FLOW-01a', 'FLOW-07b', 'FLOW-99z'] },        // FE · BE · 오타(미해소)
+  { domain: 'FLOW', id: '01a', status: 'Active', file: 'flow/FLOW-01a_fe.md' },
+  { domain: 'FLOW', id: '07b', status: 'Verifying', file: 'flow/FLOW-07b_be.md' },
+  { domain: 'WO', id: '07b-1', status: 'Draft', file: 'sprint/WO-07b-1_task.md' },
+  { domain: 'PLAN', id: '42', status: 'Active', file: 'plan/PLAN-42_unrelated.md' },
+];
+const con = blastRadius('05', cIndex);
+check('계약: 소비자가 영향권에 합집합', con.affected.map(a => `${a.domain}-${a.id}`).sort(),
+  ['CON-05', 'FLOW-01a', 'FLOW-07b', 'WO-07b-1']);
+check('계약: 무관 계보는 안 딸려온다', con.affected.some(a => a.id === '42'), false);
+check('계약: 소비자 자손까지 보수적 포함', con.viaContract.some(a => a.id === '07b-1'), true);
+check('계약: 간선 출처 표기', con.viaContract.every(a => a.via === 'CON-05'), true);
+check('계약: Verifying 소비자가 Fail-close 발동', con.blocked, true);
+check('계약: 잠금은 소비자 쪽', con.locked.map(l => l.id), ['07b']);
+check('계약: 미해소 소비자 표면화', con.unresolvedConsumers.map(u => u.ref), ['FLOW-99z']);
+// 방향은 한쪽만 — 소비자에서 계약을 역으로 끌어오지 않는다(정본이 둘이면 드리프트).
+check('계약: 역방향 아님', blastRadius('01a', cIndex).affected.map(a => a.domain), ['FLOW']);
 
 // --- whereToRecord ---
 check('route pivot→HISTORY', whereToRecord('pivot').match.destination, '.union-stack/project/HISTORY.md');
