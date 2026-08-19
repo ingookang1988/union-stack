@@ -147,6 +147,36 @@ function contractSection(c) {
   ${rows || '<div class="meta">선언된 간선 없음 — [PRO-16] §5 반증 조건 관측 대상</div>'}</section>`;
 }
 
+/** 개요용 당위 요약 카드(순수) — 등급·드리프트·concern 만 압축. 세부는 arch 페이지로 링크한다. */
+function normCard(norms, sync, concerns) {
+  if (!norms || !norms.total) return '';
+  const GRADE = {
+    gated: { cls: 'fresh', label: '게이트' },
+    cited: { cls: 'aging', label: '인용만' },
+    isolated: { cls: 'dead', label: '고립' },
+  };
+  const rows = norms.norms.map(n => {
+    const g = GRADE[n.grade] || GRADE.isolated;
+    const who = n.gates.length ? n.gates.map(f => f.split('/').pop()).join(' ') : `코드 ${n.codeCites} · 평면 ${n.planeCites}`;
+    return `<div class="crow"><span class="nm" title="${esc(n.file)}">${esc(n.key)}</span>`
+      + `<span class="pill ${g.cls}"><b>${g.label}</b></span><span class="note">${esc(who)}</span></div>`;
+  }).join('');
+  const drift = sync ? sync.planes.filter(p => ['gap', 'state'].includes(p.name)) : [];
+  const verified = drift.filter(p => p.last).length;
+  const driftLine = drift.map(p =>
+    `<span class="pill ${p.last ? 'fresh' : 'dead'}">${esc(p.name)}<b>${esc(p.last || '무기입')}</b></span>`).join('');
+  const tags = concerns && concerns.tagged
+    ? Object.entries(concerns.byTag).map(([t, n]) => `<span class="pill fresh">${esc(t)}<b>${n}</b></span>`).join('')
+    : `<span class="pill dead">concern 태그<b>사용 0</b></span>`;
+  return `<section class="card" id="norm"><h2>당위 축 — 규범과 그 집행
+    <a class="more" data-nav="arch" href="#/arch">자세히 →</a></h2>
+  <div class="meta">규범 ${norms.total} · 게이트 ${norms.gated} · 인용만 ${norms.cited}`
+    + `${norms.isolated ? ` · <span class="bad">고립 ${norms.isolated}</span>` : ''}`
+    + `${verified === 0 ? ` · <span class="bad">대조된 적 없음</span>` : ''}</div>
+  ${rows}
+  <div class="pills">${driftLine}${tags}</div></section>`;
+}
+
 /**
  * 당위 축(ARCH) **전용 페이지**(순수). 개요의 요약 카드가 아니라 세부 뷰다.
  *
@@ -272,6 +302,9 @@ const DASH_CSS = `
   nav a:hover { color:var(--ink); background:#f1f2f4; }
   nav a.on { color:#fff; background:#2a78d6; font-weight:600; }
   .view[hidden] { display:none; }
+  .more { margin-left:auto; font-size:11.5px; font-weight:400; color:#2a78d6; text-decoration:none; }
+  .more:hover { text-decoration:underline; }
+  .card > h2 { display:flex; align-items:baseline; gap:10px; }
   .card.norm > h2 { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;
                     font-family:ui-monospace, Consolas, monospace; }
   .ntitle { font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans KR",sans-serif;
@@ -349,7 +382,6 @@ const DASH_CSS = `
 const VIEWS = [
   { id: 'overview', label: '개요' },
   { id: 'arch', label: '당위(ARCH)' },
-  { id: 'plane', label: '계보' },
 ];
 
 /** 수집된 표면 → 자기완결 HTML(순수 — FS 접근 없음). */
@@ -367,16 +399,19 @@ ${syncSection(health.sync, today)}
 </div>
 </div>
 <div class="grid">
+<div class="col">
+${normCard(health.norms, health.sync, health.concerns)}
 ${sizeSection(health.sizes, health.sizeCapKb)}
+</div>
 <div class="col">
 ${contractSection(health.contracts)}
 ${effectSection(effectDim)}
 </div>
-</div>`,
-    arch: normView(health.norms, health.sync, health.concerns),
-    plane: `<section class="card"><h2>계보 — 평면 전체</h2>
+</div>
+<section class="card" id="plane"><h2>계보 — 평면 전체</h2>
 <div class="plane">${planeBody(index)}</div>
 </section>`,
+    arch: normView(health.norms, health.sync, health.concerns),
   };
   return `<!doctype html>
 <meta charset="utf-8">
@@ -399,6 +434,7 @@ const ROUTER_JS = `
 (function () {
   const views = [...document.querySelectorAll('.view')];
   const navs = [...document.querySelectorAll('nav a[data-nav]')];
+  const links = [...document.querySelectorAll('a[data-nav]')]; // 나브 + 카드 안 "자세히 →" 링크
   if (!views.length) return;
   function show(want) {
     const hit = views.some(v => v.dataset.view === want) ? want : views[0].dataset.view;
@@ -411,7 +447,7 @@ const ROUTER_JS = `
     const h = location.hash || '';
     return h.slice(0, 2) === '#/' ? h.slice(2) : '';
   }
-  navs.forEach(a => a.addEventListener('click', e => {
+  links.forEach(a => a.addEventListener('click', e => {
     e.preventDefault();
     show(a.dataset.nav);
     try { history.replaceState(null, '', '#/' + a.dataset.nav); } catch (_) { /* data: URL 등 — 무시 */ }
@@ -428,7 +464,7 @@ function gatherAll(root = path.resolve(__dirname, '..'), today = new Date().toIS
 
 module.exports = {
   tilesSection, healthSection, budgetSection, worktableSection,
-  sizeSection, syncSection, effectSection, contractSection, normView, render, gatherAll, VIEWS, MARKS,
+  sizeSection, syncSection, effectSection, contractSection, normCard, normView, render, gatherAll, VIEWS, MARKS,
 };
 
 if (require.main === module) {

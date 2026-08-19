@@ -2,7 +2,7 @@
 // 섹션 함수(순수) 단위 + 실평면 합성 스모크. 대시보드는 *합성*이므로 여기서는 그리기만 검증한다 —
 // 데이터의 옳음은 각 소스 도구의 테스트(health·context-budget·work-close·lineage-tree)가 소유한다.
 const { tilesSection, healthSection, budgetSection, worktableSection,
-  sizeSection, syncSection, effectSection, contractSection, normView, render, gatherAll, VIEWS } = require('./dashboard');
+  sizeSection, syncSection, effectSection, contractSection, normCard, normView, render, gatherAll, VIEWS } = require('./dashboard');
 
 let pass = 0, fail = 0;
 function check(label, cond) { if (cond) pass++; else { fail++; console.error(`FAIL ${label}`); } }
@@ -138,18 +138,34 @@ const nvOk = normView(
 check('norm: 검증됐으면 경고 없음', !nvOk.includes('대조된 적 없다') && nvOk.includes('대조 기록 있음'));
 check('norm: concern 태그 집계 표기', nvOk.includes('security'));
 
-// VIEWS — 축 하나 = 페이지 하나. 새 축 추가는 이 배열에 한 줄.
-check('views: 3개 정의', VIEWS.length === 3 && VIEWS[0].id === 'overview');
+// normCard — 개요용 요약(세부는 arch 페이지로 링크). 개요 정보를 버리지 않는 것이 요구사항.
+const nc = normCard(
+  { total: 2, gated: 1, cited: 1, isolated: 0, norms: [
+    { key: 'ARCH-00', file: 'a.md', grade: 'gated', gates: ['scripts/g.js'], codeCites: 1, planeCites: 2 },
+    { key: 'INF-01', file: 'b.md', grade: 'cited', gates: [], codeCites: 0, planeCites: 1 },
+  ] },
+  { planes: [{ name: 'gap', last: null }, { name: 'state', last: null }] },
+  { tagged: 0, total: 5, byTag: {} });
+check('normCard: 등급 요약', nc.includes('게이트 1') && nc.includes('인용만 1'));
+check('normCard: arch 로 가는 자세히 링크', nc.includes('data-nav="arch"') && nc.includes('자세히'));
+check('normCard: 규범 없으면 조각 없음', normCard({ total: 0, norms: [] }) === '');
+
+// VIEWS — 축 하나 = 페이지 하나. 새 축 추가는 이 배열에 한 줄. 계보는 개요가 보유(별도 페이지 아님).
+check('views: 2개 정의(개요·arch)', VIEWS.length === 2 && VIEWS[0].id === 'overview');
 check('views: arch 포함', VIEWS.some(v => v.id === 'arch'));
 
 // render — 실평면 합성 스모크
 const data = gatherAll();
 const html = render(data, { title: 'real' });
 // 항상 있는 6절. `effect`는 **환경 의존**이라 여기 넣지 않는다 — 근거는 아래 조건부 단언.
-check('합성: 개요의 6섹션',
-  ['id="health"', 'id="budget"', 'id="wo"', 'id="sync"', 'id="size"', 'id="contract"'].every(s => html.includes(s)));
-// 뷰 라우팅 — 축마다 별도 페이지. 클릭이 정본이고 해시는 부가(data: URL 뷰어 대비).
-check('라우팅: 뷰 3개 + 나브 3개', (html.match(/class="view"/g) || []).length === 3
+// 개요는 기존 대시보드 정보를 전부 유지한다(요약 카드·계보 트리 포함) — 축 페이지는 *추가* 진입.
+const ovHtml = html.slice(html.indexOf('data-view="overview"'), html.indexOf('data-view="arch"'));
+check('합성: 개요의 9섹션 전부',
+  ['id="health"', 'id="budget"', 'id="wo"', 'id="sync"', 'id="size"', 'id="contract"', 'id="norm"', 'id="plane"'].every(s => ovHtml.includes(s)));
+check('합성: 개요가 계보 트리 보유', ovHtml.includes('계보 트리 — 구조가 있는 노드') && ovHtml.includes('class="flt"'));
+check('합성: 개요 당위 카드에서 arch 진입 링크', ovHtml.includes('data-nav="arch"'));
+// 뷰 라우팅 — 클릭이 정본이고 해시는 부가(data: URL 뷰어 대비).
+check('라우팅: 뷰 2개 + data-nav 3개(나브 2 + 카드 1)', (html.match(/class="view"/g) || []).length === 2
   && (html.match(/data-nav="/g) || []).length === 3);
 check('라우팅: 클릭 핸들러가 있다(해시 미지원 뷰어 대비)', html.includes("addEventListener('click'"));
 check('라우팅: 해시는 부가로만', html.includes('history.replaceState'));
@@ -166,7 +182,7 @@ check('합성: 크기 헤드룸이 원장을 잡는다', html.includes('archive_
 check('합성: 신선도 pill', html.includes('class="pills"') && html.includes('evidence'));
 check('합성: health 차원 등장', html.includes('naming gate') && html.includes('effect surface'));
 check('합성: 활성 WO 등장', html.includes('[WO-10a-1]'));
-check('합성: 계보 트리 + 필터 포함', html.includes('계보 트리 — 구조가 있는 노드') && html.includes('class="flt"'));
+
 check('합성: undefined 누출 0', !html.includes('undefined'));
 check('합성: 자기완결(외부 참조 0)', html.startsWith('<!doctype html>') && !/src=|href="(?!#)/.test(html));
 check('합성: 결정성(같은 입력 → 같은 출력)', render(data, { title: 'real' }) === html);

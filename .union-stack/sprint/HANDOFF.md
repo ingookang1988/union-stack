@@ -22,7 +22,7 @@ version: 1.0
   영향권으로 냄(잠금 검사도 합집합 위) · `blast-radius` CLI가 간선 출처와 미해소 소비자를 표기
 - 평면: `contracts/_GUIDE`·`feature/_GUIDE`에 판별식(GRANT-02) · `CON-00`에 동작 예시(계보 00→01 횡단)
   · `CON-01`·`FLOW-01a` 더미 갱신(관찰 대 약속 분리)
-- 도구: `[TOOL-24]` lineage-tree(`npm run tree`) · `[TOOL-25]` dashboard v2.0(**축별 페이지 라우팅** + 당위 페이지,
+- 도구: `[TOOL-24]` lineage-tree(`npm run tree`) · `[TOOL-25]` dashboard v2.1(개요 전체 유지 + **축 세부 페이지** 라우팅,
   `contract edges`·`norm enforcement` 관측 — health 차원 + 페이지, `npm run dash`)
 - 작업: `[WO-10a-1]` E6 A/B(Draft) — 인간 실행 대기
 ## 3. 다음 작업 (단일 진입점)
@@ -51,7 +51,7 @@ version: 1.0
 - 재제안 금지 목록은 **AGENTS.md의 `blocks-index` 블록**이 소유한다 — 여기 복제하지 말 것([ADR-18]).
 ## 5. 검증 상태
 - 테스트 **34스위트 중 32 통과 · 2 실패**(`leakage-guard`·`ref-linter` — 미커밋 fdt 귀속).
-  신규: `query.test.js` 39단언 · `dashboard.test.js` 68단언(당위 페이지 14 + 라우팅 4) · `health.test.js` 33단언 ·
+  신규: `query.test.js` 39단언 · `dashboard.test.js` 72단언(당위 페이지 14 + 라우팅·개요 보존 7) · `health.test.js` 33단언 ·
   `zfs_index.test.js` 17단언(consumers 파싱 5건).
 - lint 7종 통과 · `permission-guard --strict` 범위 통과 · 부트스트랩 1967/4000 tok.
 - 실동작 확인: `node scripts/blast-radius.js CON-00` → 계보 `00`에서 계보 `01`의 소비자 5건을 영향권에
