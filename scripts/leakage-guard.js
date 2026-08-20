@@ -55,6 +55,9 @@ const METHODOLOGY = new Set([
   // 자기 도그푸딩 작업 오더 — 공개 방법론(eval/PROTOCOL §3-bis · eval/e6-suite)의 *실행* 지시다.
   // 위탁 데이터 0. 더미로 만들면 실행 불가한 지시가 되므로 마커 대신 등재로 닫는다.
   'WO-10a-1_e6_scenario_ab_cycle.md',
+  // 이 템플릿 자신의 개발에서 얻은 교훈([LSN-17]). 위탁 데이터 0이고, 더미로 만들면 선주입되는
+  // *경고*가 경고이기를 그만둔다 — WO-10a-1 과 같은 근거로 마커 대신 등재로 닫는다.
+  'LSN-17_shape_blind_spot.md',
 ]);
 
 // 더미 표시 마커. 슬러그 또는 본문 어디든 있으면 sanitize된 것으로 간주.

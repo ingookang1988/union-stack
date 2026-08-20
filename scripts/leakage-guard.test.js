@@ -1,7 +1,7 @@
 // scripts/leakage-guard.test.js
 // 판정 로직(순수 함수) 단위 + 실제 레포 통합 테스트.
 // 실행: node scripts/leakage-guard.test.js
-const { isSanitized, run } = require('./leakage-guard');
+const { isSanitized, run, collectFiles } = require('./leakage-guard');
 
 let pass = 0, fail = 0;
 function check(label, got, exp) {
@@ -28,8 +28,13 @@ const fs = require('fs');
 const path = require('path');
 const TEMPLATE = fs.existsSync(path.resolve(__dirname, '..',
   '.union-stack/reference/lessons/LSN-01a_example_pitfall.md'));
-if (TEMPLATE) check('현재 레포 통과', run(), 0);
-else console.log('(non-template repo: 누설 통합검사 건너뜀)');
+// 실패 시 **위반 파일을 함께 낸다**. exit code 만 단언하면 이미 빨간 게이트 뒤에 새 위반이
+// 숨는다(실측: 미커밋 spike 1건으로 계속 red 인 상태에서 신규 [LSN-17] 위반이 CI 까지 갔다).
+if (TEMPLATE) {
+  const violations = collectFiles(path.resolve(__dirname, '..'))
+    .filter(rel => !isSanitized(rel, fs.readFileSync(path.resolve(__dirname, '..', rel), 'utf8')));
+  check('현재 레포 통과', violations, []);
+} else console.log('(non-template repo: 누설 통합검사 건너뜀)');
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
