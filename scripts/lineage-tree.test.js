@@ -64,8 +64,14 @@ check('적대 평면: 필터 행 없음(status 전무)', !html.includes('class="
 check('적대 평면: 자기완결(외부 참조 0)', html.startsWith('<!doctype html>') && !/src=|href=/.test(html));
 
 // render — 실평면 스모크
-const real = render(buildIndex(), { title: 'real' });
-check('실평면: WO-10a-1 등장', real.includes('e6_scenario_ab_cycle'));
+const realIdx = buildIndex();
+const real = render(realIdx, { title: 'real' });
+// WO-10a-1 은 상류 인스턴스의 픽스처 — 채택 인스턴스 평면에는 없을 수 있다.
+if (realIdx.some(d => d.slug === 'e6_scenario_ab_cycle')) {
+  check('실평면: WO-10a-1 등장', real.includes('e6_scenario_ab_cycle'));
+} else {
+  console.log('(WO-10a-1 없음: 채택 인스턴스 — 픽스처 검사 건너뜀)');
+}
 check('실평면: 필터 행 존재', real.includes('class="flt"') && real.includes('Active'));
 check('실평면: 트리/카탈로그 분리', real.includes('계보 트리 — 구조가 있는 노드') && real.includes('단독 노드'));
 check('실평면: undefined/null 누출 0', !real.includes('undefined') && !real.includes('null'));

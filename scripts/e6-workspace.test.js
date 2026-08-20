@@ -1,8 +1,11 @@
 // scripts/e6-workspace.test.js
 // 순수 함수(applyEdit·stripCheck·dominantEol) + 스위트 정의 무결성. 실행: node scripts/e6-workspace.test.js
+const fs = require('fs');
 const path = require('path');
 const { applyEdit, stripCheck, dominantEol, byId } = require('./e6-workspace');
-const defects = require('../eval/e6-suite/defects.js');
+// 스위트는 상류 인스턴스 사유물 — 채택 인스턴스에는 없다. 있을 때만 무결성을 검사한다.
+const SUITE_PATH = path.join(__dirname, '..', 'eval', 'e6-suite', 'defects.js');
+const defects = fs.existsSync(SUITE_PATH) ? require(SUITE_PATH) : null;
 
 let pass = 0, fail = 0;
 function check(label, cond) { if (cond) pass++; else { fail++; console.error(`FAIL ${label}`); } }
@@ -35,19 +38,23 @@ check('LF 우세', dominantEol('a\nb\nc\r\n') === '\n');
 check('개행 없음 → LF', dominantEol('abc') === '\n');
 
 // --- 스위트 정의 무결성(스위트가 규약을 어기면 리그가 조용히 망가진다) ---
-check('과제 5건 = 팔당 총 5런', defects.length === 5);
-check('id 유일', new Set(defects.map(d => d.id)).size === 5);
-for (const d of defects) {
-  check(`${d.id} 필수 필드`, !!(d.title && d.prompt && d.origin && d.testFile && d.edits.length));
-  check(`${d.id} 오라클은 테스트 파일`, /\.test\.js$/.test(d.testFile));
-  check(`${d.id} strip 대상이 있다`, (d.strip || []).length + (d.stripChecks || []).length > 0);
-  check(`${d.id} 편집 대상은 레포 상대경로`, d.edits.every(e => !path.isAbsolute(e.file)));
-  check(`${d.id} 편집은 find 또는 findRe`, d.edits.every(e => !!e.find !== !!e.findRe));
-  // 발화는 증상만 — 원인·수정 커밋 해시가 들어가면 과제가 사라진다
-  check(`${d.id} 발화에 출처 해시 없음`, !d.prompt.includes(d.origin));
+if (defects) {
+  check('과제 5건 = 팔당 총 5런', defects.length === 5);
+  check('id 유일', new Set(defects.map(d => d.id)).size === 5);
+  for (const d of defects) {
+    check(`${d.id} 필수 필드`, !!(d.title && d.prompt && d.origin && d.testFile && d.edits.length));
+    check(`${d.id} 오라클은 테스트 파일`, /\.test\.js$/.test(d.testFile));
+    check(`${d.id} strip 대상이 있다`, (d.strip || []).length + (d.stripChecks || []).length > 0);
+    check(`${d.id} 편집 대상은 레포 상대경로`, d.edits.every(e => !path.isAbsolute(e.file)));
+    check(`${d.id} 편집은 find 또는 findRe`, d.edits.every(e => !!e.find !== !!e.findRe));
+    // 발화는 증상만 — 원인·수정 커밋 해시가 들어가면 과제가 사라진다
+    check(`${d.id} 발화에 출처 해시 없음`, !d.prompt.includes(d.origin));
+  }
+  check('byId 대소문자 무관', byId('d1') && byId('D1').id === 'D1');
+  check('없는 id → undefined', byId('D9') === undefined);
+} else {
+  console.log('(eval/e6-suite 없음: 채택 인스턴스 — 스위트 무결성 검사 건너뜀)');
 }
-check('byId 대소문자 무관', byId('d1') && byId('D1').id === 'D1');
-check('없는 id → undefined', byId('D9') === undefined);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

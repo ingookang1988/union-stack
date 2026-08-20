@@ -29,7 +29,11 @@ check('npx: 빈 패키지 거부', EXTERNAL_RE.test('npx:') === false);
 const cards = gather();
 if (cards.length) {
   check('실레포 카드 전부 impl 실존', findViolations(cards).length === 0);
-  check('더미 TOOL-01의 impl 파싱', cards.some(c => c.impl === 'scripts/zfs-linter.js'));
+  if (cards.some(c => /TOOL-01_/.test(c.file))) {
+    check('더미 TOOL-01의 impl 파싱', cards.some(c => c.impl === 'scripts/zfs-linter.js'));
+  } else {
+    console.log('(더미 TOOL-01 없음: 채택 인스턴스 — 픽스처 검사 건너뜀)');
+  }
 } else {
   console.log('(tools 평면 비어 있음: 픽스처 검사 건너뜀)');
 }
