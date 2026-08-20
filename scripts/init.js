@@ -140,6 +140,18 @@ function main(argv = process.argv.slice(2)) {
   }
   if (!doApply) { console.log('\n(dry-run) 적용하려면 --apply 추가. IDENTITY의 TODO를 채우고 첫 PLAN을 작성한 뒤 `npm run lint`.'); return 0; }
   apply(ops, root);
+  // 정합 앵커 시딩 — 지금 이 순간 로컬 == 상류다. 이후 `template-update --apply` 는 이 앵커와
+  // 대조해 **어답터가 실제로 고친 sync 파일만** 골라 보존한다(앵커가 없으면 전부 '판별 불가').
+  // 지연 require: template-update 가 이 모듈의 TEMPLATE_BITS 를 쓰므로 최상단이면 순환이 된다.
+  try {
+    const tu = require('./template-update');
+    let ver = null;
+    try { ver = tu.parseChangelogVersion(fs.readFileSync(path.join(root, 'CHANGELOG.md'), 'utf8')); } catch { /* 없으면 미상 */ }
+    tu.seedAnchor(root, `clone@${ver || 'unknown'}`);
+    console.log(`  ✓ 정합 앵커 시딩: ${tu.ANCHOR_PATH}`);
+  } catch (e) {
+    console.error(`  ! 정합 앵커 시딩 실패(치명적 아님): ${e.message}`);
+  }
   console.log('\n적용 완료. 다음: IDENTITY TODO 채우기 → 첫 PLAN 작성 → `npm run lint`.');
   return 0;
 }

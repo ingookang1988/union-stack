@@ -6,13 +6,14 @@ const path = require('path');
 const { ZFS_REGEX, isValidDomain, isValidName, VALID_DOMAINS } = require('./zfs_util');
 const { walkFiles } = require('./fs_walk');
 const { withContract } = require('./gate-contract');
+const { load: loadAdapter } = require('./adapter');
 
 // 계약 선언([PRO-11] — [GRAM-12c] 꼴). scope의 "안 보는 것"이 LSN-13류 오독을 막는 핵심.
 const CONTRACT = {
   gate: 'ZFS Naming Gate (zfs-linter)',
   input: '.union-stack/ 대상 디렉터리의 .md 파일명(면제 목록 제외)',
   predicate: '[DOMAIN]-[LUHMANN_ID]_[slug].md 형식 · 허용 도메인 · Luhmann ID의 l/o 금지',
-  scope: '파일명만 본다 — 내용·frontmatter·참조 무결성(ref-linter 소관)·파일 간 결합은 보지 않음',
+  scope: '파일명만 본다 — 내용·frontmatter·참조 무결성(ref-linter 소관)·파일 간 결합은 보지 않음. 면제 목록은 고정분 + 어답터 설정(adapter.json zfsIgnored)의 합집합',
   outcomes: ['PASS', 'REJECT'],
   failure_mode: '위반 파일 목록 출력 후 REJECT(차단)',
 };
@@ -33,13 +34,25 @@ const IGNORED = new Set([
 ]);
 const IGNORED_SUFFIX = ['_GUIDE.md'];
 
+/**
+ * 면제 목록 = 고정분 ∪ 어답터 설정(순수).
+ * 어답터는 고유 매니페스트(ZFS ID 를 갖지 않는 고정 파일)를 갖는 것이 정상이고, 그때 지금까지의
+ * 유일한 선택지는 **이 sync 파일을 직접 고치는 것**이었다(→ 다음 --apply 가 조용히 되돌린다).
+ * 설정으로 흡수해 그 포크를 0으로 만든다.
+ */
+function ignoredSet(root) {
+  const cfg = loadAdapter(root);
+  return { names: new Set([...IGNORED, ...cfg.zfsIgnored]), warnings: cfg.warnings };
+}
+
 /** 위반 목록을 반환하는 순수-ish 함수(출력·exit 없음). MCP/CLI 공유. */
 function lint(root = path.resolve(__dirname, '..')) {
   const violations = [];
+  const { names } = ignoredSet(root);
   const scan = relDir => walkFiles(root, relDir, rel => {
     const entry = rel.split('/').pop();
     if (!entry.endsWith('.md')) return;
-    if (IGNORED.has(entry) || IGNORED_SUFFIX.some(s => entry.endsWith(s))) return;
+    if (names.has(entry) || IGNORED_SUFFIX.some(s => entry.endsWith(s))) return;
     if (isValidName(entry)) return;
     const m = entry.match(ZFS_REGEX);
     let hint = null;
@@ -55,7 +68,9 @@ function lint(root = path.resolve(__dirname, '..')) {
 }
 
 function run() {
-  const violations = lint();
+  const root = path.resolve(__dirname, '..');
+  ignoredSet(root).warnings.forEach(w => console.error(`[ZFS] 설정 경고: ${w}`));
+  const violations = lint(root);
   if (violations.length) {
     violations.forEach(v => {
       console.error(`\n[ZFS] 규칙 위반: ${v.file}`);
@@ -69,6 +84,6 @@ function run() {
   return 0;
 }
 
-module.exports = { lint, run, CONTRACT, TARGET_DIRS };
+module.exports = { lint, run, ignoredSet, CONTRACT, TARGET_DIRS, IGNORED, IGNORED_SUFFIX };
 
 if (require.main === module) process.exit(withContract(CONTRACT, run)());

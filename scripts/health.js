@@ -8,12 +8,13 @@ const path = require('path');
 const { VALID_DOMAINS } = require('./zfs_util');
 const { buildIndex } = require('./zfs_index');
 const { lint } = require('./zfs-linter');
-const { findViolations: historyViolationsOf } = require('./history-linter');
+const { findViolations: historyViolationsOf, findClarifications: historyClarificationsOf } = require('./history-linter');
 // 누설 가드는 **템플릿 전용 자산**이다 — `init --drop-template-bits` 가 삭제한다(init.TEMPLATE_BITS).
 // 하드 require 하면 문서화된 도입 경로를 따른 어답터에서 이 점수표가 통째로 크래시한다(실측).
 let leakageGuard = null;
 try { leakageGuard = require('./leakage-guard'); } catch { /* 어답터 — 게이트 해당 없음 */ }
 const { walkFiles } = require('./fs_walk');
+const { load: loadAdapter } = require('./adapter');
 const { gather: gatherBrokenRefs } = require('./ref-linter');
 const { gather: gatherBudget } = require('./context-budget');
 
@@ -83,7 +84,7 @@ function lastDateIn(txt) {
 }
 
 /** 순수 계산: 1차 지표 → 차원별 평가 리포트. (FS 비의존 → 테스트 용이) */
-function computeHealth({ index, domainsDefined, guideCount, namingViolations, historyViolations, leakageViolations, oversize = [], brokenRefs = 0, budget = null, sync = null, lessons = null, effect = null, contracts = null, norms = null }) {
+function computeHealth({ index, domainsDefined, guideCount, namingViolations, historyViolations, leakageViolations, oversize = [], brokenRefs = 0, budget = null, sync = null, lessons = null, effect = null, contracts = null, norms = null, adapter = null, historyClarifications = 0 }) {
   const used = new Set(index.map(d => d.domain));
   const unused = domainsDefined.filter(d => !used.has(d));
   const locked = index.filter(d => LOCKED.includes(d.status));
@@ -92,12 +93,21 @@ function computeHealth({ index, domainsDefined, guideCount, namingViolations, hi
 
   const dims = [
     { name: 'naming gate', status: namingViolations === 0 ? 'OK' : 'FAIL', value: `${namingViolations} violations` },
-    { name: 'history gate', status: historyViolations === 0 ? 'OK' : 'FAIL', value: `${historyViolations} violations` },
+    // CLARIFY 분(헤딩형 항목의 근거 미검출)은 FAIL 로 세지 않는다 — 표면화이지 차단이 아니다.
+    // 이 note 가 "조용한 0"의 반대편이다: 형식이 달라 계수에서 빠지는 항목이 여기서 이름을 얻는다.
+    { name: 'history gate', status: historyViolations === 0 ? 'OK' : 'FAIL', value: `${historyViolations} violations`,
+      note: historyClarifications ? `CLARIFY ${historyClarifications} — 헤딩형 항목의 근거 미검출(비차단)` : '' },
     // null = 게이트 해당 없음(어답터: 실콘텐츠가 정상이므로 트립와이어의 의미가 반전된다).
     // OK 로 위조하지도, FAIL 로 겁주지도 않는다 — 관측 불가와 통과는 다른 사실이다([ADR-23] 문법).
+    // `adapter.private` 는 같은 반전을 **가드가 남아 있는 어답터**에도 적용한다: 비공개 실콘텐츠
+    // 레포에서 "더미 표시가 없다"는 결함이 아니라 정상이다. 강등은 여기(점수표의 판정)에서만 하고
+    // leakage-guard 자체는 손대지 않는다 — 지금까지 어답터가 이 sync 파일을 직접 고쳐 온 자리다.
     leakageViolations === null
       ? { name: 'leakage gate', status: 'INFO', value: '해당 없음 — 템플릿 전용 게이트' }
-      : { name: 'leakage gate', status: leakageViolations === 0 ? 'OK' : 'FAIL', value: `${leakageViolations} unmarked` },
+      : adapter && adapter.private
+        ? { name: 'leakage gate', status: 'INFO', value: `${leakageViolations} unmarked — private 어답터(강등)`,
+            note: 'adapter.json private:true — 공개 템플릿 보호용 게이트라 비공개 레포에선 의미가 반전됨' }
+        : { name: 'leakage gate', status: leakageViolations === 0 ? 'OK' : 'FAIL', value: `${leakageViolations} unmarked` },
     { name: 'domain utilization', status: unused.length > 6 ? 'WARN' : 'OK',
       value: `${used.size}/${domainsDefined.length} used`, note: unused.length ? `unused: ${unused.join(' ')}` : '' },
     { name: 'doc/guide ratio', status: 'INFO', value: `${index.length} ZFS docs / ${guideCount} guides` },
@@ -165,8 +175,11 @@ function countGuides(root) {
 function gather(root = path.resolve(__dirname, '..')) {
   const index = buildIndex(root);
   const namingViolations = lint(root).length;
+  const adapter = loadAdapter(root);
   const hp = path.join(root, '.union-stack/project/HISTORY.md');
-  const historyViolations = fs.existsSync(hp) ? historyViolationsOf(fs.readFileSync(hp, 'utf8')).length : 0;
+  const historyMd = fs.existsSync(hp) ? fs.readFileSync(hp, 'utf8') : '';
+  const historyViolations = historyViolationsOf(historyMd).length;
+  const historyClarifications = historyClarificationsOf(historyMd).length;
   const leakageViolations = leakageGuard
     ? leakageGuard.collectFiles(root)
         .filter(rel => !leakageGuard.isSanitized(rel, fs.readFileSync(path.join(root, rel), 'utf8'))).length
@@ -189,11 +202,11 @@ function gather(root = path.resolve(__dirname, '..')) {
   const norms = normEnforcement(index, gatherEnforcers(root), gatherPlaneCites(root), gatherNormDocs(root, index));
   const r = computeHealth({
     index, domainsDefined: [...VALID_DOMAINS], guideCount: countGuides(root),
-    namingViolations, historyViolations, leakageViolations, oversize, brokenRefs, budget,
-    sync, lessons: gatherLessons(root), effect: gatherEffectSurface(root), contracts, norms,
+    namingViolations, historyViolations, historyClarifications, leakageViolations, oversize, brokenRefs, budget,
+    sync, lessons: gatherLessons(root), effect: gatherEffectSurface(root), contracts, norms, adapter,
   });
   // 판정(dims) 외에 원자료도 함께 낸다 — 대시보드가 같은 수집을 두 번 하지 않도록(합성 원칙).
-  return { ...r, sizes, sizeCapKb: SIZE_CAP_KB, sync, contracts, norms, concerns: concernUsage(index) };
+  return { ...r, sizes, sizeCapKb: SIZE_CAP_KB, sync, contracts, norms, adapter, concerns: concernUsage(index) };
 }
 
 /** 평면별 최종 기입 날짜 + ledger 항목 수를 모은다(관측만 — [PRO-11] C3). */
