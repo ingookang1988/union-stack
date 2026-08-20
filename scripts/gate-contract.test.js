@@ -1,6 +1,8 @@
 // scripts/gate-contract.test.js
 // 계약 계층 단위 + 전 게이트 계약 완전성 통합. 실행: node scripts/gate-contract.test.js
 const { OUTCOME, OUTCOME_NAME, isBlocking, toShellExit, validateContract, withContract } = require('./gate-contract');
+const fs = require('fs');
+const path = require('path');
 
 let pass = 0, fail = 0;
 function check(label, got, exp) {
@@ -36,7 +38,13 @@ check('--contract 출력에 exit_codes 포함', printed.exit_codes.CLARIFY, 3);
 check('플래그 없으면 본 run 실행', wrapped([]), 7);
 
 // --- 통합: 게이트 6종 전부가 완전한 계약을 선언하는가 ---
+// 템플릿 전용 게이트는 `init --drop-template-bits` 가 삭제한다 — 어답터에선 **파일 부재**가 정상이다.
+// 부재만 건너뛴다(존재하는데 require 가 던지면 그대로 터진다 — 고장을 조용히 넘기지 않는다).
+const TEMPLATE_ONLY = new Set(['./leakage-guard']);
 for (const mod of ['./zfs-linter', './history-linter', './permission-guard', './leakage-guard', './health', './handoff-linter']) {
+  if (TEMPLATE_ONLY.has(mod) && !fs.existsSync(path.join(__dirname, mod.slice(2) + '.js'))) {
+    console.log(`(${mod} 없음: 템플릿 전용 게이트 — 계약 검사 건너뜀)`); continue;
+  }
   const { CONTRACT } = require(mod);
   check(`${mod} 계약 완전성`, validateContract(CONTRACT), []);
   check(`${mod} 게이트 이름에 종류 명시("Gate" 단독 금지)`, /gate/i.test(CONTRACT.gate) && CONTRACT.gate.trim().toLowerCase() !== 'gate', true);

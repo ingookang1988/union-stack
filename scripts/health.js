@@ -9,7 +9,10 @@ const { VALID_DOMAINS } = require('./zfs_util');
 const { buildIndex } = require('./zfs_index');
 const { lint } = require('./zfs-linter');
 const { findViolations: historyViolationsOf } = require('./history-linter');
-const { collectFiles, isSanitized } = require('./leakage-guard');
+// 누설 가드는 **템플릿 전용 자산**이다 — `init --drop-template-bits` 가 삭제한다(init.TEMPLATE_BITS).
+// 하드 require 하면 문서화된 도입 경로를 따른 어답터에서 이 점수표가 통째로 크래시한다(실측).
+let leakageGuard = null;
+try { leakageGuard = require('./leakage-guard'); } catch { /* 어답터 — 게이트 해당 없음 */ }
 const { walkFiles } = require('./fs_walk');
 const { gather: gatherBrokenRefs } = require('./ref-linter');
 const { gather: gatherBudget } = require('./context-budget');
@@ -90,7 +93,11 @@ function computeHealth({ index, domainsDefined, guideCount, namingViolations, hi
   const dims = [
     { name: 'naming gate', status: namingViolations === 0 ? 'OK' : 'FAIL', value: `${namingViolations} violations` },
     { name: 'history gate', status: historyViolations === 0 ? 'OK' : 'FAIL', value: `${historyViolations} violations` },
-    { name: 'leakage gate', status: leakageViolations === 0 ? 'OK' : 'FAIL', value: `${leakageViolations} unmarked` },
+    // null = 게이트 해당 없음(어답터: 실콘텐츠가 정상이므로 트립와이어의 의미가 반전된다).
+    // OK 로 위조하지도, FAIL 로 겁주지도 않는다 — 관측 불가와 통과는 다른 사실이다([ADR-23] 문법).
+    leakageViolations === null
+      ? { name: 'leakage gate', status: 'INFO', value: '해당 없음 — 템플릿 전용 게이트' }
+      : { name: 'leakage gate', status: leakageViolations === 0 ? 'OK' : 'FAIL', value: `${leakageViolations} unmarked` },
     { name: 'domain utilization', status: unused.length > 6 ? 'WARN' : 'OK',
       value: `${used.size}/${domainsDefined.length} used`, note: unused.length ? `unused: ${unused.join(' ')}` : '' },
     { name: 'doc/guide ratio', status: 'INFO', value: `${index.length} ZFS docs / ${guideCount} guides` },
@@ -160,8 +167,10 @@ function gather(root = path.resolve(__dirname, '..')) {
   const namingViolations = lint(root).length;
   const hp = path.join(root, '.union-stack/project/HISTORY.md');
   const historyViolations = fs.existsSync(hp) ? historyViolationsOf(fs.readFileSync(hp, 'utf8')).length : 0;
-  const leakageViolations = collectFiles(root)
-    .filter(rel => !isSanitized(rel, fs.readFileSync(path.join(root, rel), 'utf8'))).length;
+  const leakageViolations = leakageGuard
+    ? leakageGuard.collectFiles(root)
+        .filter(rel => !leakageGuard.isSanitized(rel, fs.readFileSync(path.join(root, rel), 'utf8'))).length
+    : null;
   // 크기는 *전부* 수집하고 초과분만 게이트로 넘긴다. 상한 근접(append-only 원장 등)은
   // 불리언 게이트가 넘는 순간에만 말하므로, 헤드룸을 보려면 분포가 필요하다(대시보드 소비).
   const sizes = [];

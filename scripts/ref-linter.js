@@ -14,7 +14,12 @@
 const fs = require('fs');
 const path = require('path');
 const { buildIndex } = require('./zfs_index');
-const { isSanitized } = require('./leakage-guard');
+// 누설 가드는 템플릿 전용 자산이라 어답터엔 없다(`init --drop-template-bits`). 없을 때의 면제는
+// **구조적 면제만** 남긴다 — 가이드는 어답터에도 방법론 텍스트지만, 더미 마커·METHODOLOGY 목록은
+// 템플릿 개념이다. 어답터에서 전부 실콘텐츠라는 판정이 곧 옳은 기본값이다.
+let isSanitized;
+try { ({ isSanitized } = require('./leakage-guard')); }
+catch { isSanitized = rel => /_GUIDE\.md$/.test(rel); }
 const { walkFiles } = require('./fs_walk');
 
 // 끝의 (\??)로 forward 마커를 포착: `[PLAN-09z]`=일반, `[PLAN-09z?]`=의도된 forward.

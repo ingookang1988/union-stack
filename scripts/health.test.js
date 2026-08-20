@@ -47,7 +47,14 @@ check('norms·concerns 원자료도 함께 낸다', Array.isArray(g.norms.norms)
 const a00 = g.norms.norms.find(n => n.key === 'ARCH-00');
 check('규범 제목·절 구조 수집', !!a00.title && a00.headings.length > 0);
 check('평면 인용처가 파일 목록으로', Array.isArray(a00.planeFiles) && a00.planeFiles.length > 0);
-check('게이트 계약의 scope 를 정적 파싱', a00.gateContracts.length > 0 && !!a00.gateContracts[0].scope);
+// ARCH-00 을 인용하는 게이트는 현재 `leakage-guard` 하나뿐이고, 그것은 템플릿 전용 자산이다
+// (`init --drop-template-bits`). 어답터에서 ARCH-00 이 무게이트가 되는 것은 결함이 아니라 **관측**이라,
+// 계약이 하나라도 있을 때만 그 구조를 단언한다([ADR-27] 문법).
+if (a00.gateContracts.length) {
+  check('게이트 계약의 scope 를 정적 파싱', !!a00.gateContracts[0].scope);
+} else {
+  console.log('(ARCH-00 인용 게이트 없음: 어답터 — 계약 파싱 검사 건너뜀)');
+}
 
 // parseContract — 실행 없이 소스에서 계약 필드를 뽑는다(read-only 불변식).
 const pc = parseContract(`const CONTRACT = {
