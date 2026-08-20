@@ -12,6 +12,14 @@ design, see [`DESIGN_RATIONALE.md`](./DESIGN_RATIONALE.md). Entries marked **⚠
 action in already-adopted projects.
 
 ## [Unreleased]
+- **ADR-35 — plane prose is rendered, not dumped raw, in the dashboard.** The product axis's entry-point
+  card showed HANDOFF §3 as literal markdown (`> ### 🎯 **…**`), which is pure noise on a surface whose
+  audience is a PO. A **quoted-prose mini-converter** (`prose()`) now handles the only four constructs that
+  actually appear as noise — inline code, bold, leading `>`, leading `#` — and is applied wherever the
+  dashboard quotes free-form plane prose (HANDOFF §3/§4/§5, ledger gists, HISTORY, LSN, re-proposal blocks,
+  PHASE titles and exit criteria, WO titles, `live.md` rows). Identifiers, statuses and `title=` attributes
+  keep plain `esc`. It cannot fail by construction: everything is escaped first (zero injection surface) and
+  any syntax it does not understand is left as escaped source — raw text beats a wrong render. No migration.
 - **⚠ ADR-29 — adopter configuration + local-modification protection.** New `.union-stack/adapter.json`
   (adopter-owned; upstream never touches it) absorbs the two gate customisations adopters were patching
   into **sync** scripts: `private: true` downgrades `health.js`'s leakage verdict FAIL → INFO (the gate

@@ -8,6 +8,7 @@ const { tilesSection, healthSection, budgetSection, worktableSection,
   sizeSection, syncSection, effectSection, contractSection, normCard, normView,
   gatherSprint, sprintView, gatherTime, timeView,
   gatherProduct, productView, parseExitCriteria, parseLiveRows,
+  esc, prose, clip, trimDanglingMarker,
   loadSections, renderSection, buildViews, render, gatherAll, VIEWS } = require('./dashboard');
 
 let pass = 0, fail = 0;
@@ -223,6 +224,42 @@ check('time: malformed LSN 표시', tm.includes('frontmatter 없음'));
 check('time: HISTORY 사실+근거 쌍', tm.includes('v6.0 승격') && tm.includes('왜: 법칙 확인') && tm.includes('시사점: 후속 필수'));
 check('time: HISTORY 예시 행은 흐리게', tm.includes('frow dim'));
 
+// --- prose: 평면 산문 인용 전용 미니 마크다운 ---
+// 실측 증상: 제품 축 진입점 카드가 HANDOFF §3 을 마크다운 원문 그대로 노출했다
+// (`> ### 🎯 **…**` 가 문자로). 관객이 PO 인 표면에서 마커는 순수한 소음이다.
+const REPORTED = [
+  '> ### 🎯 **인생록 Stage 1(MDWF 직렬화) 재구축** (무과금) — 이월, 변동 없음',
+  'webapp `serialize-saju-traits` 경로로 … **다람쥐 판정**과 **차트 2 확장**의 선행.',
+].join('\n');
+const rendered = prose(REPORTED);
+check('prose: 헤딩 줄은 통째로 굵고 <b> 중첩이 없다',
+  rendered.includes('<b>🎯 인생록 Stage 1(MDWF 직렬화) 재구축 (무과금) — 이월, 변동 없음</b>')
+  && !rendered.includes('<b><b>'));
+check('prose: 행두 인용은 스타일로 옮긴다(마커 소멸)', rendered.includes('<span class="q">') && !rendered.includes('&gt; ###'));
+check('prose: 인라인 코드 → <code>', rendered.includes('<code>serialize-saju-traits</code>'));
+check('prose: 본문 볼드 → <b>', rendered.includes('<b>다람쥐 판정</b>') && rendered.includes('<b>차트 2 확장</b>'));
+check('prose: 마크다운 마커가 원문으로 남지 않는다', !/\*\*|`|^#|&gt; /m.test(rendered.replace(/<[^>]*>/g, '')));
+check('prose: 개행 → <br>', rendered.includes('<br>'));
+
+// 안전: 이스케이프가 먼저다 — 살아남는 태그는 prose 가 만든 것뿐이다.
+check('prose: HTML 주입 차단', prose('<script>alert(1)</script>') === '&lt;script&gt;alert(1)&lt;/script&gt;');
+check('prose: 속성 깨짐 방지(따옴표 이스케이프)', prose('a"b').includes('&quot;'));
+check('prose: 코드 스팬 안의 마커는 보존', prose('`**리터럴**`') === '<code>**리터럴**</code>');
+// 이해 못 하는 문법은 원문 그대로 — 오렌더보다 원문 노출이 낫다(기존 성질 보존).
+check('prose: 짝 없는 볼드는 원문 유지', prose('열고 **안 닫음') === '열고 **안 닫음');
+check('prose: 이탤릭·링크 문법은 손대지 않는다', prose('*i* 와 [PLAN-01a] 와 [t](u)') === '*i* 와 [PLAN-01a] 와 [t](u)');
+check('prose: 빈 입력·null 은 빈 문자열', prose('') === '' && prose(null) === '' && prose(undefined) === '');
+check('prose: 마커 없는 산문은 esc 와 같다', prose('평범한 한 줄') === esc('평범한 한 줄'));
+
+// clip: 절단이 만든 짝 없는 마커는 소음이지 원문의 뜻이 아니다
+check('clip: 상한 이하면 그대로', clip('짧다', 10) === '짧다');
+check('clip: 코드 스팬 한가운데서 잘리면 마커 경계까지 물러난다', clip('앞 `long-code-span` 뒤', 10) === '앞…');
+check('clip: 볼드 한가운데서 잘려도 동일', clip('앞 **강조된 긴 문구** 뒤', 8) === '앞…');
+check('clip: 짝이 맞으면 그대로 자른다', clip('`ok` 이어지는 긴 문장', 8).startsWith('`ok`'));
+check('trimDanglingMarker: 짝 맞는 마커는 보존', trimDanglingMarker('`a` **b**') === '`a` **b**');
+check('절단 + prose 조합에 원문 마커가 남지 않는다',
+  !/\*\*|`/.test(prose(clip('앞 `long-code-span` 뒤', 10)).replace(/<[^>]*>/g, '')));
+
 // --- 제품 축(이슈 #5) — PO 의 네 질문. 어답터 무가정: 평면 데이터만 소비한다 ---
 // parseExitCriteria: 기준은 **키워드로 시작하는 줄**만. 본문의 단순 언급까지 세면 진행률이 부푼다.
 const phaseFix = [
@@ -283,6 +320,16 @@ check('product: 리스크 = 잠금 + 게이트 부채 + HANDOFF §4',
   pv.includes('\u{1F512}') && pv.includes('file size') && pv.includes('레이트리밋'));
 check('product: PLAN 롤업', pv.includes('PLAN-02') && pv.includes('payment'));
 check('product: 자유 문자열 이스케이프', !pv.includes('<b>x</b>') && pv.includes('&lt;b&gt;'));
+// 진입점·주의사항·exit 기준은 평면 산문이라 prose 를 거친다(마커 노출 0).
+const pvMd = productView({ ...prodFix,
+  entry: '> ### 🎯 **다음 작업** — `foo.js` 배선',
+  cautions: '- **레이트리밋** 미확인',
+  phases: [{ key: 'PHASE-01', file: 'p', status: 'Active', title: '단계', example: false,
+    exits: [{ text: '`eval/RESULTS.md` v2 제출', done: false }] }],
+}, '2026-08-20');
+check('product: 진입점 마커가 렌더된다',
+  pvMd.includes('<code>foo.js</code>') && pvMd.includes('<span class="q">') && !pvMd.includes('&gt; ###'));
+check('product: 주의사항·exit 기준도 동일', pvMd.includes('<b>레이트리밋</b>') && pvMd.includes('<code>eval/RESULTS.md</code>'));
 // 무가정: 평면이 텅 빈 어답터에서도 렌더된다(설정 요구 0, 예외 0).
 const empty = productView({ phases: [], current: null, latest: null, live: [], plans: [], now: [], next: [],
   verifying: [], shipped: [], locked: [], entry: '', cautions: '', debts: [], archived: 0 }, '2026-08-20');
@@ -394,6 +441,10 @@ if (JSON.stringify(data.sprint && data.sprint.wos || []).includes('WO-10a-1')) {
 check('합성: undefined 누출 0', !html.includes('undefined'));
 check('합성: 자기완결(외부 참조 0)', html.startsWith('<!doctype html>') && !/src=|href="(?!#)/.test(html));
 check('합성: 결정성(같은 입력 → 같은 출력)', render(data, { title: 'real' }) === html);
+
+// 합성 — 본문(속성 제외)에 마크다운 마커가 원문으로 남지 않는다. 이슈 #6 의 회귀 고정.
+const bodyText = html.slice(html.indexOf('<main>')).replace(/title="[^"]*"/g, '').replace(/<[^>]*>/g, '');
+check('합성: 렌더 본문에 원문 마크다운 마커 0', !/\*\*|`/.test(bodyText));
 
 // 합성 — 제품 축이 실평면에서 렌더되고, 어답터 섹션이 축에 얹힌다
 check('합성: 제품 축 페이지가 있다',

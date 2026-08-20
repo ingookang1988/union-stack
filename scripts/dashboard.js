@@ -30,6 +30,63 @@ function esc(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+/**
+ * 인라인 마커: 코드 → 볼드 순(순수). **코드 스팬 안의 마커는 보존한다** — 코드는 문자 그대로가 뜻이다.
+ * 짝이 맞지 않는 마커(`**볼드 열고 안 닫음`)는 손대지 않아 이스케이프된 원문으로 남는다.
+ *
+ * 자리표시자로 `<n>` 을 쓰는 이유: 입력은 **이미 esc() 를 거친 문자열**이라 날 `<` 가 존재할 수
+ * 없다. 충돌이 원리적으로 불가능하고, 제어문자 센티널처럼 소스 편집에서 사라질 위험도 없다.
+ */
+function proseInline(s) {
+  const spans = [];
+  return s
+    .replace(/`([^`]+)`/g, (_, c) => `<${spans.push(c) - 1}>`)
+    .replace(/\*\*(?=\S)(.+?)\*\*/g, '<b>$1</b>')
+    .replace(/<(\d+)>/g, (_, i) => `<code>${spans[+i]}</code>`);
+}
+
+/**
+ * **평면 산문 인용 전용** 미니 마크다운(순수). 풀 렌더러가 아니다 — zero-dep 자기완결이 이 도구의
+ * 불변식이고, HANDOFF·원장 같은 산문에서 실제로 소음이 되는 문법은 넷뿐이다:
+ * 인라인 코드 · 볼드 · 행두 인용(`>`) · 행두 헤딩(`#`).
+ *
+ * 관객이 PO 인 표면에서 `> ### 🎯 **…**` 가 문자 그대로 보이면 하네스 문법을 모르는 독자에겐
+ * 순수한 소음이다(실측: 제품 축 진입점 카드). 반대로 **이해 못 하는 문법은 원문 그대로 남긴다** —
+ * 오렌더보다 원문 노출이 낫다는 기존 성질의 보존이고, 그래서 이 함수는 실패할 수 없다(부분 변환이
+ * 곧 정상 동작이다).
+ *
+ * 주입 표면 0: 먼저 `esc()` 로 전부 이스케이프하므로 살아남는 태그는 여기서 만든 것뿐이다.
+ * ⚠ 속성값(`title="…"`)에는 쓰지 마라 — 태그가 들어가면 안 되는 자리이므로 거긴 `esc` 가 정본이다.
+ */
+/**
+ * 잘린 조각 끝의 **짝 없는 마커**를 떼어낸다(순수). 절단이 만든 소음이지 원문의 뜻이 아니다 —
+ * 요지 행은 원장 산문을 72~80자로 자르는데, 자른 자리가 코드 스팬·볼드 한가운데면 여는 마커만
+ * 남아 `prose()` 의 안전 폴백(모르는 문법은 원문 유지)에 걸려 그대로 노출된다.
+ */
+function trimDanglingMarker(t) {
+  let s = String(t);
+  if ((s.split('`').length - 1) % 2) s = s.slice(0, s.lastIndexOf('`'));
+  if ((s.split('**').length - 1) % 2) s = s.slice(0, s.lastIndexOf('**'));
+  return s.replace(/\s+$/, '');
+}
+
+/** 요지 절단(순수): n자 초과면 마커 경계까지 물러난 뒤 말줄임을 붙인다. */
+function clip(t, n) {
+  const s = String(t == null ? '' : t);
+  return s.length > n ? `${trimDanglingMarker(s.slice(0, n))}…` : s;
+}
+
+function prose(txt) {
+  return esc(String(txt == null ? '' : txt)).split('\n').map(line => {
+    const quoted = /^&gt;\s?/.test(line);   // esc 이후라 인용 마커는 '&gt;' 다
+    const body = quoted ? line.replace(/^&gt;\s?/, '') : line;
+    const h = body.match(/^#{1,6}\s+(.*)$/);
+    // 헤딩 줄은 통째로 굵어지므로 안쪽 볼드는 벗긴다(`<b>` 중첩은 의미가 없다). `<code>` 는 남긴다.
+    const out = h ? `<b>${proseInline(h[1]).replace(/<\/?b>/g, '')}</b>` : proseInline(body);
+    return quoted ? `<span class="q">${out}</span>` : out;
+  }).join('<br>');
+}
+
 // health 판정 마크 — 색은 dataviz 예약 status 팔레트(계열색과 절대 공유 금지), 항상 글리프+단어 동반.
 const MARKS = {
   OK: { glyph: '✓', color: '#067647' },
@@ -226,7 +283,7 @@ function sprintView(sprint, today) {
   <div class="brow"><span class="bnm">tokens</span>
     <span class="bbar"><span class="bfill${handoff.tokens > handoff.budget ? ' bover' : handoff.tokens / handoff.budget >= 0.8 ? ' bnear' : ''}" style="width:${Math.min(100, Math.round((handoff.tokens / handoff.budget) * 100))}%"></span></span>
     <span class="bval${handoff.tokens > handoff.budget ? ' bad' : ''}">${handoff.tokens}/${handoff.budget}</span></div>
-  ${handoff.verification ? `<div class="frow"><span class="flabel">검증란</span><span class="fvals t">${esc(handoff.verification)}</span></div>` : ''}
+  ${handoff.verification ? `<div class="frow"><span class="flabel">검증란</span><span class="fvals t">${prose(handoff.verification)}</span></div>` : ''}
   </section>`
     : '<section class="card"><h2>HANDOFF</h2><div class="meta bad">없음 — 인계가 끊겨 있다</div></section>';
   return `<div class="tiles">
@@ -362,7 +419,7 @@ function productView(product, today) {
   const realLive = live.filter(r => !r.example);
   const woRow = w =>
     `<div class="crow"><span class="nm">[WO-${esc(w.id)}]</span>`
-    + `<span class="fvals t">${esc(w.title || '')}</span>`
+    + `<span class="fvals t">${prose(w.title || '')}</span>`
     + `${w.parent ? `<span class="note">← ${esc(w.parent)}</span>` : ''}</div>`;
   const board = (label, cls, items, empty) => `<section class="card"><h2>${label}</h2>
   <div class="meta">${items.length}건</div>
@@ -373,20 +430,20 @@ function productView(product, today) {
     const pct = total ? Math.round((done / total) * 100) : 0;
     const term = PHASE_TERMINAL.has(p.status);
     return `<div class="frow${p.example ? ' dim' : ''}"><span class="flabel">${esc(p.key)}</span>
-    <span class="fvals t"><b>${esc(p.title)}</b>
+    <span class="fvals t"><b>${prose(p.title)}</b>
       <span class="pill ${term ? 'fresh' : 'aging'}">status<b>${esc(p.status || '미기입')}</b></span>
       ${p === current ? '<span class="pill">현재<b>진행 중</b></span>' : ''}
       <div class="brow"><span class="bnm">exit</span>
         <span class="bbar"><span class="bfill" style="width:${pct}%"></span></span>
         <span class="bval">${total ? `${done}/${total}` : '기준 없음'}</span></div>
-      ${p.exits.map(e => `<div class="note">${e.done ? '✓' : '·'} ${esc(e.text)}</div>`).join('')}
+      ${p.exits.map(e => `<div class="note">${e.done ? '✓' : '·'} ${prose(e.text)}</div>`).join('')}
     </span></div>`;
   };
   const shipRow = a =>
     `<div class="crow"><span class="nm">${esc(a.id)}</span><span class="note">${esc(a.date)}</span>`
-    + `<span class="fvals t">${esc(a.text.split(' — ')[0].slice(0, 80))}</span></div>`;
+    + `<span class="fvals t">${prose(clip(a.text.split(' — ')[0], 80))}</span></div>`;
   const liveRow = r =>
-    `<div class="crow${r.example ? ' dim' : ''}"><span class="nm">${esc(r.feature)}</span>`
+    `<div class="crow${r.example ? ' dim' : ''}"><span class="nm">${prose(r.feature)}</span>`
     + `<span class="note">${esc(r.ref)}</span><span class="fvals t">${esc(r.status)}</span></div>`;
   const planCounts = {};
   plans.forEach(d => { planCounts[d.status || '(없음)'] = (planCounts[d.status || '(없음)'] || 0) + 1; });
@@ -399,7 +456,7 @@ function productView(product, today) {
   </div>
   <section class="card"><h2>지금 무엇을 하는가 — 단일 진입점</h2>
   <div class="meta">HANDOFF §3 이 정본이다. 이 축은 그것을 로드맵·작업·배송과 나란히 놓을 뿐이다.</div>
-  ${entry ? `<div class="fvals t">${esc(entry).replace(/\n/g, '<br>')}</div>` : '<div class="meta bad">HANDOFF §3 비어 있음 — 다음 세션이 진입점을 못 찾는다</div>'}</section>
+  ${entry ? `<div class="fvals t">${prose(entry)}</div>` : '<div class="meta bad">HANDOFF §3 비어 있음 — 다음 세션이 진입점을 못 찾는다</div>'}</section>
   <section class="card" id="roadmap"><h2>로드맵 진행률 — PHASE exit 기준</h2>
   <div class="meta">exit 충족은 <b>산문에서 읽은 관측</b>이다(✅ 표식) — 판정이 아니다.
   기준이 0인 단계는 "달성"이 아니라 <b>기준이 없다</b>는 사실이다.</div>
@@ -426,7 +483,7 @@ function productView(product, today) {
   <div class="meta">잠금 ${locked.length} · 게이트 부채 ${debts.length}</div>
   ${locked.length ? locked.map(d => `<div class="crow"><span class="nm">\u{1F512} ${esc(d.domain)}-${esc(d.id)}</span><span class="fvals t">${esc(d.slug)} — Verifying(다른 작업이 소유)</span></div>`).join('') : ''}
   ${debts.map(d => `<div class="crow"><span class="nm ${d.status === 'FAIL' ? 'bad' : ''}">${esc(d.name)}</span><span class="fvals t">${esc(d.value)}${d.note ? ' — ' + esc(d.note) : ''}</span></div>`).join('') || '<div class="meta">게이트 부채 없음</div>'}
-  ${cautions ? `<div class="frow"><span class="flabel">HANDOFF §4</span><span class="fvals t">${esc(cautions).replace(/\n/g, '<br>')}</span></div>` : ''}</section>
+  ${cautions ? `<div class="frow"><span class="flabel">HANDOFF §4</span><span class="fvals t">${prose(cautions)}</span></div>` : ''}</section>
   </div>`;
 }
 
@@ -472,32 +529,29 @@ function timeView(time, today) {
     `<div class="brow"><span class="bnm">${esc(d)}</span>`
     + `<span class="bbar"><span class="bfill" style="width:${Math.round((byDate[d] / maxN) * 100)}%"></span></span>`
     + `<span class="bval">${byDate[d]}</span></div>`).join('');
-  const gist = t => {
-    const cut = t.split(' — ')[0];
-    return cut.length > 72 ? cut.slice(0, 72) + '…' : cut;
-  };
+  const gist = t => clip(t.split(' — ')[0], 72);
   const recent = adrs.slice(-8).reverse().map(a =>
     `<div class="crow"><span class="nm">${esc(a.id)}</span><span class="note">${esc(a.date)}</span>`
     + `${blockIds.has(a.id) ? '<span class="pill dead">⛔<b>재제안 차단</b></span>' : ''}`
-    + `<span class="fvals t" title="${esc(a.text.slice(0, 300))}">${esc(gist(a.text))}</span></div>`).join('');
+    + `<span class="fvals t" title="${esc(a.text.slice(0, 300))}">${prose(gist(a.text))}</span></div>`).join('');
   const blockRows = blocks.map(b =>
-    `<div class="frow"><span class="flabel">⛔ ${esc(b.id)}</span><span class="fvals t"><b>${esc(b.blocks)}</b>`
-    + `${b.reopen_when ? `<br><span class="note">재개 조건: ${esc(b.reopen_when)}</span>` : ''}</span></div>`).join('');
+    `<div class="frow"><span class="flabel">⛔ ${esc(b.id)}</span><span class="fvals t"><b>${prose(b.blocks)}</b>`
+    + `${b.reopen_when ? `<br><span class="note">재개 조건: ${prose(b.reopen_when)}</span>` : ''}</span></div>`).join('');
   const lsnCards = lessons.map(l => l.malformed
     ? `<div class="crow"><span class="nm">${esc(l.file.split('/').pop())}</span><span class="bad">frontmatter 없음</span></div>`
-    : `<div class="frow"><span class="flabel">${esc(l.id || '?')}</span><span class="fvals t">${esc(l.title || '')}`
+    : `<div class="frow"><span class="flabel">${esc(l.id || '?')}</span><span class="fvals t">${prose(l.title || '')}`
       + `${l.occurrences ? ` <span class="pill aging">반복<b>${esc(l.occurrences)}회</b></span>` : ''}`
-      + `${l.valid_reason ? `<br><span class="note">유효 사유: ${esc(l.valid_reason)}</span>` : ''}</span></div>`).join('');
+      + `${l.valid_reason ? `<br><span class="note">유효 사유: ${prose(l.valid_reason)}</span>` : ''}</span></div>`).join('');
   // 근거 없는 행은 **빈 칸이 아니라 표식**으로 낸다 — 헤딩형 이관본에서 파서가 근거 절을 못 찾은
   // 경우가 여기로 온다(history-linter 의 CLARIFY 와 같은 사실). "왜: " 뒤의 공백은 아무 말도 안 한다.
   const histRows = history.map(e =>
     `<div class="frow${e.example ? ' dim' : ''}"><span class="flabel">${esc(e.date)}</span>`
-    + `<span class="fvals t"><b>${esc(e.fact)}</b>`
+    + `<span class="fvals t"><b>${prose(e.fact)}</b>`
     + `${e.form === 'heading' ? ' <span class="pill">형식<b>헤딩</b></span>' : ''}`
     + `<br>${e.reason
-      ? `<span class="note">왜: ${esc(e.reason)}</span>`
+      ? `<span class="note">왜: ${prose(e.reason)}</span>`
       : '<span class="pill aging">근거<b>미검출 — CLARIFY</b></span>'}`
-    + `${e.note ? `<br><span class="note">시사점: ${esc(e.note)}</span>` : ''}</span></div>`).join('');
+    + `${e.note ? `<br><span class="note">시사점: ${prose(e.note)}</span>` : ''}</span></div>`).join('');
   return `<div class="tiles">
   <div class="tile"><div class="tl">전술 결정</div><div class="tv">${adrs.length}</div><div class="ts">archive_ledger ADR</div></div>
   <div class="tile"><div class="tl">전략 분기점</div><div class="tv">${realHistory.length}</div><div class="ts">HISTORY (예시 ${history.length - realHistory.length} 별도)</div></div>
@@ -751,6 +805,9 @@ const DASH_CSS = `
   .pill.fresh { border-color:#a6e0c1; background:#f0fbf5; } .pill.fresh b { color:#067647; }
   .pill.aging { border-color:#f0d08a; background:#fffaf0; } .pill.aging b { color:#b54708; }
   .pill.stale, .pill.dead { border-color:#f1bcb7; background:#fef6f5; } .pill.stale b, .pill.dead b { color:#b42318; }
+  /* 인용 산문(prose()) — 행두 '>' 였던 줄. 마커를 지우는 대신 들여쓰기+세로선으로 옮긴다. */
+  .fvals .q { display:inline-block; border-left:3px solid var(--line); padding-left:8px; color:#4b5563; }
+  .fvals code { font:12px/1.4 ui-monospace, Consolas, monospace; background:#f3f4f6; border-radius:3px; padding:0 4px; }
   .card .plane { font:12.5px/1.45 ui-monospace, Consolas, monospace; }
   .card .plane section { padding:10px 18px; }
   .card .plane > .meta, .card .plane > .legend, .card .plane > .flt { margin:8px 18px 0; }
@@ -915,6 +972,7 @@ module.exports = {
   sizeSection, syncSection, effectSection, contractSection, normCard, normView,
   gatherSprint, sprintView, gatherTime, timeView,
   gatherProduct, productView, parseExitCriteria, parseLiveRows, PHASE_TERMINAL,
+  esc, prose, proseInline, clip, trimDanglingMarker,
   loadSections, renderSection, buildViews, routerCss,
   render, gatherAll, VIEWS, MARKS,
 };

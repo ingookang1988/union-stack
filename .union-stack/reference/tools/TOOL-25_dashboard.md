@@ -56,16 +56,18 @@ version: 2.4
 **모듈 로드 실패는 침묵 금지**(stderr + exit 1, 대시보드는 나머지로 계속). 예시: MIGRATION.md.
 
 ## 설계 불변식
-- **합성이지 계산이 아니다** — 4개 도구의 기존 export(`health.gather` · `context-budget.gather` ·
-  `work-close.gather`+`ACTIVE` · `lineage-tree.planeBody`+`PLANE_CSS`+`FILTER_JS`)를 소비만 한다.
-  `health.gather()`가 판정(`dims`) 외에 원자료(`sizes`·`sync`)도 내므로 같은 수집을 두 번 하지 않는다.
+- **합성이지 계산이 아니다** — 기존 export(health · context-budget · work-close · lineage-tree)를
+  소비만 한다(정확한 목록은 impl 의 require 블록). `health.gather()`가 판정 외에 원자료도 내므로
+  같은 수집을 두 번 하지 않는다.
 - 경과일 계산의 `today`는 `gatherAll`이 주입한다 — 렌더는 순수하게 유지되고 테스트가 결정적이다.
   데이터의 옳음은 각 소스 도구의 테스트가 소유하고, 여기서는 그리기만 검증한다(로직 1벌, 표면 N개).
 - 어답터 평면 무가정은 소스 도구가 이미 보장한다 — 이 도구는 그 출력을 재해석하지 않는다.
+- 평면 **자유 서술**은 `prose()`(esc → 볼드·코드·행두 인용/헤딩)를 거친다 — 식별자·속성값은 `esc`
+  가 정본. 모르는 문법은 원문 유지라 실패할 수 없다([ADR-35]).
 - 판정 마크 색은 dataviz 예약 status 팔레트(OK 녹·FAIL 적·WARN 호박) — 계열색(도메인 칩)과
   절대 공유하지 않고, 항상 글리프+단어를 동반한다(색 단독 금지).
-- 섹션 함수는 전부 순수(데이터 → HTML 조각) · zero-dep 자기완결(인라인 CSS/JS, CDN 0).
-- 산출물(`dashboard.html`)은 **gitignore** — 커밋하면 드리프트 게이트가 하나 더 필요해진다.
+- 섹션 함수는 전부 순수(데이터 → HTML) · zero-dep 자기완결(인라인 CSS/JS, CDN 0).
+- 산출물(`dashboard.html`)은 **gitignore** — 커밋하면 드리프트 게이트가 하나 더 는다.
 
 ## 언제 쓰나
 - 세션 진입 시 낯선 평면(어답터 레포)의 건강·예산·작업대·구조를 한 번에 잡을 때.
@@ -74,7 +76,7 @@ version: 2.4
 ## 언제 쓰지 않나
 - **CI/커밋 게이트** — 판정은 각 린터의 exit code 가 정본이다(`--json`은 health FAIL 시 exit 1을
   중계하지만, 게이트 체인을 대체하지 않는다).
-- **계보만 볼 때** — [TOOL-24] `npm run tree`가 더 가볍다.
+- **계보만 볼 때** — [TOOL-24] `npm run tree`.
 
 ## 호출
 ```bash
