@@ -12,6 +12,43 @@ design, see [`DESIGN_RATIONALE.md`](./DESIGN_RATIONALE.md). Entries marked **⚠
 action in already-adopted projects.
 
 ## [Unreleased]
+- **⚠ ADR-29 — adopter configuration + local-modification protection.** New `.union-stack/adapter.json`
+  (adopter-owned; upstream never touches it) absorbs the two gate customisations adopters were patching
+  into **sync** scripts: `private: true` downgrades `health.js`'s leakage verdict FAIL → INFO (the gate
+  protects the *public template*, so in a private repo its meaning inverts), and `zfsIgnored: [...]`
+  extends the ZFS naming exemption list. The gates themselves are unchanged — only the scorecard's verdict.
+  `template-update` now does a **3-way compare** (local vs last-coherent anchor vs upstream) and `--apply`
+  **skips locally modified files**, plus files with no anchor (`unknown` — undecidable is not a pass).
+  The anchor lives in `.union-stack/template-sync.json`, written by `--apply` and seeded by `init.js`.
+  Measured trigger: one `--apply` silently overwrote 2 legitimate adopter patches and 2 gates went FAIL.
+  Migration: **existing adopters need `--apply --force` once** (no anchor yet); after that, only your
+  real modifications are preserved. Better: move the modifications into `adapter.json` and drop the patches.
+- **⚠ ADR-30 — the self-test suite now passes in a fresh adopter repo.** Five assertions asserted this
+  repo's *template plane content* (a dummy `01a` lineage, the ledger's `ADR-02`, `archive_ledger.md` in the
+  size top-N, "all 8 overview sections", "gating empty"), so `node --test scripts/*.test.js` could not go
+  green after `init --apply` — which blocked adopters from gating on the harness's own tests at all.
+  Assertions were rewritten as **contract assertions** (a section renders iff its source data is non-empty —
+  strictly stronger than before) or guarded by **fixture detection**; only template-cleanliness assertions
+  use the repo-mode discriminator (`package.json` name). Also: `npm test` hardcoded 34 filenames and died
+  on the first missing one in a `--drop-template-bits` adopter → now `node --test "scripts/*.test.js"`.
+  Migration: copy the new `test` script into your `package.json` (it is a **review**-category file).
+- **ADR-31 — HISTORY heading-form entries are recognised.** Projects migrated via `MIGRATION.md` naturally
+  keep HISTORY as `### YYYY-MM-DD — title` + context/decision/rationale/impact; that shape was invisible to
+  the parser, so the dashboard time axis showed **0 strategic turning points** and the linter passed silently.
+  Now: **counting** sees both shapes, **REJECT** stays table-only (a table's columns *are* the contract), and
+  a heading entry with no detectable reason is **CLARIFY** (free prose can't prove absence). No migration
+  required — re-run `node scripts/history-linter.js` and the count is real. See MIGRATION.md §"HISTORY 형식".
+- **ADR-32 — `dashboard.js --sections <module>`.** `dashboard.js` is a sync file, so an adopter wanting its
+  own KPI section had to fork it (drift) or ship a second HTML page (breaks the synthesis principle). An
+  adopter-owned module now exports `[{id, title, axis, axisLabel?, render(gathered)}]`; a new `axis` id
+  creates a whole axis (nav + radio + router CSS). The host wraps the card, and a section that throws
+  reports inside its own card only.
+- **ADR-33 — dashboard product axis (5th page).** The existing four axes all address the *harness operator*.
+  The product axis answers a PO's four questions from data already in the plane: current PHASE + single entry
+  point (HANDOFF §3) · roadmap progress (PHASE exit clauses) · Now/Next/Verifying board (WO `status:`) ·
+  PLAN status rollup · recent shipping (ledger + `feature/live.md`) · risk (locks + gate debt + HANDOFF §4).
+  Observation, not verdict: exit-satisfaction is read from `✅` markers and is never promoted to a score;
+  a phase with zero exit criteria is reported as **"no criteria"**, not as achieved. No configuration.
 - **⚠ PRO-15** — work-order closure. `sprint/` gains real `WO-*` documents (frontmatter `status`,
   `evidence`, `closed_by`) and `sprint/next.md` becomes a **generated view** of them; `scripts/work-close.js`
   (**TOOL-23**) is the work-*exit* ritual mirroring Upward Fetching. Closes a structural hole: entry had
