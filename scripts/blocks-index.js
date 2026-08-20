@@ -14,7 +14,7 @@ const fs = require('fs');
 const path = require('path');
 const { withContract, OUTCOME, toShellExit } = require('./gate-contract');
 
-const LEDGER = '.union-stack/archive_ledger.md';
+const { HEAD: LEDGER, read: readLedger } = require('./ledger');
 const PROPOSALS_DIR = '.union-stack/proposals';
 const AGENTS = 'AGENTS.md';
 const BLOCK_RE = /(<!-- blocks-index:begin[^\n]*-->)\r?\n([\s\S]*?)(<!-- blocks-index:end -->)/;
@@ -95,8 +95,9 @@ function inject(agentsTxt, index) {
 
 function gather(root = path.resolve(__dirname, '..')) {
   const items = [];
-  const ledger = path.join(root, LEDGER);
-  if (fs.existsSync(ledger)) items.push(...extractBlocks(fs.readFileSync(ledger, 'utf8')));
+  // 머리 + 회전본을 함께 읽는다([PRO-18] §3-3) — 실측상 안 읽으면 차단 표식이 6건에서 0건이 되고,
+  // 이어지는 평소의 `--write` 가 AGENTS.md 의 ⛔ 블록을 `(없음)` 으로 덮어쓴다.
+  items.push(...extractBlocks(readLedger(root)));
   const pdir = path.join(root, PROPOSALS_DIR);
   if (fs.existsSync(pdir)) {
     for (const e of fs.readdirSync(pdir)) {

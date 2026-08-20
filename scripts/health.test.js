@@ -29,6 +29,13 @@ check('domain util WARN when many unused', many.dims.find(d => d.name === 'domai
 
 // 파일 크기 + 참조 차원
 const sz = computeHealth({ index, domainsDefined: defined, guideCount: 5, namingViolations: 0, historyViolations: 0, leakageViolations: 0, oversize: [{ file: 'x.md', kb: 47 }], brokenRefs: 3 });
+// 상한 초과는 **처방과 함께** 나와야 한다 — 해소 경로가 안 보이는 경고는 배경 소음이 된다([PRO-18] §3-4).
+const sizeNote = r => r.dims.find(d => d.name === 'file size').note;
+check('크기 초과: 문서는 분할 처방', sizeNote(sz).includes('ZFS 계보로 분할'), true);
+const szRot = computeHealth({ index, domainsDefined: defined, guideCount: 5, namingViolations: 0, historyViolations: 0, leakageViolations: 0,
+  oversize: [{ file: '.union-stack/archive_ledger.md', kb: 43, rotatable: true }] });
+check('크기 초과: 행 저장소는 회전 처방', sizeNote(szRot).includes('회전(archive_ledger/)'), true);
+check('처방은 파일명과 함께 나온다', sizeNote(szRot).includes('archive_ledger.md:43KB'), true);
 check('file size WARN', sz.dims.find(d => d.name === 'file size').status === 'WARN');
 check('ref integrity INFO', sz.dims.find(d => d.name === 'ref integrity').value.includes('3'));
 

@@ -11,6 +11,7 @@
 const fs = require('fs');
 const path = require('path');
 const { walkFiles } = require('./fs_walk');
+const { HEAD: LEDGER_HEAD, isLedgerStore } = require('./ledger');
 
 const KEEP_EXACT = new Set(['.union-stack/architecture/ARCH-00_zfs_naming.md']);
 const EXPLICIT_DUMMIES = new Set([
@@ -45,6 +46,9 @@ function planOps({ name, slug, drop = false, files = [] }) {
     if (RESET_TARGETS.has(f)) { ops.push({ op: 'reset', path: f }); continue; }
     if (!f.startsWith('.union-stack/')) continue;
     if (isKeep(f)) continue;                  // 가이드·ARCH-00 보존
+    // 원장 회전본([PRO-18])은 **상류의 결정 기록**이다. 머리는 RESET_TARGETS 가 비우는데
+    // 회전본을 두면 어답터가 상류 ADR 수십 건을 그대로 물려받는다(실측: init 후 24건 잔존).
+    if (isLedgerStore(f) && f !== LEDGER_HEAD) { ops.push({ op: 'delete', path: f }); continue; }
     if (/example/i.test(path.posix.basename(f)) || EXPLICIT_DUMMIES.has(f)) {
       ops.push({ op: 'delete', path: f });    // 더미 제거
     }

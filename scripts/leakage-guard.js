@@ -33,8 +33,10 @@ const CONTENT_DIRS = [
   '.union-stack/sprint', '.union-stack/verification', '.union-stack/proposals',
   '.union-stack/spike', '.union-stack/profile',
 ];
-// 콘텐츠를 담는 매니페스트(디렉터리 밖이지만 스캔 대상).
+// 콘텐츠를 담는 매니페스트(디렉터리 밖이지만 스캔 대상). 원장은 회전본까지 — 안 넓히면
+// 회전이 곧 **게이트 이탈**이 된다(실측: 회전본이 스캔 대상 밖이었다. [PRO-18] §3-3).
 const ROOT_MANIFESTS = ['.union-stack/archive_ledger.md'];
+const { files: ledgerFiles } = require('./ledger');
 
 // 마커 없이도 합법인 방법론 파일(명시 집합). 린터의 IGNORED와 같은 유지보수 방식.
 // 새 방법론 파일을 추가하면 여기에도 등재한다.
@@ -71,7 +73,7 @@ function isSanitized(relPath, content) {
 function collectFiles(root) {
   const out = [];
   CONTENT_DIRS.forEach(d => walkFiles(root, d, rel => { if (rel.endsWith('.md')) out.push(rel); }));
-  ROOT_MANIFESTS.forEach(f => {
+  [...new Set([...ROOT_MANIFESTS, ...ledgerFiles(root)])].forEach(f => {
     if (fs.existsSync(path.join(root, f))) out.push(f);
   });
   return out;

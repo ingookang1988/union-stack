@@ -12,6 +12,23 @@ design, see [`DESIGN_RATIONALE.md`](./DESIGN_RATIONALE.md). Entries marked **⚠
 action in already-adopted projects.
 
 ## [Unreleased]
+- **⚠ PRO-18 / ADR-36 — ledger rotation: append-only now protects *entries*, not *lines*.**
+  `archive_ledger.md` only grows, and the rotation protocol `DESIGN_RATIONALE` §7 has declared since
+  v5.11 was **unexecutable** — rotation moves lines out, and `permission-guard` Check A rejected any
+  line leaving an append-only file. So the ledger crossed the 30KB cap and could only ever stay over it.
+  Check A now runs a **conservation check**: a removed substantive line must reappear **verbatim in
+  another append-only path in the same commit**. A move passes; losing one line is still REJECTed, and
+  the guard names the lost entry. There is no bypass flag — it verifies rather than trusts.
+  Rotated blocks live in `.union-stack/archive_ledger/ADR-<first>_<last>.md` and are append-only too;
+  `scripts/ledger.js` is the single source of ledger paths so all five consumers (`ref-linter` row
+  anchors, `blocks-index`, dashboard time axis, `health`, `leakage-guard`) read head + shards and
+  rotation stays invisible to them. Measured: skipping that step produces 24 ghost references and takes
+  the re-proposal block list **6 → 0**, after which a routine `blocks-index --write` blanks the AGENTS.md
+  ⛔ block. First rotation applied here: head 42.9KB → **16.3KB**.
+  Also fixed: `_GUIDE.md` was classified append-only inside `plan/meetings/` and `plan/analytics/`, so
+  editing one line of those guides was REJECTed — guides are methodology text, not entry stores.
+  Migration: **none required** — no shards exist until you rotate. When `health` warns on ledger size,
+  follow `.union-stack/archive_ledger/_GUIDE.md`. Adopters upgrading get the guard change for free.
 - **ADR-35 — plane prose is rendered, not dumped raw, in the dashboard.** The product axis's entry-point
   card showed HANDOFF §3 as literal markdown (`> ### 🎯 **…**`), which is pure noise on a surface whose
   audience is a PO. A **quoted-prose mini-converter** (`prose()`) now handles the only four constructs that

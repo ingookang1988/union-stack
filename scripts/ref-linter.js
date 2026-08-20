@@ -21,6 +21,7 @@ let isSanitized;
 try { ({ isSanitized } = require('./leakage-guard')); }
 catch { isSanitized = rel => /_GUIDE\.md$/.test(rel); }
 const { walkFiles } = require('./fs_walk');
+const ledger = require('./ledger');
 
 // 끝의 (\??)로 forward 마커를 포착: `[PLAN-09z]`=일반, `[PLAN-09z?]`=의도된 forward.
 const REF_RE = /\[([A-Z]{2,6})-([0-9][0-9a-z-]*)(\??)\]/g;
@@ -29,9 +30,12 @@ const REF_RE = /\[([A-Z]{2,6})-([0-9][0-9a-z-]*)(\??)\]/g;
 // 영원히 없다. 참조 대상이 실존하므로 known set에 편입한다(제외가 아니라 편입 — 제외하면
 // 유령 참조 [ADR-99] 오타가 영원히 통과한다). buildIndex에는 절대 넣지 않는다: ADR-16의
 // id "16"이 색인에 들어가면 계보 16을 오염시킨다(계수 도메인 앨리어싱의 역수입).
+// `read(root)` 로 본문을 얻는다 — 원장은 회전본까지 이어 붙여야 하므로 경로 하나로는 부족하다
+// ([PRO-18] §3-3: 안 넓히면 옮긴 ADR 참조가 전부 유령이 된다 — 실측 24종).
 const ROW_STORES = [
-  { rel: '.union-stack/archive_ledger.md', re: /^- \[\d{4}-\d{2}-\d{2}\]\[(ADR-\d+)\]:/gm },
-  { rel: '.union-stack/project/GRANTS.md', re: /^\|\s*(GRANT-\d+)\s*\|/gm },
+  { rel: ledger.HEAD, re: /^- \[\d{4}-\d{2}-\d{2}\]\[(ADR-\d+)\]:/gm, read: root => ledger.read(root) },
+  { rel: '.union-stack/project/GRANTS.md', re: /^\|\s*(GRANT-\d+)\s*\|/gm,
+    read: root => { try { return fs.readFileSync(path.join(root, '.union-stack/project/GRANTS.md'), 'utf8'); } catch { return ''; } } },
 ];
 
 /** 행 정본 텍스트에서 앵커 ID만 뽑는다(순수). 본문 속 *언급*은 앵커가 아니다 —
@@ -69,9 +73,7 @@ function findBroken(refs, knownSet) {
 function gather(root = path.resolve(__dirname, '..'), gateOnly = false) {
   const known = new Set(buildIndex(root).map(d => `${d.domain}-${d.id}`));
   for (const s of ROW_STORES) {
-    let txt = '';
-    try { txt = fs.readFileSync(path.join(root, s.rel), 'utf8'); } catch { continue; }
-    for (const id of rowAnchors(txt, s.re)) known.add(id);
+    for (const id of rowAnchors(s.read(root), s.re)) known.add(id);
   }
   const broken = [];
   walkFiles(root, '.union-stack', rel => {

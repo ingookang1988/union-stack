@@ -43,7 +43,7 @@ const SYNC_PLANES = [
   { name: 'evidence', rel: '.union-stack/verification/raw/evidence.md' },
   { name: 'live', rel: '.union-stack/feature/live.md' },
 ];
-const LEDGER = '.union-stack/archive_ledger.md';
+const { read: readLedger, isLedgerStore } = require('./ledger');
 const LESSONS_DIR = '.union-stack/reference/lessons';
 
 // 효과 표면(갭 분석 §3-C) — 비가역 외부 효과는 평면이 아니라 에이전트 설정의 문자열 allowlist가 다스린다.
@@ -111,8 +111,12 @@ function computeHealth({ index, domainsDefined, guideCount, namingViolations, hi
     { name: 'domain utilization', status: unused.length > 6 ? 'WARN' : 'OK',
       value: `${used.size}/${domainsDefined.length} used`, note: unused.length ? `unused: ${unused.join(' ')}` : '' },
     { name: 'doc/guide ratio', status: 'INFO', value: `${index.length} ZFS docs / ${guideCount} guides` },
+    // 문서와 행 저장소는 성장 법칙이 다르고 처방도 다르다 — 문서는 **분할**, append-only 행
+    // 저장소는 **회전**([PRO-18]). 임계값은 그대로 두고 note 가 처방을 말한다: 해소 경로가 안
+    // 보이는 경고는 계기가 아니라 배경 소음이 된다.
     { name: 'file size', status: oversize.length ? 'WARN' : 'OK',
-      value: `${oversize.length} > ${SIZE_CAP_KB}KB`, note: oversize.map(o => `${o.file}:${o.kb}KB`).join(' ') },
+      value: `${oversize.length} > ${SIZE_CAP_KB}KB`,
+      note: oversize.map(o => `${o.file}:${o.kb}KB → ${o.rotatable ? '회전(archive_ledger/)' : 'ZFS 계보로 분할'}`).join(' ') },
     { name: 'ref integrity', status: 'INFO', value: `${brokenRefs} unresolved bracket refs (advisory)` },
     { name: 'context budget', status: budget && budget.over ? 'WARN' : 'OK',
       value: budget ? `${budget.total}/${budget.totalCap} tok bootstrap` : 'n/a',
@@ -194,7 +198,8 @@ function gather(root = path.resolve(__dirname, '..')) {
     sizes.push({ file: rel, kb });
   });
   sizes.sort((a, b) => b.kb - a.kb);
-  const oversize = sizes.filter(s => s.kb > SIZE_CAP_KB).map(s => ({ file: s.file, kb: Math.round(s.kb) }));
+  const oversize = sizes.filter(s => s.kb > SIZE_CAP_KB)
+    .map(s => ({ file: s.file, kb: Math.round(s.kb), rotatable: isLedgerStore(s.file) }));
   const brokenRefs = gatherBrokenRefs(root).length;
   const budget = gatherBudget(root);
   const sync = gatherSync(root);
@@ -213,7 +218,7 @@ function gather(root = path.resolve(__dirname, '..')) {
 function gatherSync(root) {
   const readIf = rel => { try { return fs.readFileSync(path.join(root, rel), 'utf8'); } catch { return ''; } };
   const planes = SYNC_PLANES.map(p => ({ name: p.name, last: lastDateIn(readIf(p.rel)) }));
-  const ledgerTxt = readIf(LEDGER);
+  const ledgerTxt = readLedger(root);   // 머리 + 회전본([PRO-18] §3-3)
   const ledgerEntries = new Set(ledgerTxt.match(/ADR-\d+/g) || []).size;
   return { planes, ledgerEntries, ledgerLast: lastDateIn(ledgerTxt) };
 }

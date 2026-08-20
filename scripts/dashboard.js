@@ -20,6 +20,7 @@ const { gather: gatherBudget } = require('./context-budget');
 const { gather: gatherWos, checkClosure, frontmatter, field, ACTIVE } = require('./work-close');
 const { analyze: analyzeHandoff, partBody: handoffPart, HANDOFF_PATH } = require('./handoff-linter');
 const { parseLedger, gather: gatherBlocks } = require('./blocks-index');
+const { read: readLedger } = require('./ledger');
 const { parseEntries: parseHistory } = require('./history-linter');
 const { walkFiles } = require('./fs_walk');
 const { LOCKED } = require('./query');
@@ -494,7 +495,7 @@ function productView(product, today) {
  */
 function gatherTime(root) {
   const readIf = rel => { try { return fs.readFileSync(path.join(root, rel), 'utf8'); } catch { return ''; } };
-  const adrs = parseLedger(readIf('.union-stack/archive_ledger.md'));
+  const adrs = parseLedger(readLedger(root));   // 머리 + 회전본([PRO-18] §3-3)
   const history = parseHistory(readIf('.union-stack/project/HISTORY.md'));
   const lessons = [];
   walkFiles(root, '.union-stack/reference/lessons', rel => {

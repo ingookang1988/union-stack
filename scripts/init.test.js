@@ -46,6 +46,16 @@ check('ARCH-00 보존(방법론)', opOf('.union-stack/architecture/ARCH-00_zfs_n
 check('HISTORY reset', has('reset', '.union-stack/project/HISTORY.md'));
 check('live reset', has('reset', '.union-stack/feature/live.md'));
 check('archive_ledger reset', has('reset', '.union-stack/archive_ledger.md'));
+// 회전본([PRO-18])은 상류의 결정 기록이다 — 머리만 비우고 두면 어답터가 상류 ADR 을 물려받는다.
+const rot = planOps({ name: 'X', slug: 'x', files: [
+  '.union-stack/archive_ledger.md',
+  '.union-stack/archive_ledger/ADR-02_25.md',
+  '.union-stack/archive_ledger/_GUIDE.md',
+] });
+const rotOp = p => rot.find(o => o.path === p)?.op;
+check('회전본 삭제', rotOp('.union-stack/archive_ledger/ADR-02_25.md') === 'delete');
+check('회전본 머리는 reset(삭제 아님)', rotOp('.union-stack/archive_ledger.md') === 'reset');
+check('회전본 디렉터리의 _GUIDE 는 보존', rotOp('.union-stack/archive_ledger/_GUIDE.md') === undefined);
 // pkg
 check('pkg op', ops.some(o => o.op === 'pkg' && o.name === 'my_project' && o.version === '0.1.0'));
 // 기본은 템플릿 자산 보존
