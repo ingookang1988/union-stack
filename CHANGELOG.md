@@ -29,6 +29,19 @@ action in already-adopted projects.
   editing one line of those guides was REJECTed — guides are methodology text, not entry stores.
   Migration: **none required** — no shards exist until you rotate. When `health` warns on ledger size,
   follow `.union-stack/archive_ledger/_GUIDE.md`. Adopters upgrading get the guard change for free.
+- **ADR-37 — three follow-ups to ADR-35, all reported by an adopter.** None are visible in upstream's
+  own data shape. ① **The gist is truncated twice** — at the `' — '` separator as well as by length —
+  and ADR-35 only repaired the length cut. An adopter whose ledger convention is `**title — subtitle**`
+  (bold spanning the dash) got a dangling `**` on every recent-shipping row; the fragment was shorter
+  than the cap, so `clip()` never even ran. Truncation now lives in one place (`gistOf`) and whoever
+  cuts repairs what it broke. ② **Repair direction flipped from trimming to closing.** Backing off to the
+  marker boundary erased the whole string when the opening marker sat at position 0 — found while fixing
+  ①, not reported. Closing the marker loses no characters. ③ **live.md header rows were counted as
+  shipped features**: headers were detected by vocabulary (`feature`…`status`), which misses non-English
+  headers and every table after the first. An adopter with 13 per-zone tables saw the PO tile read
+  **122 instead of 109**. Header detection now follows markdown's actual contract — the next line is a
+  separator row — and all three `live.md` columns go through `prose` (previously only the first did).
+  No migration.
 - **ADR-35 — plane prose is rendered, not dumped raw, in the dashboard.** The product axis's entry-point
   card showed HANDOFF §3 as literal markdown (`> ### 🎯 **…**`), which is pure noise on a surface whose
   audience is a PO. A **quoted-prose mini-converter** (`prose()`) now handles the only four constructs that

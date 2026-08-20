@@ -60,21 +60,45 @@ function proseInline(s) {
  * ⚠ 속성값(`title="…"`)에는 쓰지 마라 — 태그가 들어가면 안 되는 자리이므로 거긴 `esc` 가 정본이다.
  */
 /**
- * 잘린 조각 끝의 **짝 없는 마커**를 떼어낸다(순수). 절단이 만든 소음이지 원문의 뜻이 아니다 —
- * 요지 행은 원장 산문을 72~80자로 자르는데, 자른 자리가 코드 스팬·볼드 한가운데면 여는 마커만
- * 남아 `prose()` 의 안전 폴백(모르는 문법은 원문 유지)에 걸려 그대로 노출된다.
+ * 잘린 조각의 **짝 없는 마커를 닫는다**(순수). 절단이 만든 소음이지 원문의 뜻이 아니다 —
+ * 자른 자리가 코드 스팬·볼드 한가운데면 여는 마커만 남아 `prose()` 의 안전 폴백(모르는 문법은
+ * 원문 유지)에 걸려 그대로 노출된다.
+ *
+ * **떼어내지 않고 닫는 이유**: 마커 경계까지 물러나는 첫 구현은 여는 마커가 맨 앞일 때
+ * (`**제목 전체가 볼드**` 꼴) 텍스트를 통째로 지웠다 — 실측상 빈 문자열 + 말줄임만 남는다.
+ * 닫으면 내용이 한 글자도 안 없어지고 조각이 의도대로(굵게/코드로) 읽힌다. 절단의 목적은
+ * 짧게 보여주는 것이지 지우는 것이 아니다.
  */
-function trimDanglingMarker(t) {
-  let s = String(t);
-  if ((s.split('`').length - 1) % 2) s = s.slice(0, s.lastIndexOf('`'));
-  if ((s.split('**').length - 1) % 2) s = s.slice(0, s.lastIndexOf('**'));
-  return s.replace(/\s+$/, '');
+function closeDanglingMarker(t) {
+  let s = String(t).replace(/\s+$/, '');
+  if ((s.split('`').length - 1) % 2) s += '`';
+  if ((s.split('**').length - 1) % 2) s += '**';
+  return s;
 }
 
-/** 요지 절단(순수): n자 초과면 마커 경계까지 물러난 뒤 말줄임을 붙인다. */
+/** 길이 절단(순수): n자 초과면 자른 뒤 깨진 마커를 닫고 말줄임을 붙인다. */
 function clip(t, n) {
   const s = String(t == null ? '' : t);
-  return s.length > n ? `${trimDanglingMarker(s.slice(0, n))}…` : s;
+  return s.length > n ? `${closeDanglingMarker(s.slice(0, n))}…` : s;
+}
+
+/**
+ * 원장 산문 → 요지(순수). **절단은 두 번 일어난다** — 구분자(` — `)에서 한 번, 길이에서 한 번.
+ * 둘 다 마커 쌍을 반으로 자를 수 있으므로 **자른 쪽이 자기가 깨뜨린 마커를 수습한다**.
+ *
+ * 길이 절단만 수습하던 첫 구현은 어답터 원장에서 15건을 노출했다(실측): 그쪽 관례가
+ * `**제목 — 부제**` 라 볼드가 구분자를 감싸는데, 구분자에서 자르면 여는 `**` 만 남고 조각이
+ * 상한보다 짧아 `clip` 이 손댈 기회조차 없었다. 상류 관례는 `**제목** — 부제` 라 안 걸린다 —
+ * 자기 데이터 형상만 도는 도구의 전형적 사각지대([ADR-26]~[ADR-28] 계열).
+ *
+ * 자르지 않았으면 손대지 않는다 — 원문의 짝 없는 마커는 작성자의 것이고 `prose` 의 안전 폴백 소관이다.
+ */
+function gistOf(text, n) {
+  const s = String(text == null ? '' : text);
+  const i = s.indexOf(' — ');
+  const head = i >= 0 ? s.slice(0, i) : s;
+  const out = clip(head, n);
+  return out === head && i >= 0 ? closeDanglingMarker(head) : out;
 }
 
 function prose(txt) {
@@ -352,16 +376,31 @@ function parseExitCriteria(txt) {
   return out;
 }
 
-/** feature/live.md 표 → 행 배열(순수). 헤더·구분선·빈 행은 버린다. */
+/**
+ * `feature/live.md` 표 → 행 배열(순수). 구분선·빈 행·**헤더**는 버린다.
+ *
+ * 헤더 판정은 **"다음 줄이 구분선"**이다 — 마크다운 표의 실제 계약이고 `history-linter` 가 쓰는
+ * 규칙과 같다. 헤더 *어휘*로 판정하던 첫 구현(`feature`…`status`)은 두 가지로 틀렸다:
+ * ①한국어·도메인 헤더를 못 알아보고 ②파일에 표가 여럿이면 두 번째부터 전부 놓친다.
+ * 실측(어답터): 존별 표 13개의 헤더가 하나도 안 걸러져 **배송 109 → 122** 로 집계됐다.
+ * 표시 결함이 아니라 **PO 타일의 숫자가 틀린 것**이라 이 축에서 더 아프다.
+ */
 function parseLiveRows(md) {
+  const lines = String(md || '').split(/\r?\n/);
+  const isRow = l => /^\s*\|/.test(l);
+  const cellsOf = l => l.replace(/^\s*\|/, '').replace(/\|\s*$/, '').split('|').map(c => c.trim());
+  const isSep = l => isRow(l) && cellsOf(l).every(c => /^:?-+:?$/.test(c));
   const rows = [];
-  for (const line of String(md || '').split(/\r?\n/)) {
-    if (!/^\s*\|/.test(line)) continue;
-    const cells = line.replace(/^\s*\|/, '').replace(/\|\s*$/, '').split('|').map(c => c.trim());
-    if (cells.every(c => /^:?-+:?$/.test(c))) continue;
-    if (/feature/i.test(cells[0]) && /status/i.test(cells[cells.length - 1] || '')) continue; // 헤더
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (!isRow(line) || isSep(line)) continue;
+    if (isSep(lines[i + 1] || '')) continue;          // 헤더 — 다음 줄이 구분선
+    const cells = cellsOf(line);
     if (!cells[0]) continue;
-    rows.push({ feature: cells[0], ref: cells[1] || '', status: cells[2] || '', example: /\(예시\)|\(더미\)|example|dummy/i.test(line) });
+    rows.push({
+      feature: cells[0], ref: cells[1] || '', status: cells[2] || '',
+      example: /\(예시\)|\(더미\)|example|dummy/i.test(line),
+    });
   }
   return rows;
 }
@@ -442,10 +481,10 @@ function productView(product, today) {
   };
   const shipRow = a =>
     `<div class="crow"><span class="nm">${esc(a.id)}</span><span class="note">${esc(a.date)}</span>`
-    + `<span class="fvals t">${prose(clip(a.text.split(' — ')[0], 80))}</span></div>`;
+    + `<span class="fvals t">${prose(gistOf(a.text, 80))}</span></div>`;
   const liveRow = r =>
     `<div class="crow${r.example ? ' dim' : ''}"><span class="nm">${prose(r.feature)}</span>`
-    + `<span class="note">${esc(r.ref)}</span><span class="fvals t">${esc(r.status)}</span></div>`;
+    + `<span class="note">${prose(r.ref)}</span><span class="fvals t">${prose(r.status)}</span></div>`;
   const planCounts = {};
   plans.forEach(d => { planCounts[d.status || '(없음)'] = (planCounts[d.status || '(없음)'] || 0) + 1; });
 
@@ -530,7 +569,7 @@ function timeView(time, today) {
     `<div class="brow"><span class="bnm">${esc(d)}</span>`
     + `<span class="bbar"><span class="bfill" style="width:${Math.round((byDate[d] / maxN) * 100)}%"></span></span>`
     + `<span class="bval">${byDate[d]}</span></div>`).join('');
-  const gist = t => clip(t.split(' — ')[0], 72);
+  const gist = t => gistOf(t, 72);
   const recent = adrs.slice(-8).reverse().map(a =>
     `<div class="crow"><span class="nm">${esc(a.id)}</span><span class="note">${esc(a.date)}</span>`
     + `${blockIds.has(a.id) ? '<span class="pill dead">⛔<b>재제안 차단</b></span>' : ''}`
@@ -973,7 +1012,7 @@ module.exports = {
   sizeSection, syncSection, effectSection, contractSection, normCard, normView,
   gatherSprint, sprintView, gatherTime, timeView,
   gatherProduct, productView, parseExitCriteria, parseLiveRows, PHASE_TERMINAL,
-  esc, prose, proseInline, clip, trimDanglingMarker,
+  esc, prose, proseInline, clip, gistOf, closeDanglingMarker,
   loadSections, renderSection, buildViews, routerCss,
   render, gatherAll, VIEWS, MARKS,
 };

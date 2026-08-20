@@ -1,10 +1,10 @@
 <!-- [Wiki] 세션 이어달리기. 세션을 마치는 에이전트가 덮어쓴다. 최신 하나만 유효.
      다음 세션 부트스트랩 시 가장 먼저 읽힘. -->
 ---
-session_id: adopter-issues-1to6-plus-pro18-2026-08-20
+session_id: adopter-issues-1to6-pro18-adr37-2026-08-20
 date: 2026-08-20T00:00:00Z
 author: agent
-verification: "상류 36스위트 중 34 통과(실패 2 = 미커밋 fdt 귀속, 기준선 동일) · 어답터 시뮬레이터 34/34 green · lint 7종 통과 · 회전 커밋 가드 통과 + 한 줄 유실 시뮬레이션 REJECT 확인 · 크기 WARN 최초 해소"
+verification: "상류 36스위트 중 34 통과(실패 2 = 미커밋 fdt 귀속, 기준선 동일) · 어답터 시뮬레이터 34/34 green · lint 7종 통과 · 회전 커밋 가드 통과 + 한 줄 유실 REJECT 확인 · 크기 WARN 최초 해소 · 하류 데이터 형상 주입 재현으로 [ADR-37] 3건 확인(계수 122→109, 마커 0)"
 version: 1.0
 ---
 
@@ -17,14 +17,17 @@ version: 1.0
   가드가 **보존 검사**로 판정한다(우회 플래그 없음). 첫 회전: 원장 42.9→16.3KB, 크기 WARN 최초 해소.
 - 부수로 [ADR-30]의 **어답터 시뮬레이터가 실제 결함을 처음 잡았다**([ADR-36] ① — `init` 이 회전본을
   남겨 어답터가 상류 ADR 24건을 물려받을 뻔했다). [PRO-17] 팔의 가치가 실측으로 한 번 확인된 셈.
+- **[ADR-37]** — 하류 제보로 [ADR-35]의 절단 경로 2건 + live 헤더 오계수 수리. 셋 다 상류 데이터
+  형상에선 안 보인다 — **데이터 형상도 환경이다**(§4 패턴 항목 참조).
 
 ## 2. 변경 위치 (ID 목록 — Upward Fetching 진입점)
 - 신규 코드: `scripts/adapter.js`(어답터 설정) · **`scripts/ledger.js`**(원장 경로 정본)
-- 변경 코드: `permission-guard`(보존 검사·`_GUIDE` 분류) · `template-update`(3-way 앵커) ·
+- 변경 코드: `dashboard`(`gistOf`·`closeDanglingMarker`·`parseLiveRows` — [ADR-37]) ·
+  `permission-guard`(보존 검사·`_GUIDE` 분류) · `template-update`(3-way 앵커) ·
   `init`(앵커 시딩·회전본 삭제) · `history-linter`(헤딩형) · `handoff-linter`(5부 배정) ·
   `dashboard`(제품 축·`--sections`·`prose`) · `health`·`zfs-linter`·`ref-linter`·`blocks-index`·
   `leakage-guard`(원장 소비 확대) · `package.json`(test 글롭)
-- 평면: 원장 `[ADR-29]`~`[ADR-36]` · 회전본 `archive_ledger/ADR-02_25.md` + `_GUIDE` ·
+- 평면: 원장 `[ADR-29]`~`[ADR-37]` · 회전본 `archive_ledger/ADR-02_25.md` + `_GUIDE` ·
   `[PRO-18]`(Approved) · `[TOOL-21]`·`[TOOL-25]` 카드 · CHANGELOG · MIGRATION · DESIGN_RATIONALE §7
 - 상세 근거는 전부 원장에 있다 — 여기 복제하지 말 것.
 
@@ -42,6 +45,10 @@ version: 1.0
   **두 번째 회전 때 60% 조정 여부를 판정**하라([PRO-18] §6 의 자동화 논의와 같은 자리).
 - **회전본의 누설 통과가 약하다**: 통과 근거가 본문의 "예시" 6회다. 회전이 만든 문제는 아니지만
   (MARKER 판정이 약하다는 이월 항목) 보호 표면이 하나 늘었다.
+- **형상 사각지대가 반복된다(패턴 후보)**: [ADR-26]~[ADR-28]은 *환경* 형상(뷰어·픽스처·모듈 부재),
+  [ADR-36]①은 *상태* 형상(회전본 존재), [ADR-37]은 *데이터* 형상(원장 관례·표 개수). 다섯 번이면
+  `reference/lessons/LSN-*` 승격 후보다(라우팅 규칙상 2~3회 반복 함정 = LSN). **다음 세션 판단.**
+  [PRO-17] 팔은 *환경* 축만 돈다 — 데이터 형상은 여전히 하류 제보로만 발견된다.
 - **[TOOL-25] 카드가 상한(4KB) 상시 밀착**: 축이 더 늘면 축별 카드 분할(`TOOL-25a`)이 다음 후보.
 - **[PRO-17] 승인 대기**: 시뮬레이터가 그 팔의 수동판이고 이번에 값을 증명했다 — 승인되면
   `harness.yml` 잡으로 고정한다(시뮬레이터가 아직 스크래치패드에만 있어 스크립트화 필요).
@@ -58,4 +65,6 @@ version: 1.0
 - **회전 성공 바는 집합으로 잰다**(수가 아니라) — `gather()` 가 *(파일, 참조)* 쌍을 파일별로 중복
   제거하므로 텍스트가 옮겨가면 수는 변한다. 미해소 ID **집합** 37종 불변이 판정이었다([ADR-36]).
 - **가드는 양방향으로 확인했다**: 실제 회전 커밋 통과 + 회전본에서 한 줄 뺀 상태 REJECT(소멸 항목 지목).
+- **"렌더 본문 원문 마커 0"(dashboard.test)은 실평면 단언이고 약화 금지.** [ADR-30]이 없앤 것은
+  *픽스처 하드코딩*, 이것은 *데이터 무관 불변식* — 후자는 실평면에 걸려야 값을 한다([ADR-37]).
 - **어답터 모드**는 작업트리 사본에 `init --apply --drop-template-bits` 를 걸어 잰다.

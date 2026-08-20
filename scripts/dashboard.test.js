@@ -8,7 +8,7 @@ const { tilesSection, healthSection, budgetSection, worktableSection,
   sizeSection, syncSection, effectSection, contractSection, normCard, normView,
   gatherSprint, sprintView, gatherTime, timeView,
   gatherProduct, productView, parseExitCriteria, parseLiveRows,
-  esc, prose, clip, trimDanglingMarker,
+  esc, prose, clip, gistOf, closeDanglingMarker,
   loadSections, renderSection, buildViews, render, gatherAll, VIEWS } = require('./dashboard');
 
 let pass = 0, fail = 0;
@@ -251,14 +251,31 @@ check('prose: 이탤릭·링크 문법은 손대지 않는다', prose('*i* 와 [
 check('prose: 빈 입력·null 은 빈 문자열', prose('') === '' && prose(null) === '' && prose(undefined) === '');
 check('prose: 마커 없는 산문은 esc 와 같다', prose('평범한 한 줄') === esc('평범한 한 줄'));
 
-// clip: 절단이 만든 짝 없는 마커는 소음이지 원문의 뜻이 아니다
+// 절단이 깨뜨린 마커는 **닫는다**(떼어내지 않는다) — 내용을 지우지 않으면서 폴백 노출을 막는다.
+check('closeDanglingMarker: 짝 맞으면 그대로', closeDanglingMarker('`a` **b**') === '`a` **b**');
+check('closeDanglingMarker: 짝 없는 볼드를 닫는다', closeDanglingMarker('앞 **강조') === '앞 **강조**');
+check('closeDanglingMarker: 짝 없는 코드도 닫는다', closeDanglingMarker('앞 `코드') === '앞 `코드`');
 check('clip: 상한 이하면 그대로', clip('짧다', 10) === '짧다');
-check('clip: 코드 스팬 한가운데서 잘리면 마커 경계까지 물러난다', clip('앞 `long-code-span` 뒤', 10) === '앞…');
-check('clip: 볼드 한가운데서 잘려도 동일', clip('앞 **강조된 긴 문구** 뒤', 8) === '앞…');
 check('clip: 짝이 맞으면 그대로 자른다', clip('`ok` 이어지는 긴 문장', 8).startsWith('`ok`'));
-check('trimDanglingMarker: 짝 맞는 마커는 보존', trimDanglingMarker('`a` **b**') === '`a` **b**');
+// 회귀: 여는 마커가 맨 앞이면 "경계까지 물러나기"는 텍스트를 통째로 지웠다(빈 문자열 + 말줄임).
+check('clip: 여는 마커가 맨 앞이어도 내용이 남는다',
+  clip('**강조가 문장 전체를 감싼 아주 긴 제목**', 12) === '**강조가 문장 전체를**…');
+check('clip: 잘린 코드 스팬은 닫혀서 코드로 읽힌다',
+  prose(clip('앞 `long-code-span` 뒤', 10)).includes('<code>'));
 check('절단 + prose 조합에 원문 마커가 남지 않는다',
   !/\*\*|`/.test(prose(clip('앞 `long-code-span` 뒤', 10)).replace(/<[^>]*>/g, '')));
+
+// gistOf: 절단은 **두 번** 일어난다 — 구분자와 길이. 자른 쪽이 자기가 깨뜨린 마커를 수습한다.
+// 회귀(어답터 실측): 관례가 `**제목 — 부제**` 면 구분자 절단만으로 여는 `**` 가 남고,
+// 조각이 상한보다 짧아 길이 절단이 손댈 기회조차 없었다 — 원장 요지 15건이 원문 노출됐다.
+const SPLIT_BOLD = '**상류 union-stack 이슈 5건 게시 — 어답터↔템플릿 경계 분리(설정·앵커·확장점).**';
+check('gistOf: 구분자 절단이 깨뜨린 볼드를 닫는다', gistOf(SPLIT_BOLD, 80) === '**상류 union-stack 이슈 5건 게시**');
+check('gistOf: 그 결과에 원문 마커가 없다',
+  !/\*\*|`/.test(prose(gistOf(SPLIT_BOLD, 80)).replace(/<[^>]*>/g, '')));
+check('gistOf: 상류 관례(`**제목** — 부제`)도 그대로 동작', gistOf('**제목** — 부제', 80) === '**제목**');
+check('gistOf: 구분자가 없으면 길이 절단만', gistOf('구분자 없는 아주 긴 한 줄짜리 요약문', 8).endsWith('…'));
+// 자르지 않았으면 손대지 않는다 — 원문의 짝 없는 마커는 작성자의 것이다(prose 안전 폴백 소관).
+check('gistOf: 안 자르면 원문 유지', gistOf('짝 없는 **마커가 원문에 있음', 80) === '짝 없는 **마커가 원문에 있음');
 
 // --- 제품 축(이슈 #5) — PO 의 네 질문. 어답터 무가정: 평면 데이터만 소비한다 ---
 // parseExitCriteria: 기준은 **키워드로 시작하는 줄**만. 본문의 단순 언급까지 세면 진행률이 부푼다.
@@ -288,6 +305,17 @@ const liveRows = parseLiveRows('| Feature | ZFS Ref | Status |\n|---|---|---|\n|
 check('live: 데이터 행만 2건', liveRows.length === 2);
 check('live: 예시 표시', [liveRows[0].example, liveRows[1].example].join() === 'true,false');
 check('live: 컬럼 매핑', liveRows[1].feature === '결제' && liveRows[1].ref === '[PLAN-02]' && liveRows[1].status === 'Live');
+// 헤더 판정은 어휘가 아니라 **다음 줄이 구분선**이다. 회귀(어답터 실측): 존별 표 13개의
+// 한국어 헤더가 하나도 안 걸러져 배송 계수가 109 → 122 로 부풀었다(표시가 아니라 숫자가 틀림).
+const multiTable = [
+  '## 존 A', '| 기능 | ZFS Ref | 상태 |', '|---|---|---|', '| 관광지 | [PLAN-02a] (`/attractions`) | Live |',
+  '', '## 존 B', '| 기능 | ZFS Ref | 상태 |', '|---|---|---|', '| 결제 | [PLAN-03] | Live |',
+].join('\n');
+const multi = parseLiveRows(multiTable);
+check('live: 표가 여럿이어도 헤더는 전부 걸러진다', multi.length === 2);
+check('live: 한국어 헤더도 걸러진다', !multi.some(r => r.feature === '기능'));
+check('live: 두 번째 표의 데이터도 잡힌다', multi.map(r => r.feature).join() === '관광지,결제');
+check('live: 구분선 없는 표는 헤더를 못 알아본다(마크다운 계약)', parseLiveRows('| a | b |').length === 1);
 
 const prodFix = {
   phases: [
@@ -316,6 +344,13 @@ check('product: Now/Next/검증 대기 보드', pv.includes('Now — 진행 중'
 check('product: WO 가 보드에 뜬다', pv.includes('[WO-02a-1]') && pv.includes('[WO-02a-2]') && pv.includes('[WO-02a-3]'));
 check('product: 단일 진입점은 HANDOFF §3', pv.includes('정산 배선부터'));
 check('product: 최근 배송 = 원장 + live', pv.includes('ADR-07') && pv.includes('결제'));
+// live 는 표의 세 열이 전부 평면 산문이다 — 열마다 처리가 달라선 안 된다(같은 행에서 한 열만
+// 마커가 렌더되고 다른 열은 원문으로 남던 실측 결함).
+const pvLive = productView({ ...prodFix,
+  live: [{ feature: '관광지 `목록`', ref: '[PLAN-02a] (`/attractions`)', status: '**Live**', example: false }],
+}, '2026-08-20');
+check('product: live 세 열이 모두 렌더된다',
+  (pvLive.match(/<code>/g) || []).length >= 2 && pvLive.includes('<b>Live</b>'));
 check('product: 리스크 = 잠금 + 게이트 부채 + HANDOFF §4',
   pv.includes('\u{1F512}') && pv.includes('file size') && pv.includes('레이트리밋'));
 check('product: PLAN 롤업', pv.includes('PLAN-02') && pv.includes('payment'));
