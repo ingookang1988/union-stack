@@ -18,7 +18,7 @@ const { buildIndex } = require('./zfs_index');
 const { gather: gatherHealth } = require('./health');
 const { gather: gatherBudget } = require('./context-budget');
 const { gather: gatherWos, checkClosure, frontmatter, field, ACTIVE } = require('./work-close');
-const { analyze: analyzeHandoff, HANDOFF_PATH } = require('./handoff-linter');
+const { analyze: analyzeHandoff, partBody: handoffPart, HANDOFF_PATH } = require('./handoff-linter');
 const { parseLedger, gather: gatherBlocks } = require('./blocks-index');
 const { parseEntries: parseHistory } = require('./history-linter');
 const { walkFiles } = require('./fs_walk');
@@ -245,6 +245,191 @@ function sprintView(sprint, today) {
   ${hoCard}`;
 }
 
+// --- 제품 축 -------------------------------------------------------------
+// 현행 4축(개요·당위·스프린트·시간축)의 관객은 **하네스 관리자**다 — 게이트·예산·의례·결정 밀도.
+// 프로젝트를 운영하는 PO 의 네 질문에는 어느 축도 답하지 않는다: 로드맵 대비 어디까지 왔나 ·
+// 뭐가 진행 중이고 뭐가 막혔나 · 최근에 뭐가 나갔나 · 리스크는 무엇인가.
+// 원료는 전부 평면에 이미 있다 — 계산이 아니라 **합성 공백**이다(이 도구 자신의 설계 원칙 그대로).
+//
+// ⚠ 이 축은 **관측이지 판정이 아니다.** exit 기준의 충족 여부는 산문에서 추정한 휴리스틱이고
+// (`✅` 표식 + 워크스트림 헤딩), Now/Next/Blocked 는 WO 의 `status:` 를 그대로 옮긴 것이다.
+// 진행률을 점수로 승격시키지 않는 이유는 [PRO-11] §4(측도 금지)와 같다.
+
+// PHASE 의 종료 상태 — 이 값들이면 "지나온 단계"로 본다.
+const PHASE_TERMINAL = new Set(['Crystallized', 'Closed', 'Archived', 'Superseded', 'Rejected']);
+
+// exit 기준 줄 — 항목이 **키워드로 시작**해야 한다. 본문의 단순 *언급*("…네 워크스트림 전부 exit
+// gate 충족 →")까지 세면 진행률이 산문 밀도를 따라 부풀어 수가 뜻을 잃는다(계수기 오염).
+const EXIT_LINE = /^\**\s*(?:exit(?:\s*gate)?|종료\s*조건|승격\s*게이트)\s*\**\s*[:：]\s*(.+)$/i;
+
+/**
+ * PHASE 본문 → exit 기준 체크리스트(순수 — 휴리스틱 관측).
+ * 규약(roadmap/_GUIDE): "게이트는 PHASE 안의 *절*이지 자기 도메인이 아니다." 그래서 파싱 대상은
+ * 자유 서술 안의 `Exit:` 줄이고, 충족 표식은 그 줄 또는 그것을 담은 워크스트림 헤딩의 `✅` 다.
+ */
+function parseExitCriteria(txt) {
+  const lines = String(txt || '').split(/\r?\n/);
+  // 완료 표식은 exit 줄에만 붙지 않는다 — 실측 문서는 워크스트림 헤딩(`### E3 … ✅`)이나 별도
+  // `## 진행 상태` 절(`- **[E1] ✅ 완료** …`)에 적는다. 그래서 헤딩의 토큰(E1·E3…)을 키로 삼아
+  // 문서 어디서든 그 토큰과 ✅ 가 같은 줄에 있으면 충족으로 읽는다.
+  const doneTokens = new Set();
+  for (const line of lines) {
+    if (!line.includes('✅')) continue;
+    for (const t of line.match(/\b[A-Z]\d{1,2}\b/g) || []) doneTokens.add(t);
+  }
+  const out = [];
+  let headDone = false;
+  for (const line of lines) {
+    const h = line.match(/^#{2,4}\s+(.*)$/);
+    if (h) {
+      const tok = (h[1].match(/^\s*([A-Z]\d{1,2})\b/) || [])[1];
+      headDone = /✅/.test(h[1]) || (!!tok && doneTokens.has(tok));
+      continue;
+    }
+    if (/^\s*>/.test(line)) continue;                       // 인용문은 서술이지 기준이 아니다
+    const m = line.replace(/^\s*[-*+]\s*/, '').match(EXIT_LINE);
+    if (!m) continue;
+    out.push({ text: m[1].trim(), done: /✅|충족|완료/.test(line) || headDone });
+  }
+  return out;
+}
+
+/** feature/live.md 표 → 행 배열(순수). 헤더·구분선·빈 행은 버린다. */
+function parseLiveRows(md) {
+  const rows = [];
+  for (const line of String(md || '').split(/\r?\n/)) {
+    if (!/^\s*\|/.test(line)) continue;
+    const cells = line.replace(/^\s*\|/, '').replace(/\|\s*$/, '').split('|').map(c => c.trim());
+    if (cells.every(c => /^:?-+:?$/.test(c))) continue;
+    if (/feature/i.test(cells[0]) && /status/i.test(cells[cells.length - 1] || '')) continue; // 헤더
+    if (!cells[0]) continue;
+    rows.push({ feature: cells[0], ref: cells[1] || '', status: cells[2] || '', example: /\(예시\)|\(더미\)|example|dummy/i.test(line) });
+  }
+  return rows;
+}
+
+/**
+ * 제품 축 수집 — **어답터 무가정**: 평면 데이터만 소비하고 설정을 요구하지 않는다.
+ * 이미 모인 축(index·wos·sprint·time·health)에서 파생만 하므로 같은 수집을 두 번 하지 않는다.
+ */
+function gatherProduct(root, { index, wos, sprint, time, health }) {
+  const readIf = rel => { try { return fs.readFileSync(path.join(root, rel), 'utf8'); } catch { return ''; } };
+  const phases = index.filter(d => d.domain === 'PHASE').map(d => {
+    const txt = readIf(d.file);
+    const fm = frontmatter(txt);
+    return {
+      key: `PHASE-${d.id}`, file: d.file, status: d.status || '',
+      title: (fm && field(fm, 'title')) || d.slug,
+      exits: parseExitCriteria(txt),
+      example: /example/i.test(d.slug),
+    };
+  }).sort((a, b) => a.key.localeCompare(b.key));
+  // 현재 단계 = 종료되지 않은 것 중 가장 뒤. 예시 문서(init 이 지우는 더미)는 실문서가 있으면 제외.
+  // 전부 종료면 `current` 는 null 이다 — "마지막 단계"로 위조하지 않는다. 그건 *다음 단계 미정*이라는
+  // 사실이고 PO 가 봐야 할 신호다(로드맵이 끝났는데 후속이 없다).
+  const real = phases.filter(p => !p.example);
+  const pool = real.length ? real : phases;
+  const open = pool.filter(p => !PHASE_TERMINAL.has(p.status));
+  const current = open.length ? open[open.length - 1] : null;
+  const latest = pool.length ? pool[pool.length - 1] : null;
+
+  const live = parseLiveRows(readIf('.union-stack/feature/live.md'));
+  const handoffTxt = readIf(HANDOFF_PATH);
+  const byStatus = st => wos.filter(w => !w.malformed && w.status === st);
+  return {
+    phases, current, latest, live,
+    plans: index.filter(d => d.domain === 'PLAN'),
+    now: byStatus('Active'), next: byStatus('Draft'), verifying: byStatus('Verifying'),
+    shipped: (time.adrs || []).slice(-6).reverse(),
+    locked: index.filter(d => LOCKED.has(d.status)),
+    entry: handoffPart(handoffTxt, 'next'),
+    cautions: handoffPart(handoffTxt, 'open'),
+    debts: (health.dims || []).filter(d => d.status === 'FAIL' || d.status === 'WARN'),
+    archived: (sprint && sprint.archived) || 0,
+  };
+}
+
+/**
+ * 제품 축 **전용 페이지**(순수). 다섯 번째 축 — 관객이 하네스 관리자가 아니라 PO 다.
+ * 새 데이터를 만들지 않는다: PHASE·WO·원장·live·HANDOFF 를 PO 의 질문 순서로 다시 배열할 뿐이다.
+ */
+function productView(product, today) {
+  if (!product) return '';
+  const { phases, current, latest, live, plans, now, next, verifying, shipped, locked, entry, cautions, debts, archived } = product;
+  const doneOf = p => p.exits.filter(e => e.done).length;
+  const totalExits = phases.reduce((n, p) => n + p.exits.length, 0);
+  const doneExits = phases.reduce((n, p) => n + doneOf(p), 0);
+  const realLive = live.filter(r => !r.example);
+  const woRow = w =>
+    `<div class="crow"><span class="nm">[WO-${esc(w.id)}]</span>`
+    + `<span class="fvals t">${esc(w.title || '')}</span>`
+    + `${w.parent ? `<span class="note">← ${esc(w.parent)}</span>` : ''}</div>`;
+  const board = (label, cls, items, empty) => `<section class="card"><h2>${label}</h2>
+  <div class="meta">${items.length}건</div>
+  ${items.length ? items.map(woRow).join('') : `<div class="meta">${empty}</div>`}</section>`;
+
+  const phaseCard = p => {
+    const done = doneOf(p), total = p.exits.length;
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    const term = PHASE_TERMINAL.has(p.status);
+    return `<div class="frow${p.example ? ' dim' : ''}"><span class="flabel">${esc(p.key)}</span>
+    <span class="fvals t"><b>${esc(p.title)}</b>
+      <span class="pill ${term ? 'fresh' : 'aging'}">status<b>${esc(p.status || '미기입')}</b></span>
+      ${p === current ? '<span class="pill">현재<b>진행 중</b></span>' : ''}
+      <div class="brow"><span class="bnm">exit</span>
+        <span class="bbar"><span class="bfill" style="width:${pct}%"></span></span>
+        <span class="bval">${total ? `${done}/${total}` : '기준 없음'}</span></div>
+      ${p.exits.map(e => `<div class="note">${e.done ? '✓' : '·'} ${esc(e.text)}</div>`).join('')}
+    </span></div>`;
+  };
+  const shipRow = a =>
+    `<div class="crow"><span class="nm">${esc(a.id)}</span><span class="note">${esc(a.date)}</span>`
+    + `<span class="fvals t">${esc(a.text.split(' — ')[0].slice(0, 80))}</span></div>`;
+  const liveRow = r =>
+    `<div class="crow${r.example ? ' dim' : ''}"><span class="nm">${esc(r.feature)}</span>`
+    + `<span class="note">${esc(r.ref)}</span><span class="fvals t">${esc(r.status)}</span></div>`;
+  const planCounts = {};
+  plans.forEach(d => { planCounts[d.status || '(없음)'] = (planCounts[d.status || '(없음)'] || 0) + 1; });
+
+  return `<div class="tiles">
+  <div class="tile"><div class="tl">현재 단계</div><div class="tv">${esc(current ? current.key : latest ? latest.key : '없음')}</div><div class="ts">${esc(current ? (current.status || '미기입') : latest ? `${latest.status} — 후속 단계 미정` : 'PHASE 문서 없음')}</div></div>
+  <div class="tile"><div class="tl">로드맵 진행</div><div class="tv">${totalExits ? `${doneExits}/${totalExits}` : '—'}</div><div class="ts">exit 기준 충족(관측)</div></div>
+  <div class="tile"><div class="tl">진행 중</div><div class="tv ${now.length ? 'good' : ''}">${now.length}</div><div class="ts">다음 ${next.length} · 검증 대기 ${verifying.length}</div></div>
+  <div class="tile"><div class="tl">배송</div><div class="tv">${realLive.length}</div><div class="ts">live 표면 · 아카이브 WO ${archived}</div></div>
+  </div>
+  <section class="card"><h2>지금 무엇을 하는가 — 단일 진입점</h2>
+  <div class="meta">HANDOFF §3 이 정본이다. 이 축은 그것을 로드맵·작업·배송과 나란히 놓을 뿐이다.</div>
+  ${entry ? `<div class="fvals t">${esc(entry).replace(/\n/g, '<br>')}</div>` : '<div class="meta bad">HANDOFF §3 비어 있음 — 다음 세션이 진입점을 못 찾는다</div>'}</section>
+  <section class="card" id="roadmap"><h2>로드맵 진행률 — PHASE exit 기준</h2>
+  <div class="meta">exit 충족은 <b>산문에서 읽은 관측</b>이다(✅ 표식) — 판정이 아니다.
+  기준이 0인 단계는 "달성"이 아니라 <b>기준이 없다</b>는 사실이다.</div>
+  ${phases.length ? phases.map(phaseCard).join('') : '<div class="meta">PHASE 문서 없음 — roadmap 축이 비어 있다</div>'}</section>
+  <div class="grid">
+  ${board('Now — 진행 중', 'good', now, '없음 — 활성 WO 가 0이다')}
+  ${board('Next — 대기', '', next, '없음 — 다음 작업이 문서화되지 않았다')}
+  </div>
+  <div class="grid">
+  ${board('검증 대기 🔒 — Verifying(잠금)', 'warn', verifying, '없음')}
+  <section class="card"><h2>PLAN 상태 롤업</h2>
+  <div class="meta">${plans.length} PLAN</div>
+  ${plans.length
+    ? `<div class="pills">${Object.entries(planCounts).map(([k, v]) => `<span class="pill">${esc(k)}<b>${v}</b></span>`).join('')}</div>`
+      + plans.map(d => `<div class="crow"><span class="nm">PLAN-${esc(d.id)}</span><span class="note">${esc(d.status || '(없음)')}</span><span class="fvals t">${esc(d.slug)}</span></div>`).join('')
+    : '<div class="meta">PLAN 문서 없음</div>'}</section>
+  </div>
+  <div class="grid">
+  <section class="card"><h2>최근 배송</h2>
+  <div class="meta">원장 최근 ${shipped.length}건 · live 표면 ${live.length}행</div>
+  ${shipped.map(shipRow).join('') || '<div class="meta">원장 항목 없음</div>'}
+  ${live.length ? '<div class="meta">live 표면</div>' + live.map(liveRow).join('') : '<div class="meta">live.md 행 없음</div>'}</section>
+  <section class="card"><h2>리스크</h2>
+  <div class="meta">잠금 ${locked.length} · 게이트 부채 ${debts.length}</div>
+  ${locked.length ? locked.map(d => `<div class="crow"><span class="nm">\u{1F512} ${esc(d.domain)}-${esc(d.id)}</span><span class="fvals t">${esc(d.slug)} — Verifying(다른 작업이 소유)</span></div>`).join('') : ''}
+  ${debts.map(d => `<div class="crow"><span class="nm ${d.status === 'FAIL' ? 'bad' : ''}">${esc(d.name)}</span><span class="fvals t">${esc(d.value)}${d.note ? ' — ' + esc(d.note) : ''}</span></div>`).join('') || '<div class="meta">게이트 부채 없음</div>'}
+  ${cautions ? `<div class="frow"><span class="flabel">HANDOFF §4</span><span class="fvals t">${esc(cautions).replace(/\n/g, '<br>')}</span></div>` : ''}</section>
+  </div>`;
+}
+
 /**
  * 시간축 수집 — 원장(전술 결정) + HISTORY(전략 분기점) + LSN(오답노트) + 재제안 차단.
  * 파서는 각 소유 도구의 export 소비: parseLedger([TOOL-22] 관할)·parseHistory(history-linter)·
@@ -303,9 +488,15 @@ function timeView(time, today) {
     : `<div class="frow"><span class="flabel">${esc(l.id || '?')}</span><span class="fvals t">${esc(l.title || '')}`
       + `${l.occurrences ? ` <span class="pill aging">반복<b>${esc(l.occurrences)}회</b></span>` : ''}`
       + `${l.valid_reason ? `<br><span class="note">유효 사유: ${esc(l.valid_reason)}</span>` : ''}</span></div>`).join('');
+  // 근거 없는 행은 **빈 칸이 아니라 표식**으로 낸다 — 헤딩형 이관본에서 파서가 근거 절을 못 찾은
+  // 경우가 여기로 온다(history-linter 의 CLARIFY 와 같은 사실). "왜: " 뒤의 공백은 아무 말도 안 한다.
   const histRows = history.map(e =>
     `<div class="frow${e.example ? ' dim' : ''}"><span class="flabel">${esc(e.date)}</span>`
-    + `<span class="fvals t"><b>${esc(e.fact)}</b><br><span class="note">왜: ${esc(e.reason)}</span>`
+    + `<span class="fvals t"><b>${esc(e.fact)}</b>`
+    + `${e.form === 'heading' ? ' <span class="pill">형식<b>헤딩</b></span>' : ''}`
+    + `<br>${e.reason
+      ? `<span class="note">왜: ${esc(e.reason)}</span>`
+      : '<span class="pill aging">근거<b>미검출 — CLARIFY</b></span>'}`
     + `${e.note ? `<br><span class="note">시사점: ${esc(e.note)}</span>` : ''}</span></div>`).join('');
   return `<div class="tiles">
   <div class="tile"><div class="tl">전술 결정</div><div class="tv">${adrs.length}</div><div class="ts">archive_ledger ADR</div></div>
@@ -573,13 +764,63 @@ const DASH_CSS = `
  */
 const VIEWS = [
   { id: 'overview', label: '개요' },
+  { id: 'product', label: '제품' },
   { id: 'arch', label: '당위(ARCH)' },
   { id: 'sprint', label: '스프린트' },
   { id: 'time', label: '시간축' },
 ];
 
+/**
+ * 어답터 섹션 로드 — `--sections <path>` ([이슈 #4] 컴포지션 확장점).
+ *
+ * 왜 필요한가: 이 파일은 **sync 카테고리**다. 어답터가 자기 관측(제품 KPI·도메인 지표)을 한 장에
+ * 합치려면 지금까지 선택지가 ⓐ sync 파일 포크(→ 다음 --apply 가 덮어씀) ⓑ HTML 2장(합성 원칙
+ * 훼손) 뿐이었다. 확장점 하나로 그 포크를 0으로 만든다 — 어답터 파일은 template-update 불간섭.
+ *
+ * 계약: 모듈이 `[{ id, title, axis, axisLabel?, render(gathered) }]`(또는 `{sections:[...]}`)를
+ * export 한다. `render` 는 **수집된 데이터 → HTML 조각**의 순수 함수이고, 카드 껍데기(`<section>`·
+ * 제목)는 호스트가 씌운다 — 어답터 섹션이 페이지 구조를 깨뜨릴 수 없게 하려는 것이다.
+ * `axis` 가 기존 축 id 면 그 페이지에 덧붙고, 새 id 면 축(나브 항목 + 페이지)이 하나 생긴다.
+ */
+function loadSections(root, rel) {
+  const abs = path.isAbsolute(rel) ? rel : path.resolve(root, rel);
+  const mod = require(abs);
+  const list = Array.isArray(mod) ? mod : (mod && Array.isArray(mod.sections) ? mod.sections : null);
+  if (!list) throw new Error(`${rel}: 배열 또는 {sections:[...]} 를 export 해야 한다`);
+  return list.map((sec, i) => ({
+    id: sec.id || `local-${i + 1}`,
+    title: sec.title || sec.id || `섹션 ${i + 1}`,
+    axis: sec.axis || 'overview',
+    axisLabel: sec.axisLabel,
+    render: sec.render,
+  }));
+}
+
+/** 어답터 섹션 1개 → 카드(순수). **실패한 섹션은 그 카드만 오류를 적는다** — 페이지 전체는 산다. */
+function renderSection(sec, data) {
+  let inner;
+  try {
+    if (typeof sec.render !== 'function') throw new Error('render 가 함수가 아니다');
+    inner = String(sec.render(data) ?? '');
+  } catch (e) {
+    inner = `<div class="meta bad">섹션 렌더 실패 — ${esc(e && e.message ? e.message : String(e))}</div>`;
+  }
+  return `<section class="card" id="${esc(sec.id)}"><h2>${esc(sec.title)}</h2>\n${inner}</section>`;
+}
+
+/** 기본 축 + 어답터 섹션이 요구한 새 축(순수). 기존 축 순서는 불변 — 새 축만 뒤에 붙는다. */
+function buildViews(sections = []) {
+  const views = VIEWS.slice();
+  for (const sec of sections) {
+    if (views.some(v => v.id === sec.axis)) continue;
+    views.push({ id: sec.axis, label: sec.axisLabel || sec.axis });
+  }
+  return views;
+}
+
 /** 수집된 표면 → 자기완결 HTML(순수 — FS 접근 없음). */
-function render(data, { title = 'plane' } = {}) {
+function render(data, { title = 'plane', sections = [] } = {}) {
+  const views = buildViews(sections);
   const { index, health, budget, wos, today } = data;
   const effectDim = (health.dims || []).find(d => d.name === 'effect surface');
   const body = {
@@ -605,20 +846,22 @@ ${effectSection(effectDim)}
 <section class="card" id="plane"><h2>계보 — 평면 전체</h2>
 <div class="plane">${planeBody(index)}</div>
 </section>`,
+    product: productView(data.product, today),
     arch: normView(health.norms, health.sync, health.concerns),
     sprint: sprintView(data.sprint, today),
     time: timeView(data.time, today),
   };
+  for (const sec of sections) body[sec.axis] = `${body[sec.axis] || ''}\n${renderSection(sec, data)}`;
   // 라디오는 nav·main **앞**에 와야 한다(`~`는 뒤따르는 형제만 고른다). 첫 뷰가 checked.
   return `<!doctype html>
 <meta charset="utf-8">
 <title>dashboard — ${esc(title)}</title>
-<style>${PLANE_CSS}${DASH_CSS}${ROUTER_CSS}</style>
-${VIEWS.map((v, i) => `<input class="vsel" type="radio" name="v" id="v-${v.id}"${i ? '' : ' checked'}>`).join('\n')}
+<style>${PLANE_CSS}${DASH_CSS}${routerCss(views)}</style>
+${views.map((v, i) => `<input class="vsel" type="radio" name="v" id="v-${v.id}"${i ? '' : ' checked'}>`).join('\n')}
 <nav><b>${esc(title)}</b>
-  ${VIEWS.map(v => `<label for="v-${v.id}" data-nav="${v.id}">${esc(v.label)}</label>`).join('')}</nav>
+  ${views.map(v => `<label for="v-${v.id}" data-nav="${v.id}">${esc(v.label)}</label>`).join('')}</nav>
 <main>
-${VIEWS.map(v => `<div class="view" data-view="${v.id}">\n${body[v.id] || ''}\n</div>`).join('\n')}
+${views.map(v => `<div class="view" data-view="${v.id}">\n${body[v.id] || ''}\n</div>`).join('\n')}
 </main>
 <script>${ROUTER_JS}${FILTER_JS}</script>
 `;
@@ -629,10 +872,10 @@ ${VIEWS.map(v => `<div class="view" data-view="${v.id}">\n${body[v.id] || ''}\n<
 // 영영 도달할 수 없다(실측 2회: 전 뷰 hidden → 빈 화면, 이어서 클릭 핸들러 → 전환 불가).
 // 그래서 전환은 라디오 `:checked ~` 형제 선택자로 스크립트 0에서 성립시키고, JS는 해시 북마크만 얹는다.
 // CSS까지 죽은 환경에서는 전 뷰가 세로로 쌓여 **내용은 여전히 읽힌다**(빈 화면으로 죽지 않는다).
-const ROUTER_CSS = `
+const routerCss = views => `
   .vsel { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
   .view { display:none; }
-${VIEWS.map(v => `  #v-${v.id}:checked ~ main .view[data-view="${v.id}"] { display:block; }
+${views.map(v => `  #v-${v.id}:checked ~ main .view[data-view="${v.id}"] { display:block; }
   #v-${v.id}:checked ~ nav label[for="v-${v.id}"] { color:#fff; background:#2a78d6; font-weight:600; }`).join('\n')}
 `;
 
@@ -659,16 +902,21 @@ const ROUTER_JS = `
 /** 표면 수집(read-only). `today`는 신선도 경과일 계산용 — 순수 렌더에 주입한다. */
 function gatherAll(root = path.resolve(__dirname, '..'), today = new Date().toISOString().slice(0, 10)) {
   const wos = gatherWos(root);
-  return {
+  const data = {
     index: buildIndex(root), health: gatherHealth(root), budget: gatherBudget(root),
     wos, sprint: gatherSprint(root, wos), time: gatherTime(root), today,
   };
+  data.product = gatherProduct(root, data);   // 파생만 한다 — 같은 수집을 두 번 하지 않는다
+  return data;
 }
 
 module.exports = {
   tilesSection, healthSection, budgetSection, worktableSection,
   sizeSection, syncSection, effectSection, contractSection, normCard, normView,
-  gatherSprint, sprintView, gatherTime, timeView, render, gatherAll, VIEWS, MARKS,
+  gatherSprint, sprintView, gatherTime, timeView,
+  gatherProduct, productView, parseExitCriteria, parseLiveRows, PHASE_TERMINAL,
+  loadSections, renderSection, buildViews, routerCss,
+  render, gatherAll, VIEWS, MARKS,
 };
 
 if (require.main === module) {
@@ -681,6 +929,16 @@ if (require.main === module) {
   }
   const oi = args.indexOf('--out');
   const out = oi >= 0 && args[oi + 1] ? args[oi + 1] : path.join(root, 'dashboard.html');
-  fs.writeFileSync(out, render(data, { title: path.basename(root) }));
-  console.error(`대시보드: docs ${data.index.length} · 게이트 FAIL ${data.health.fails} · 활성 WO ${data.wos.filter(w => ACTIVE.has(w.status)).length} → ${out}`);
+  // 어답터 섹션은 **선택**이다. 로드 실패는 조용히 넘기지 않는다(경로 오타가 "내 섹션이 없네"로
+  // 끝나는 것이 이 부류 확장점의 표준 사고) — 보고하고, 대시보드는 나머지로 계속 낸다.
+  const si = args.indexOf('--sections');
+  let sections = [], sectionsFailed = false;
+  if (si >= 0 && args[si + 1]) {
+    try { sections = loadSections(root, args[si + 1]); }
+    catch (e) { sectionsFailed = true; console.error(`섹션 로드 실패: ${args[si + 1]} — ${e.message}`); }
+  }
+  fs.writeFileSync(out, render(data, { title: path.basename(root), sections }));
+  console.error(`대시보드: docs ${data.index.length} · 게이트 FAIL ${data.health.fails} · 활성 WO ${data.wos.filter(w => ACTIVE.has(w.status)).length}`
+    + `${sections.length ? ` · 어답터 섹션 ${sections.length}` : ''} → ${out}`);
+  if (sectionsFailed) process.exit(1);
 }

@@ -1,9 +1,14 @@
 // scripts/dashboard.test.js
 // 섹션 함수(순수) 단위 + 실평면 합성 스모크. 대시보드는 *합성*이므로 여기서는 그리기만 검증한다 —
 // 데이터의 옳음은 각 소스 도구의 테스트(health·context-budget·work-close·lineage-tree)가 소유한다.
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
 const { tilesSection, healthSection, budgetSection, worktableSection,
   sizeSection, syncSection, effectSection, contractSection, normCard, normView,
-  gatherSprint, sprintView, gatherTime, timeView, render, gatherAll, VIEWS } = require('./dashboard');
+  gatherSprint, sprintView, gatherTime, timeView,
+  gatherProduct, productView, parseExitCriteria, parseLiveRows,
+  loadSections, renderSection, buildViews, render, gatherAll, VIEWS } = require('./dashboard');
 
 let pass = 0, fail = 0;
 function check(label, cond) { if (cond) pass++; else { fail++; console.error(`FAIL ${label}`); } }
@@ -152,8 +157,8 @@ check('normCard: arch 로 가는 자세히 링크', nc.includes('data-nav="arch"
 check('normCard: 규범 없으면 조각 없음', normCard({ total: 0, norms: [] }) === '');
 
 // VIEWS — 축 하나 = 페이지 하나. 새 축 추가는 이 배열에 한 줄. 계보는 개요가 보유(별도 페이지 아님).
-check('views: 4개 정의(개요·arch·sprint·time)', VIEWS.length === 4 && VIEWS[0].id === 'overview');
-check('views: 축 전부 포함', ['arch', 'sprint', 'time'].every(id => VIEWS.some(v => v.id === id)));
+check('views: 5개 정의(개요·제품·arch·sprint·time)', VIEWS.length === 5 && VIEWS[0].id === 'overview');
+check('views: 축 전부 포함', ['product', 'arch', 'sprint', 'time'].every(id => VIEWS.some(v => v.id === id)));
 
 // sprintView — 축의 짝은 종료 의례: WO 닫힘 조건 + HANDOFF 인계 상태
 check('sprint: 없는 입력 → 조각 없음', sprintView(null) === '');
@@ -218,6 +223,98 @@ check('time: malformed LSN 표시', tm.includes('frontmatter 없음'));
 check('time: HISTORY 사실+근거 쌍', tm.includes('v6.0 승격') && tm.includes('왜: 법칙 확인') && tm.includes('시사점: 후속 필수'));
 check('time: HISTORY 예시 행은 흐리게', tm.includes('frow dim'));
 
+// --- 제품 축(이슈 #5) — PO 의 네 질문. 어답터 무가정: 평면 데이터만 소비한다 ---
+// parseExitCriteria: 기준은 **키워드로 시작하는 줄**만. 본문의 단순 언급까지 세면 진행률이 부푼다.
+const phaseFix = [
+  '# [PHASE-09] 예시 단계',
+  '> 인용문에 exit gate 라는 말이 있어도 기준이 아니다.',
+  '### E1 — 첫 워크스트림 ✅',
+  '- Exit: 반증 가능한 효능 표.',
+  '### E2 — 둘째 워크스트림',
+  '- Exit: 100노드 평면 precision ≥ 임계.',
+  '### E3 — 셋째',
+  '- 승격 게이트: 핵심 플로우 E2E 통과.',
+  '## 진행 상태',
+  '- **[E3] ✅ 완료** — 별도 절에 적힌 완료 표식도 읽는다.',
+  '- 네 워크스트림 전부 exit gate 충족이라고 *서술*만 한 줄은 기준이 아니다.',
+].join('\n');
+const ex = parseExitCriteria(phaseFix);
+check('exit: 기준 3건만(인용문·서술 언급 제외)', ex.length === 3);
+check('exit: 헤딩 ✅ 가 충족을 준다', ex[0].done === true);
+check('exit: 미표식은 미충족', ex[1].done === false);
+check('exit: 진행 상태 절의 토큰 완료 표식도 읽는다', ex[2].done === true);
+check('exit: 라벨은 벗겨진다', ex[0].text === '반증 가능한 효능 표.');
+check('exit: 빈 문서 → 0건(기준 없음은 달성이 아니다)', parseExitCriteria('').length === 0);
+
+// parseLiveRows: 헤더·구분선 제외, 더미 표시
+const liveRows = parseLiveRows('| Feature | ZFS Ref | Status |\n|---|---|---|\n| (예시) 로그인 | [PLAN-01a] | (더미) |\n| 결제 | [PLAN-02] | Live |');
+check('live: 데이터 행만 2건', liveRows.length === 2);
+check('live: 예시 표시', [liveRows[0].example, liveRows[1].example].join() === 'true,false');
+check('live: 컬럼 매핑', liveRows[1].feature === '결제' && liveRows[1].ref === '[PLAN-02]' && liveRows[1].status === 'Live');
+
+const prodFix = {
+  phases: [
+    { key: 'PHASE-01', file: 'p1', status: 'Crystallized', title: '지난 단계', exits: [{ text: 'a', done: true }], example: false },
+    { key: 'PHASE-02', file: 'p2', status: 'Active', title: '현재 단계<b>x</b>', exits: [{ text: 'b', done: false }, { text: 'c', done: true }], example: false },
+  ],
+  live: [{ feature: '결제', ref: '[PLAN-02]', status: 'Live', example: false }],
+  plans: [{ domain: 'PLAN', id: '02', slug: 'payment', status: 'Active' }],
+  now: [{ id: '02a-1', title: '결제 배선', status: 'Active', parent: 'PLAN-02' }],
+  next: [{ id: '02a-2', title: '정산', status: 'Draft', parent: 'PLAN-02' }],
+  verifying: [{ id: '02a-3', title: '검증 중', status: 'Verifying', parent: 'PLAN-02' }],
+  shipped: [{ id: 'ADR-07', date: '2026-08-01', text: '결제 벤더 교체 — 정산 주기' }],
+  locked: [{ domain: 'WO', id: '02a-3', slug: 'verify', status: 'Verifying' }],
+  entry: '→ 정산 배선부터',
+  cautions: '- 벤더 API 레이트리밋 미확인',
+  debts: [{ name: 'file size', status: 'WARN', value: '1 > 30KB', note: 'ledger:31KB' }],
+  archived: 4,
+};
+prodFix.current = prodFix.phases[1];
+prodFix.latest = prodFix.phases[1];
+const pv = productView(prodFix, '2026-08-20');
+check('product: 타일 4개', (pv.match(/class="tile"/g) || []).length === 4);
+check('product: 현재 단계 타일', pv.includes('PHASE-02') && pv.includes('현재 단계'));
+check('product: 로드맵 진행 = exit 충족/전체', pv.includes('2/3'));
+check('product: Now/Next/검증 대기 보드', pv.includes('Now — 진행 중') && pv.includes('Next — 대기') && pv.includes('Verifying(잠금)'));
+check('product: WO 가 보드에 뜬다', pv.includes('[WO-02a-1]') && pv.includes('[WO-02a-2]') && pv.includes('[WO-02a-3]'));
+check('product: 단일 진입점은 HANDOFF §3', pv.includes('정산 배선부터'));
+check('product: 최근 배송 = 원장 + live', pv.includes('ADR-07') && pv.includes('결제'));
+check('product: 리스크 = 잠금 + 게이트 부채 + HANDOFF §4',
+  pv.includes('\u{1F512}') && pv.includes('file size') && pv.includes('레이트리밋'));
+check('product: PLAN 롤업', pv.includes('PLAN-02') && pv.includes('payment'));
+check('product: 자유 문자열 이스케이프', !pv.includes('<b>x</b>') && pv.includes('&lt;b&gt;'));
+// 무가정: 평면이 텅 빈 어답터에서도 렌더된다(설정 요구 0, 예외 0).
+const empty = productView({ phases: [], current: null, latest: null, live: [], plans: [], now: [], next: [],
+  verifying: [], shipped: [], locked: [], entry: '', cautions: '', debts: [], archived: 0 }, '2026-08-20');
+check('product: 빈 평면도 렌더', empty.includes('PHASE 문서 없음') && !empty.includes('undefined'));
+check('product: 진입점 부재를 사실로 적는다', empty.includes('HANDOFF §3 비어 있음'));
+check('product: time 과 달리 null 이면 빈 문자열', productView(null, '2026-08-20') === '');
+
+// --- 어답터 섹션 컴포지션 확장점(이슈 #4) — sync 파일 포크 0 ---
+const secTmp = fs.mkdtempSync(path.join(os.tmpdir(), 'dashsec-'));
+const secFile = path.join(secTmp, 'dashboard.local.js');
+fs.writeFileSync(secFile, `module.exports = [
+  { id: 'kpi', title: '제품 KPI', axis: 'product', render: d => '<div class="meta">docs ' + d.index.length + '</div>' },
+  { id: 'boom', title: '터지는 섹션', axis: 'overview', render: () => { throw new Error('의도된 실패'); } },
+  { id: 'ops', title: '운영', axis: 'ops', axisLabel: '운영축', render: () => '<div class="meta">ops</div>' },
+];
+`);
+const secs = loadSections(secTmp, 'dashboard.local.js');
+check('sections: 3건 로드', secs.length === 3);
+check('sections: axis 기본값은 overview', loadSections(secTmp, './dashboard.local.js')[0].axis === 'product');
+let loadFailed = false;
+try { loadSections(secTmp, 'no-such-file.js'); } catch { loadFailed = true; }
+check('sections: 없는 경로는 throw(조용한 무시 금지)', loadFailed);
+check('sections: 카드 껍데기는 호스트가 씌운다',
+  renderSection(secs[0], { index: [1, 2] }).startsWith('<section class="card" id="kpi"><h2>제품 KPI</h2>'));
+check('sections: 실패한 섹션은 그 카드만 오류(전체 불사)',
+  renderSection(secs[1], {}).includes('섹션 렌더 실패') && renderSection(secs[1], {}).includes('의도된 실패'));
+check('sections: 새 axis 는 축을 하나 만든다',
+  buildViews(secs).map(v => v.id).join() === VIEWS.map(v => v.id).join() + ',ops');
+check('sections: 기존 축 순서는 불변', buildViews(secs).slice(0, VIEWS.length).map(v => v.id).join() === VIEWS.map(v => v.id).join());
+check('sections: 섹션 없으면 기본 축 그대로', buildViews([]).length === VIEWS.length);
+fs.rmSync(secTmp, { recursive: true, force: true });
+
 // render — 실평면 합성 스모크
 const data = gatherAll();
 const html = render(data, { title: 'real' });
@@ -226,13 +323,28 @@ const html = render(data, { title: 'real' });
 // 슬라이스는 **뷰 div**에 고정한다 — `data-view=` 단독으로는 라우터 CSS 규칙이 먼저 잡혀 빈 구간이 된다.
 const ovHtml = html.slice(html.indexOf('class="view" data-view="overview"'),
   html.indexOf('class="view" data-view="arch"'));
-check('합성: 개요의 9섹션 전부',
-  ['id="health"', 'id="budget"', 'id="wo"', 'id="sync"', 'id="size"', 'id="contract"', 'id="norm"', 'id="plane"'].every(s => ovHtml.includes(s)));
+// 섹션은 **원자료가 있으면 그린다 / 없으면 조용히 빠진다**가 계약이다(effect surface 와 같은 꼴).
+// 그래서 "8개 다 있다"가 아니라 "있어야 할 것만 정확히 있다"를 단언한다 — 신선한 어답터는
+// 계약 0·규범 0 이 정상이고, 거기서 빈 카드를 그리는 쪽이 오히려 결함이다.
+const OV_SECTIONS = [
+  ['id="health"', true],
+  ['id="budget"', true],
+  ['id="wo"', true],
+  ['id="sync"', !!data.health.sync],
+  ['id="size"', data.health.sizes.length > 0],
+  ['id="contract"', data.health.contracts.contracts > 0],
+  ['id="norm"', data.health.norms.total > 0],
+  ['id="plane"', true],
+];
+check('합성: 개요 섹션은 원자료 유무를 따른다',
+  OV_SECTIONS.every(([sel, want]) => ovHtml.includes(sel) === want));
+check('합성: 항상 있는 4섹션', ['id="health"', 'id="budget"', 'id="wo"', 'id="plane"'].every(s => ovHtml.includes(s)));
 check('합성: 개요가 계보 트리 보유', ovHtml.includes('계보 트리 — 구조가 있는 노드') && ovHtml.includes('class="flt"'));
 check('합성: 개요 당위 카드에서 arch 진입 링크', ovHtml.includes('data-nav="arch"'));
 // 뷰 라우팅 — **CSS가 정본이고 JS는 해시 북마크만** (스크립트를 실행하지 않는 뷰어 대비).
-check('라우팅: 뷰 4개 + data-nav 7개(나브 4 + 카드 3)', (html.match(/class="view"/g) || []).length === 4
-  && (html.match(/data-nav="/g) || []).length === 7);
+check('라우팅: 뷰 = VIEWS + data-nav = 나브 + 카드 링크 3',
+  (html.match(/class="view"/g) || []).length === VIEWS.length
+  && (html.match(/data-nav="/g) || []).length === VIEWS.length + 3);
 check('합성: 시간축 뷰가 실원장을 잡는다', html.includes('data-view="time"') && html.includes('결정 밀도'));
 check('합성: 신선도 카드에서 time 진입 링크', ovHtml.includes('data-nav="time"'));
 check('합성: 스프린트 뷰가 실 WO·HANDOFF 를 잡는다',
@@ -250,14 +362,15 @@ check('라우팅: 무JS — 축마다 :checked 전환 규칙',
 check('라우팅: 무JS — 라디오가 nav·main 앞(형제 선택자 성립)',
   html.indexOf('id="v-overview"') < html.indexOf('<nav>')
   && html.indexOf('id="v-time"') < html.indexOf('<main>'));
-check('라우팅: 진입점 7개 전부 라벨(앵커 0 — JS 없이도 눌린다)',
-  (html.match(/<label [^>]*for="v-[a-z]+"/g) || []).length === 7
+check('라우팅: 진입점 전부 라벨(앵커 0 — JS 없이도 눌린다)',
+  (html.match(/<label [^>]*for="v-[a-z]+"/g) || []).length === VIEWS.length + 3
   && !/<a [^>]*data-nav=/.test(html));
 check('라우팅: JS는 해시 북마크만(전환 로직 아님)',
   html.includes('history.replaceState') && html.includes("addEventListener('hashchange'")
   && !html.includes("addEventListener('click'"));
 check('합성: 당위 뷰가 실규범을 잡는다', html.includes('ARCH-00') && html.includes('verification 첫 화살표'));
-check('합성: 계약 절이 health 원자료를 소비', html.includes('계약 간선 — 계보 밖 소비자'));
+check('합성: 계약 절이 health 원자료를 소비',
+  html.includes('계약 간선 — 계보 밖 소비자') === (data.health.contracts.contracts > 0));
 // effect surface 는 gitignore 된 .claude/settings*.json 에서 온다 — CI 체크아웃엔 없다.
 // 따라서 "있으면 그린다 / 없으면 조용히 빠진다"가 계약이고, 둘 다 단언한다(무가정 원칙의 연장).
 const effDim = data.health.dims.find(d => d.name === 'effect surface');
@@ -265,7 +378,10 @@ const hasSettings = !!(effDim && effDim.note);
 check('합성: effect 절은 설정 유무를 따른다', html.includes('id="effect"') === hasSettings);
 check('합성: 설정 없으면 health 가 "관측 불가"로 적는다',
   hasSettings || effDim.value.includes('관측 불가'));
-check('합성: 크기 헤드룸이 원장을 잡는다', html.includes('archive_ledger.md'));
+// 크기 절은 상위 N건만 그린다 — 특정 파일명(원장)을 박으면 그 파일이 상위권 밖인 레포에서 깨진다.
+// 계약은 "가장 큰 파일이 거기 있다"이다.
+check('합성: 크기 헤드룸이 최대 파일을 잡는다',
+  !data.health.sizes.length || html.includes(data.health.sizes[0].file));
 check('합성: 신선도 pill', html.includes('class="pills"') && html.includes('evidence'));
 check('합성: health 차원 등장', html.includes('naming gate') && html.includes('effect surface'));
 // WO-10a-1 은 상류 인스턴스의 픽스처 — 채택 인스턴스 평면에는 없을 수 있다.
@@ -278,6 +394,23 @@ if (JSON.stringify(data.sprint && data.sprint.wos || []).includes('WO-10a-1')) {
 check('합성: undefined 누출 0', !html.includes('undefined'));
 check('합성: 자기완결(외부 참조 0)', html.startsWith('<!doctype html>') && !/src=|href="(?!#)/.test(html));
 check('합성: 결정성(같은 입력 → 같은 출력)', render(data, { title: 'real' }) === html);
+
+// 합성 — 제품 축이 실평면에서 렌더되고, 어답터 섹션이 축에 얹힌다
+check('합성: 제품 축 페이지가 있다',
+  html.includes('data-view="product"') && html.includes('로드맵 진행률 — PHASE exit 기준'));
+check('합성: 제품 축은 수집을 새로 하지 않는다(파생만)', !!data.product && Array.isArray(data.product.phases));
+const withSecs = render(data, { title: 'real', sections: [
+  { id: 'kpi', title: '제품 KPI', axis: 'product', render: () => '<div class="meta">kpi</div>' },
+  { id: 'ops', title: '운영', axis: 'ops', axisLabel: '운영축', render: () => '<div class="meta">ops</div>' },
+] });
+check('합성: 어답터 섹션이 기존 축에 덧붙는다',
+  withSecs.slice(withSecs.indexOf('class="view" data-view="product"'), withSecs.indexOf('class="view" data-view="arch"')).includes('id="kpi"'));
+check('합성: 새 축은 나브·라디오·CSS 규칙을 함께 얻는다',
+  withSecs.includes('id="v-ops"') && withSecs.includes('운영축')
+  && withSecs.includes('#v-ops:checked ~ main .view[data-view="ops"] { display:block; }'));
+check('합성: 어답터 섹션은 기본 축을 건드리지 않는다',
+  withSecs.replace(/\n<section class="card" id="(kpi|ops)">[\s\S]*?<\/section>/g, '')
+    .includes('data-view="overview"'));
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
