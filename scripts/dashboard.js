@@ -116,7 +116,7 @@ function syncSection(sync, today) {
     return `<span class="pill${cls}" title="${esc(p.last)}">${esc(p.name)}<b>${n === null ? esc(p.last) : n === 0 ? '오늘' : n + '일'}</b></span>`;
   };
   const dead = sync.planes.filter(p => !p.last).length;
-  return `<section class="card" id="sync"><h2>평면 신선도 — 마지막 기입<a class="more" data-nav="time" href="#/time">자세히 →</a></h2>
+  return `<section class="card" id="sync"><h2>평면 신선도 — 마지막 기입<label class="more" data-nav="time" for="v-time">자세히 →</label></h2>
   <div class="meta">ledger ${sync.ledgerEntries} entries · last ${esc(sync.ledgerLast || '무기입')}`
     + `${dead ? ` · <span class="bad">무기입 ${dead}면</span>` : ''}</div>
   <div class="pills">${sync.planes.map(pill).join('')}</div></section>`;
@@ -361,7 +361,7 @@ function normCard(norms, sync, concerns) {
     ? Object.entries(concerns.byTag).map(([t, n]) => `<span class="pill fresh">${esc(t)}<b>${n}</b></span>`).join('')
     : `<span class="pill dead">concern 태그<b>사용 0</b></span>`;
   return `<section class="card" id="norm"><h2>당위 축 — 규범과 그 집행
-    <a class="more" data-nav="arch" href="#/arch">자세히 →</a></h2>
+    <label class="more" data-nav="arch" for="v-arch">자세히 →</label></h2>
   <div class="meta">규범 ${norms.total} · 게이트 ${norms.gated} · 인용만 ${norms.cited}`
     + `${norms.isolated ? ` · <span class="bad">고립 ${norms.isolated}</span>` : ''}`
     + `${verified === 0 ? ` · <span class="bad">대조된 적 없음</span>` : ''}</div>
@@ -469,13 +469,13 @@ function worktableSection(wos) {
   const act = wos.filter(w => !w.malformed && ACTIVE.has(w.status));
   const bad = wos.filter(w => w.malformed);
   if (!act.length && !bad.length) {
-    return `<section class="card" id="wo"><h2>작업대 — 활성 WO<a class="more" data-nav="sprint" href="#/sprint">자세히 →</a></h2><div class="meta">활성 WO 없음</div></section>`;
+    return `<section class="card" id="wo"><h2>작업대 — 활성 WO<label class="more" data-nav="sprint" for="v-sprint">자세히 →</label></h2><div class="meta">활성 WO 없음</div></section>`;
   }
   const tr = w => `<tr><td class="nm">[WO-${w.id}]</td><td>${esc(w.title || '')}</td>`
     + `<td>${esc(w.parent || '')}</td><td>${esc(w.status || '')}</td><td class="note">${esc(w.evidence || '')}</td></tr>`;
   const warn = bad.length
     ? `<div class="meta bad">frontmatter 없는 WO ${bad.length}건: ${bad.map(w => esc(w.file)).join(' ')}</div>` : '';
-  return `<section class="card" id="wo"><h2>작업대 — 활성 WO<a class="more" data-nav="sprint" href="#/sprint">자세히 →</a></h2>${warn}
+  return `<section class="card" id="wo"><h2>작업대 — 활성 WO<label class="more" data-nav="sprint" for="v-sprint">자세히 →</label></h2>${warn}
   <table class="tbl"><tr class="th"><td>WO</td><td>제목</td><td>부모</td><td>상태</td><td>증거</td></tr>
   ${act.map(tr).join('\n')}</table></section>`;
 }
@@ -489,12 +489,11 @@ const DASH_CSS = `
         border-bottom:1px solid var(--line); padding:12px 24px; display:flex; gap:18px;
         align-items:baseline; z-index:2; }
   nav b { font-size:14px; margin-right:auto; }
-  nav a { color:var(--muted); text-decoration:none; font-size:12.5px; padding:4px 10px;
-          border-radius:6px; }
-  nav a:hover { color:var(--ink); background:#f1f2f4; }
-  nav a.on { color:#fff; background:#2a78d6; font-weight:600; }
-  .view[hidden] { display:none; }
-  .more { margin-left:auto; font-size:11.5px; font-weight:400; color:#2a78d6; text-decoration:none; }
+  nav label { color:var(--muted); font-size:12.5px; padding:4px 10px;
+              border-radius:6px; cursor:pointer; user-select:none; }
+  nav label:hover { color:var(--ink); background:#f1f2f4; }
+  .more { margin-left:auto; font-size:11.5px; font-weight:400; color:#2a78d6;
+          text-decoration:none; cursor:pointer; user-select:none; }
   .more:hover { text-decoration:underline; }
   .card > h2 { display:flex; align-items:baseline; gap:10px; }
   .card.norm > h2 { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;
@@ -610,47 +609,50 @@ ${effectSection(effectDim)}
     sprint: sprintView(data.sprint, today),
     time: timeView(data.time, today),
   };
+  // 라디오는 nav·main **앞**에 와야 한다(`~`는 뒤따르는 형제만 고른다). 첫 뷰가 checked.
   return `<!doctype html>
 <meta charset="utf-8">
 <title>dashboard — ${esc(title)}</title>
-<style>${PLANE_CSS}${DASH_CSS}</style>
+<style>${PLANE_CSS}${DASH_CSS}${ROUTER_CSS}</style>
+${VIEWS.map((v, i) => `<input class="vsel" type="radio" name="v" id="v-${v.id}"${i ? '' : ' checked'}>`).join('\n')}
 <nav><b>${esc(title)}</b>
-  ${VIEWS.map(v => `<a href="#/${v.id}" data-nav="${v.id}">${esc(v.label)}</a>`).join('')}</nav>
+  ${VIEWS.map(v => `<label for="v-${v.id}" data-nav="${v.id}">${esc(v.label)}</label>`).join('')}</nav>
 <main>
-${VIEWS.map(v => `<div class="view" data-view="${v.id}" hidden>\n${body[v.id] || ''}\n</div>`).join('\n')}
+${VIEWS.map(v => `<div class="view" data-view="${v.id}">\n${body[v.id] || ''}\n</div>`).join('\n')}
 </main>
 <script>${ROUTER_JS}${FILTER_JS}</script>
 `;
 }
 
-// 뷰 라우터 — 축 하나 = 페이지 하나.
-// **클릭이 정본이고 해시는 부가다.** 해시만으로 전환하면 `data:` URL 임베드처럼 해시가 유지되지 않는
-// 뷰어에서 첫 뷰에 갇혀 나머지 축에 영영 도달할 수 없다(실측: 프리뷰 패널에서 재현).
-// 그래서 클릭으로 직접 전환하고, 해시는 지원되는 환경에서만 북마크·뒤로가기를 얹는 보너스로 둔다.
+// 뷰 라우터 — 축 하나 = 페이지 하나. **CSS가 정본이고 JS는 부가다.**
+// 전환을 JS에 걸면 스크립트를 실행하지 않는 뷰어(파일 미리보기 패널)에서 첫 뷰에 갇혀 나머지 축에
+// 영영 도달할 수 없다(실측 2회: 전 뷰 hidden → 빈 화면, 이어서 클릭 핸들러 → 전환 불가).
+// 그래서 전환은 라디오 `:checked ~` 형제 선택자로 스크립트 0에서 성립시키고, JS는 해시 북마크만 얹는다.
+// CSS까지 죽은 환경에서는 전 뷰가 세로로 쌓여 **내용은 여전히 읽힌다**(빈 화면으로 죽지 않는다).
+const ROUTER_CSS = `
+  .vsel { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
+  .view { display:none; }
+${VIEWS.map(v => `  #v-${v.id}:checked ~ main .view[data-view="${v.id}"] { display:block; }
+  #v-${v.id}:checked ~ nav label[for="v-${v.id}"] { color:#fff; background:#2a78d6; font-weight:600; }`).join('\n')}
+`;
+
 const ROUTER_JS = `
 (function () {
-  const views = [...document.querySelectorAll('.view')];
-  const navs = [...document.querySelectorAll('nav a[data-nav]')];
-  const links = [...document.querySelectorAll('a[data-nav]')]; // 나브 + 카드 안 "자세히 →" 링크
-  if (!views.length) return;
-  function show(want) {
-    const hit = views.some(v => v.dataset.view === want) ? want : views[0].dataset.view;
-    views.forEach(v => { v.hidden = v.dataset.view !== hit; });
-    navs.forEach(a => a.classList.toggle('on', a.dataset.nav === hit));
-    document.title = document.title.split(' — ')[0] + ' — ' + hit;
+  const sels = [...document.querySelectorAll('.vsel')];
+  if (!sels.length) return;
+  const idOf = el => el.id.slice(2);
+  const fromHash = () => (location.hash || '').slice(0, 2) === '#/' ? location.hash.slice(2) : '';
+  function pick(want) {
+    const hit = sels.find(s => idOf(s) === want);
+    if (hit) hit.checked = true;
+  }
+  sels.forEach(s => s.addEventListener('change', () => {
+    if (!s.checked) return;
+    try { history.replaceState(null, '', '#/' + idOf(s)); } catch (_) { /* data: URL 등 — 무시 */ }
     scrollTo(0, 0);
-  }
-  function fromHash() {
-    const h = location.hash || '';
-    return h.slice(0, 2) === '#/' ? h.slice(2) : '';
-  }
-  links.forEach(a => a.addEventListener('click', e => {
-    e.preventDefault();
-    show(a.dataset.nav);
-    try { history.replaceState(null, '', '#/' + a.dataset.nav); } catch (_) { /* data: URL 등 — 무시 */ }
   }));
-  addEventListener('hashchange', () => show(fromHash()));
-  show(fromHash());
+  addEventListener('hashchange', () => pick(fromHash()));
+  pick(fromHash());
 })();
 `;
 

@@ -223,12 +223,14 @@ const data = gatherAll();
 const html = render(data, { title: 'real' });
 // 항상 있는 6절. `effect`는 **환경 의존**이라 여기 넣지 않는다 — 근거는 아래 조건부 단언.
 // 개요는 기존 대시보드 정보를 전부 유지한다(요약 카드·계보 트리 포함) — 축 페이지는 *추가* 진입.
-const ovHtml = html.slice(html.indexOf('data-view="overview"'), html.indexOf('data-view="arch"'));
+// 슬라이스는 **뷰 div**에 고정한다 — `data-view=` 단독으로는 라우터 CSS 규칙이 먼저 잡혀 빈 구간이 된다.
+const ovHtml = html.slice(html.indexOf('class="view" data-view="overview"'),
+  html.indexOf('class="view" data-view="arch"'));
 check('합성: 개요의 9섹션 전부',
   ['id="health"', 'id="budget"', 'id="wo"', 'id="sync"', 'id="size"', 'id="contract"', 'id="norm"', 'id="plane"'].every(s => ovHtml.includes(s)));
 check('합성: 개요가 계보 트리 보유', ovHtml.includes('계보 트리 — 구조가 있는 노드') && ovHtml.includes('class="flt"'));
 check('합성: 개요 당위 카드에서 arch 진입 링크', ovHtml.includes('data-nav="arch"'));
-// 뷰 라우팅 — 클릭이 정본이고 해시는 부가(data: URL 뷰어 대비).
+// 뷰 라우팅 — **CSS가 정본이고 JS는 해시 북마크만** (스크립트를 실행하지 않는 뷰어 대비).
 check('라우팅: 뷰 4개 + data-nav 7개(나브 4 + 카드 3)', (html.match(/class="view"/g) || []).length === 4
   && (html.match(/data-nav="/g) || []).length === 7);
 check('합성: 시간축 뷰가 실원장을 잡는다', html.includes('data-view="time"') && html.includes('결정 밀도'));
@@ -236,8 +238,24 @@ check('합성: 신선도 카드에서 time 진입 링크', ovHtml.includes('data
 check('합성: 스프린트 뷰가 실 WO·HANDOFF 를 잡는다',
   html.includes('data-view="sprint"') && html.includes('HANDOFF — 세션 이어달리기'));
 check('합성: 작업대 카드에서 sprint 진입 링크', ovHtml.includes('data-nav="sprint"'));
-check('라우팅: 클릭 핸들러가 있다(해시 미지원 뷰어 대비)', html.includes("addEventListener('click'"));
-check('라우팅: 해시는 부가로만', html.includes('history.replaceState'));
+// 성패 판정: **스크립트 0으로 축 전환이 성립한다.** 라디오 4개(첫 뷰만 checked) + 축마다
+// `:checked ~ main` 규칙 + 진입점 전부가 라벨이어야 한다. 하나라도 빠지면 미리보기 패널에서 갇힌다.
+check('라우팅: 무JS — 라디오 4개, 개요만 checked',
+  (html.match(/class="vsel" type="radio" name="v" id="v-[a-z]+"/g) || []).length === VIEWS.length
+  && (html.match(/ checked>/g) || []).length === 1
+  && html.includes('id="v-overview" checked>'));
+check('라우팅: 무JS — 축마다 :checked 전환 규칙',
+  VIEWS.every(v => html.includes(`#v-${v.id}:checked ~ main .view[data-view="${v.id}"] { display:block; }`)
+    && html.includes(`#v-${v.id}:checked ~ nav label[for="v-${v.id}"]`)));
+check('라우팅: 무JS — 라디오가 nav·main 앞(형제 선택자 성립)',
+  html.indexOf('id="v-overview"') < html.indexOf('<nav>')
+  && html.indexOf('id="v-time"') < html.indexOf('<main>'));
+check('라우팅: 진입점 7개 전부 라벨(앵커 0 — JS 없이도 눌린다)',
+  (html.match(/<label [^>]*for="v-[a-z]+"/g) || []).length === 7
+  && !/<a [^>]*data-nav=/.test(html));
+check('라우팅: JS는 해시 북마크만(전환 로직 아님)',
+  html.includes('history.replaceState') && html.includes("addEventListener('hashchange'")
+  && !html.includes("addEventListener('click'"));
 check('합성: 당위 뷰가 실규범을 잡는다', html.includes('ARCH-00') && html.includes('verification 첫 화살표'));
 check('합성: 계약 절이 health 원자료를 소비', html.includes('계약 간선 — 계보 밖 소비자'));
 // effect surface 는 gitignore 된 .claude/settings*.json 에서 온다 — CI 체크아웃엔 없다.
@@ -250,7 +268,12 @@ check('합성: 설정 없으면 health 가 "관측 불가"로 적는다',
 check('합성: 크기 헤드룸이 원장을 잡는다', html.includes('archive_ledger.md'));
 check('합성: 신선도 pill', html.includes('class="pills"') && html.includes('evidence'));
 check('합성: health 차원 등장', html.includes('naming gate') && html.includes('effect surface'));
-check('합성: 활성 WO 등장', html.includes('[WO-10a-1]'));
+// WO-10a-1 은 상류 인스턴스의 픽스처 — 채택 인스턴스 평면에는 없을 수 있다.
+if (JSON.stringify(data.sprint && data.sprint.wos || []).includes('WO-10a-1')) {
+  check('합성: 활성 WO 등장', html.includes('[WO-10a-1]'));
+} else {
+  console.log('(WO-10a-1 없음: 채택 인스턴스 — 픽스처 검사 건너뜀)');
+}
 
 check('합성: undefined 누출 0', !html.includes('undefined'));
 check('합성: 자기완결(외부 참조 0)', html.startsWith('<!doctype html>') && !/src=|href="(?!#)/.test(html));
