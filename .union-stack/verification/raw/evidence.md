@@ -23,3 +23,4 @@
 - [2026-08-20][EVD-ci] gates green @ 3482e25 (run 32345571003) — naming·history·permission·handoff·tests·health
 - [2026-08-20][EVD-ci] gates green @ 8aa355d (run 32347748396) — naming·history·permission·handoff·tests·health
 - [2026-08-20][EVD-ci] gates green @ 137d8a8 (run 32349669542) — naming·history·permission·handoff·tests·health·adopter-arm
+- [2026-08-20][EVD-ci] gates green @ bcd6777 (run 32350565766) — naming·history·permission·handoff·tests·health·adopter-arm
