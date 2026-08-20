@@ -43,12 +43,16 @@ jobs:
         run: npm test
       - name: Health scorecard (gate status + structural metrics)
         run: node scripts/health.js
+      - name: Adopter arm (PRO-17 — 같은 게이트를 다른 형상에서 한 번 더)
+        # 상류는 자기 형상만 돈다([LSN-17]). 사본에 ①init 적용(env) ②평면 데이터 모양 교체(data)
+        # 를 걸고 기존 도구를 그대로 돌린다 — 새 게이트가 아니라 같은 게이트의 두 번째 실행이다.
+        run: node scripts/adopter-arm.js
       - name: Append gate evidence to Raw plane (PRO-11 — "시스템만 Append"의 이행)
         # 게이트 전부 그린으로 여기 도달했을 때만 실행된다. [skip ci]로 자기 재트리거 방지.
         if: github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
         run: |
           SHORT=$(git rev-parse --short "${{ github.sha }}")
-          echo "- [$(date -u +%F)][EVD-ci] gates green @ ${SHORT} (run ${{ github.run_id }}) — naming·history·permission·handoff·tests·health" >> .union-stack/verification/raw/evidence.md
+          echo "- [$(date -u +%F)][EVD-ci] gates green @ ${SHORT} (run ${{ github.run_id }}) — naming·history·permission·handoff·tests·health·adopter-arm" >> .union-stack/verification/raw/evidence.md
           git config user.name 'harness-ci'
           git config user.email 'actions@users.noreply.github.com'
           git add .union-stack/verification/raw/evidence.md

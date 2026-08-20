@@ -169,4 +169,5 @@ this file only pins the deterministic core. The detail lives in the structure.
 - **[TOOL-23]** work-close (작업 종료 의례 — 진입 의례의 거울) — WO를 닫을 때 상위 축 흔적(`closed_by`)과 증거(`evidence`)를 검사해 미충족을 CLARIFY로 표면화하고, `sprint/next.md` 작업대 뷰를 WO 문서에서 재생성한다([PRO-15]). (`scripts/work-close.js`)
 - **[TOOL-24]** lineage-tree (계보 트리 렌더러) — 평면 전체를 루만 계보 포레스트로 그려 자기완결 HTML 1장으로 낸다. 큰/낯선 평면에서의 (`scripts/lineage-tree.js`)
 - **[TOOL-25]** dashboard (평면 대시보드 — 관측 표면 합성) — 관측 표면을 자기완결 HTML 1장으로 **합성**한다. **개요는 전체 대시보드 그대로**이고(요약 카드·계보 (`scripts/dashboard.js`)
+- **[TOOL-26]** 어답터 팔 (같은 게이트를 다른 형상에서 한 번 더) — 사본을 만들어 **형상을 바꾼 뒤 기존 도구를 그대로 돌린다**([PRO-17]). 새 게이트가 아니라 같은 (`scripts/adopter-arm.js`)
 <!-- tools-index:end -->

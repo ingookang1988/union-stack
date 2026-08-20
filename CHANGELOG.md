@@ -12,6 +12,23 @@ design, see [`DESIGN_RATIONALE.md`](./DESIGN_RATIONALE.md). Entries marked **⚠
 action in already-adopted projects.
 
 ## [Unreleased]
+- **PRO-17 / ADR-40 — adopter arm: the same gates, run once more in a different shape.**
+  Upstream only ever runs its own shape, so a fact that is only true in another shape is observed
+  nowhere — eight measured defects across three axes ([LSN-17]). `scripts/adopter-arm.js` (**TOOL-26**)
+  makes a copy, changes the shape, and runs the **existing** tools; it is a second execution, not a new
+  gate, so the logic stays single-sourced. Two axes:
+  `env` (a real `init --apply --drop-template-bits` copy → suite failures 0 · no upstream ADRs left ·
+  `health` exit 0 · JS-less reachability) and **`data`** (plane *content shape* only — 13 per-zone tables
+  with non-English headers, a `**title — subtitle**` ledger convention, heading-form HISTORY, wrapped
+  bold — → no crashes · zero raw markdown markers in the rendered body · live and HISTORY counts exact).
+  The `data` axis is new: PRO-17 §5 deferred a shape matrix until "a real adopter breaks after the single
+  shape passes", and ADR-31/ADR-37 were exactly that. Every bar was **proven to bite** against the
+  pre-fix code before being wired (118 markers · 65 vs 52 rows · 0 turning points · 24 residual ADRs).
+  Wired as one CI step. No migration — adopters get a stronger upstream, not a new obligation.
+- **ADR-41 — `prose` converts inline markup over the whole text, not per line.** Plane prose wraps at
+  ~100 chars, so bold spanning a wrapped line is common; per-line conversion split the pair and the safe
+  fallback exposed the raw markers. Bold may now cross a newline but not a blank line (a paragraph
+  boundary), so one unmatched marker cannot swallow half a document.
 - **⚠ PRO-18 / ADR-36 — ledger rotation: append-only now protects *entries*, not *lines*.**
   `archive_ledger.md` only grows, and the rotation protocol `DESIGN_RATIONALE` §7 has declared since
   v5.11 was **unexecutable** — rotation moves lines out, and `permission-guard` Check A rejected any

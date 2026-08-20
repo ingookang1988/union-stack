@@ -18,11 +18,10 @@
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
-const { walkFiles } = require('./fs_walk');
+const { walkFiles, copyTree } = require('./fs_walk');
 
 const ROOT = path.resolve(__dirname, '..');
 const SUITE = path.join(ROOT, 'eval', 'e6-suite', 'defects.js');
-const SKIP_DIRS = new Set(['.git', 'node_modules']);
 
 const defects = () => require(SUITE);
 const byId = id => defects().find(d => d.id === String(id).toUpperCase());
@@ -64,18 +63,6 @@ function stripCheck(txt, label) {
   }
   lines.splice(start, end - start + 1);
   return lines.join('\n');
-}
-
-// --- 파일 트리 사본 ---------------------------------------------------------
-function copyTree(src, dest) {
-  let n = 0;
-  walkFiles(src, '', rel => {
-    const to = path.join(dest, rel);
-    fs.mkdirSync(path.dirname(to), { recursive: true });
-    fs.copyFileSync(path.join(src, rel), to);
-    n++;
-  }, { skipDir: name => SKIP_DIRS.has(name) });
-  return n;
 }
 
 function editFile(dest, rel, fn) {

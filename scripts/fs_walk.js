@@ -30,6 +30,26 @@ function walkFiles(root, relDir, onFile, opts = {}) {
   }
 }
 
+// 사본에서 제외하는 디렉터리 — .git 는 워크스페이스가 자기 이력을 갖게 하려는 도구가 따로 만들고,
+// node_modules 는 재생성 가능하다.
+const SKIP_DIRS = new Set(['.git', 'node_modules']);
+
+/**
+ * 트리 사본(파일 수 반환). **다른 형상에서 돌려 보려면 먼저 사본이 필요하다** — 원본을 건드리지
+ * 않고 형상을 바꾸는 것이 [LSN-17] 계열 검증의 전제라, 사본 로직을 한 벌로 모은다
+ * (`e6-workspace` 의 결함 주입 워크스페이스와 `adopter-arm` 의 형상 팔이 같은 것을 쓴다).
+ */
+function copyTree(src, dest, opts = {}) {
+  let n = 0;
+  walkFiles(src, '', rel => {
+    const to = path.join(dest, rel);
+    fs.mkdirSync(path.dirname(to), { recursive: true });
+    fs.copyFileSync(path.join(src, rel), to);
+    n++;
+  }, { skipDir: name => SKIP_DIRS.has(name) || (opts.skipDir && opts.skipDir(name)) });
+  return n;
+}
+
 /** 편의: 조건에 맞는 상대경로 목록을 모아 반환. */
 function collectFiles(root, relDir, filter = () => true, opts = {}) {
   const out = [];
@@ -37,4 +57,4 @@ function collectFiles(root, relDir, filter = () => true, opts = {}) {
   return out;
 }
 
-module.exports = { walkFiles, collectFiles };
+module.exports = { walkFiles, collectFiles, copyTree, SKIP_DIRS };
