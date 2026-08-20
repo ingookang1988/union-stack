@@ -1,60 +1,58 @@
 <!-- [Wiki] 세션 이어달리기. 세션을 마치는 에이전트가 덮어쓴다. 최신 하나만 유효.
      다음 세션 부트스트랩 시 가장 먼저 읽힘. -->
 ---
-session_id: contract-consumer-edge-2026-08-19
-date: 2026-08-19T00:00:00Z
+session_id: adopter-blindspot-2026-08-20
+date: 2026-08-20T00:00:00Z
 author: agent
-verification: "34스위트 중 32 통과 · 2 실패(미커밋 fdt_canon 귀속) · lint 7종 통과 · query 23 + zfs_index 17단언"
+verification: "34스위트 중 32 통과(기존 실패 2 동일 · 미커밋 fdt 귀속) · lint 7종 통과 · 어답터 모드 재현 32/32 통과 · main 푸시(857002c)"
 version: 1.0
 ---
 
 # Handoff → 다음 세션
 
 ## 1. 세션 요약 (1~3줄)
-- **[PRO-16] 계약의 계보 밖 간선** — "계약이 축인가" 물음에 [PRO-04] 분할원리를 적용해 **기둥은 기각**하고
-  (CON이 이미 계약×상태 칸), 실측된 구조 공백 둘을 닫았다. 계약은 격자에서 **유일하게 트리가 아니라
-  그래프인 자산**이다 — 포함관계 아닌 당사자끼리 공유되므로 소비자는 늘 다른 계보에 산다.
-- 이어 **축별 세부 페이지 설계 착수 — 당위(ARCH)부터**. 목록이 아니라 "규범이 무엇이고 지켜지는지
-  누가 보는가"를 낸다(이 축의 짝은 verification 첫 화살표). 부수: [TOOL-24]·[TOOL-25] 상륙.
+- **어답터 보고에서 결함 3건이 한꺼번에 나왔고 셋 다 상류에서는 초록이었다.** 공통 원인 하나 —
+  상류는 자기 인스턴스에서만 돌고 어답터 형상은 어디서도 실행되지 않는다([ADR-26]·[ADR-27]·[ADR-28]).
+- 가장 무거운 건 [ADR-26]: **단언이 1차 수리를 통과시켰다.** 테스트 환경(스크립트 실행됨)이 배송
+  환경(실행 안 됨)과 달랐다 — [ADR-07] 계열(계측기 자기 눈멂)의 **환경 축** 사례.
+- 구조로 닫는 제안을 올렸다: [PRO-17] 어답터 팔(승인 대기, 효력 0).
+
 ## 2. 변경 위치 (ID 목록 — Upward Fetching 진입점)
-- 규칙: `[PRO-16]` 계약 소비자 간선 + FLOW/CON 경계 판별식 · `[ADR-25]` ID 공간 · `[ADR-24]` 행 정본
-- 코드: `zfs_index.parseConsumers` 신설 · `query.blastRadius`가 **계보 자손 ∪ 선언된 소비자·그 자손**을
-  영향권으로 냄(잠금 검사도 합집합 위) · `blast-radius` CLI가 간선 출처와 미해소 소비자를 표기
-- 평면: `contracts/_GUIDE`·`feature/_GUIDE`에 판별식(GRANT-02) · `CON-00`에 동작 예시(계보 00→01 횡단)
-  · `CON-01`·`FLOW-01a` 더미 갱신(관찰 대 약속 분리)
-- 도구: `[TOOL-24]` lineage-tree(`npm run tree`) · `[TOOL-25]` dashboard v2.3(개요 전체 유지 + 축 페이지: **당위·스프린트·시간축**,
-  `contract edges`·`norm enforcement` 관측 — health 차원 + 페이지, `npm run dash`)
-- 작업: `[WO-10a-1]` E6 A/B(Draft) — 인간 실행 대기
+- 코드: `dashboard.js` 라우팅 **JS → CSS**(라디오 `:checked ~`, 진입점 7개 `<label>`) ·
+  `health.js`·`ref-linter.js`·`gate-contract.test.js` 누설 가드 **소프트 의존** ·
+  테스트 5건에 어답터 가드(`dashboard`·`lineage-tree`·`tool-linter`·`e6-workspace`·`health`)
+- 평면: `[PRO-17]` 어답터 팔 신설 · `[TOOL-25]` 카드 라우팅 절 갱신 · 원장 `[ADR-26]`·`[ADR-27]`·`[ADR-28]`
+
 ## 3. 다음 작업 (단일 진입점)
-→ **`context-budget.js`에 AGENTS.md 계측 추가** — 상시 주입 파일 중 최대인 AGENTS.md가 예산
-  게이트 밖이다(대상은 project·profile·handoff뿐). 3세션째 이월되는 계측 공백이며 독립적인 소품.
+→ **`context-budget.js`에 AGENTS.md 계측 추가** (전 세션에서 이월 — **4세션째**). 상시 주입 파일 중
+  최대인 AGENTS.md가 예산 게이트 밖이다(대상은 project·profile·handoff뿐).
   주의: AGENTS.md는 예산 3종과 성격이 다르다(분할·압축 불가한 단일 진입 파일) — 상한 신설이 아니라
   **관측 표시**가 먼저인지 [PRO-13]의 예산 문법에 맞춰 판단하고 시작할 것.
+  ⚠ 4세션 체류는 [PRO-13]의 "3세션 생존 = 오라우팅" 기준을 이미 넘었다 — 착수하거나 WO로 승격하거나
+  드롭할지 **먼저 판정**하라. 이월을 한 번 더 하지 말 것.
+
 ## 4. 미해결 / 주의
-- **[PRO-16] 반증 관측**(계기 완비): `health`의 `contract edges` 절과 대시보드 계약 카드가 채택·무결성을
-  본다. 6개월간 어느 *실*계약에도 안 달리면 수요가 없는 것 → 필드 폐기.
-  정당한 계약 편집이 반복 차단되면 자손 포함을 철회하고 선언된 노드만 잠근다([ADR-08] 마찰 논리).
-- **[PRO-16] §4 보류**: 호환성 의미론(breaking/additive·CDC 연동)은 실계약 3건 + 깨진 변경 1회 실측 후.
-  현재 CON 2건이 **둘 다 더미**라 지금 지으면 YAGNI 위반이다.
-- **누설 가드가 약하다(실사례 발생)**: `MARKER`가 본문 어디든 "예시" 한 단어면 통과라, 이번 세션에
-  HANDOFF 문장을 고치자 우연히 있던 마커가 사라져 FAIL이 떴다. 실콘텐츠 판정을 단어 우연에
-  기대는 구조다 — 별건으로 다룰 것(METHODOLOGY 등재 대상 확대 또는 판정 기준 교체).
-- **미커밋 유지**: `ref/`와 `spike/SPIKE-fdt_canon_import_utility_analysis.md`. 공개 여부는 인간 판단.
-  이 파일이 `leakage` FAIL + `ref-linter --strict` 게이팅 + 실패 테스트 2스위트의 원인이다(사본 실증 2회).
+- **[PRO-17] 승인 대기**: 승인 시 `harness.yml` 에 어답터 팔 잡 추가(성공 바 3개는 카드에 명시).
+  기각 시 기각 근거를 PRO-17 에 남길 것 — 삭제 금지(재제안 방지).
+- **인용 공백(별건 후보)**: `ARCH-00` 을 인용하는 게이트가 `leakage-guard` **하나뿐**이다. 실제 네이밍
+  집행자 `zfs-linter` 가 소스에서 ID를 인용하지 않아, 어답터에서 ARCH-00 이 무게이트로 관측된다.
+  `normEnforcement` 의 "인용 ≠ 집행" 경고의 실사례 — 인용을 심을지, 등급 계산을 바꿀지 판단 필요.
+- **누설 가드가 약하다(전 세션 이월)**: `MARKER` 가 본문 어디든 "예시" 한 단어면 통과다. 이번 세션의
+  [ADR-28]은 *의존 구조*만 고쳤고 **판정 기준은 손대지 않았다** — 별건으로 남아 있다.
+- **원장 크기 29/30KB**: [ADR-26~28] 3건으로 27→29KB. 상한 근접이라 다음 ADR 전에 로테이션·분할을
+  판단해야 한다(크기 헤드룸 절이 트립와이어).
+- **미커밋 유지**: `ref/` 와 `spike/SPIKE-fdt_canon_import_utility_analysis.md`. 공개 여부는 인간 판단.
+  이 파일이 `leakage` FAIL + 실패 테스트 2스위트의 원인이다(기준선과 동일 — 이번 변경과 무관).
 - **[WO-10a-1] 인간 대기**: E6 10런은 top-level 세션 필요. 에이전트가 세션 내 실행 불가.
-- **[PRO-04] `concern:` 채택 관측**: 승인 후 **사용 0**. 당위 절이 계기다 — 6개월 뒤에도 0이면
-  오버레이 자체의 수요를 재검토할 것(`consumers:`와 같은 문법).
-- **규범↔현실 화살표 미발사**: `gap`·`state` 무기입이라 규범 3건 중 **0건이 현실과 대조된 적 없다**.
-  당위 절이 이를 표면화한다. verification 평면을 살릴지는 별도 판단.
-- **축 페이지 보류 2건(기각 아님)**: 계약(CON) 축은 실계약 3건+ 또는 간선 10건+, 기획(PLAN) 축은
-  PLAN ≥ 5 에서 착수 — 재개 조건·내용 후보는 [TOOL-25] 카드 "예정 축" 절이 정본. 여기 복제 금지.
-- **관측 지표 셋**: `tier distribution` `draft:` 0 이탈 · `effect surface` deny 0·ask 0([ADR-23]) ·
-  [ADR-25] 재개 조건은 `lock exposure`가 트립와이어 · 크기 헤드룸에서 `archive_ledger` 27/30KB.
+- **[PRO-16] 반증 관측**: `consumers:` 가 6개월간 어느 *실*계약에도 안 달리면 필드 폐기(계기 완비).
+- **[PRO-04] `concern:` 채택 관측**: 승인 후 **사용 0**. 6개월 뒤에도 0이면 오버레이 수요 재검토.
 - 재제안 금지 목록은 **AGENTS.md의 `blocks-index` 블록**이 소유한다 — 여기 복제하지 말 것([ADR-18]).
+
 ## 5. 검증 상태
-- 테스트 **34스위트 중 32 통과 · 2 실패**(`leakage-guard`·`ref-linter` — 미커밋 fdt 귀속).
-  신규: `query.test.js` 39단언 · `dashboard.test.js` 102단언(당위 14 + 스프린트 15 + 시간축 12) · parseLedger·parseEntries 신설(각 정본에) · `health.test.js` 33단언 ·
-  `zfs_index.test.js` 17단언(consumers 파싱 5건).
-- lint 7종 통과 · `permission-guard --strict` 범위 통과 · 부트스트랩 1967/4000 tok.
-- 실동작 확인: `node scripts/blast-radius.js CON-00` → 계보 `00`에서 계보 `01`의 소비자 5건을 영향권에
-  포함(더미 예시 기준). 같은 계보 소비자는 간선이 무의미하다는 것도 실측 확인.
+- **상류 정상 모드**: 34스위트 중 32 통과 · 2 실패(`leakage-guard`·`ref-linter` — 미커밋 fdt 귀속,
+  **기준선과 동일**). lint 7종 통과. 부트스트랩 2476/4000 tok.
+- **어답터 모드 재현**(template bits 4건 제거): 32스위트 **전부 통과** · `health.js` 게이트 전부 통과
+  (크래시 0, leakage = `INFO 해당 없음`) · `ref-linter`·`gate-contract` 정상.
+- **실동작 확인**: 스크립트 제거 사본(`hasScript:false`)에서 진입점 7개(나브 4 + 카드 3) **전부 전환**.
+  JS 있을 때 `#/sprint` 진입·클릭 시 해시 동기화·계보 필터 무회귀(57→24 문서).
+- `main` 푸시 완료: `944a118..857002c` (커밋 4건).
