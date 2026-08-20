@@ -38,6 +38,45 @@ const PARTS = [
 ];
 // '— 해당 없음' 명시(SPIKE C6)는 별도 토큰 검사가 필요 없다 — 명시하면 부가 비지 않아 통과한다.
 
+/**
+ * 본문 → `## ` 절 배열(순수). frontmatter·선두 주석은 헤더가 아니므로 자연히 제외된다.
+ * 분해 규칙의 정본은 이 함수 하나다 — 소비자(대시보드 제품 축이 §3 다음 작업·§4 미결을 읽는다)가
+ * 자기 파서를 따로 두면 5부 규약이 두 벌이 되어 조용히 갈라진다.
+ */
+function parseSections(text) {
+  const sections = [];
+  let cur = null;
+  for (const l of String(text || '').split(/\r?\n/)) {
+    const h = l.match(/^##\s+(.+)/);
+    if (h) { cur = { header: h[1], body: [] }; sections.push(cur); }
+    else if (cur) cur.body.push(l);
+  }
+  return sections;
+}
+
+/**
+ * 절 → 5부 배정(순수). `{key: section|null}`.
+ *
+ * 키워드 단독 매칭은 오배정한다(실측): §2 "변경 위치 (ID 목록 — Upward Fetching **진입점**)" 이
+ * `next` 의 `/진입/` 에 먼저 걸려 §3 자리를 차지한다. 존재 여부만 보던 때는 드러나지 않았지만
+ * 본문을 꺼내 쓰는 순간 틀린 절을 준다. 그래서 **문서 순서 그리디**로 배정한다 — 절을 순서대로
+ * 훑으며 아직 배정되지 않은 첫 PART 에 준다. 5부는 순서가 규약이므로 이게 곧 규약의 이행이다.
+ */
+function assignParts(sections) {
+  const out = Object.fromEntries(PARTS.map(p => [p.key, null]));
+  for (const sec of sections) {
+    const p = PARTS.find(x => out[x.key] === null && x.re.test(sec.header));
+    if (p) out[p.key] = sec;
+  }
+  return out;
+}
+
+/** 5부 키(PARTS.key) → 그 부의 본문 텍스트(순수). 없으면 빈 문자열. */
+function partBody(text, key) {
+  const sec = assignParts(parseSections(text))[key];
+  return sec ? sec.body.join('\n').trim() : '';
+}
+
 /** 순수 분석: 본문 → {findings, tokens, budget}. findings는 전부 CLARIFY급. */
 function analyze(text) {
   const findings = [];
@@ -46,17 +85,9 @@ function analyze(text) {
     findings.push({ rule: 'budget', msg:
       `예산 초과 ${tokens}/${BUDGETS.handoff} tok — 자르지 말고 [PRO-13] §3 트리로 라우팅하라(결정→ledger, 반복 함정→lessons, 재도출 가능→버림)` });
   }
-  // 섹션 분해: `## ` 헤더 기준. frontmatter·선두 주석은 헤더가 아니므로 자연히 제외된다.
-  const lines = String(text || '').split(/\r?\n/);
-  const sections = [];
-  let cur = null;
-  for (const l of lines) {
-    const h = l.match(/^##\s+(.+)/);
-    if (h) { cur = { header: h[1], body: [] }; sections.push(cur); }
-    else if (cur) cur.body.push(l);
-  }
+  const assigned = assignParts(parseSections(text));
   for (const p of PARTS) {
-    const sec = sections.find(s => p.re.test(s.header));
+    const sec = assigned[p.key];
     if (!sec) {
       findings.push({ rule: 'part-missing', msg: `5부 누락: "${p.label}" — 없으면 '— 해당 없음'을 명시한 부라도 남겨라` });
       continue;
@@ -87,6 +118,6 @@ function run(argv = process.argv.slice(2)) {
   return OUTCOME.PASS;
 }
 
-module.exports = { analyze, run, CONTRACT, PARTS, HANDOFF_PATH };
+module.exports = { analyze, parseSections, assignParts, partBody, run, CONTRACT, PARTS, HANDOFF_PATH };
 
 if (require.main === module) process.exit(withContract(CONTRACT, run)());
