@@ -1,6 +1,9 @@
 // scripts/ref-linter.test.js
 // 순수 함수(extractRefs, findBroken) 단위 + gather/gatherGating 스모크. 실행: node scripts/ref-linter.test.js
+const fs = require('fs');
+const path = require('path');
 const { extractRefs, findBroken, rowAnchors, ROW_STORES, gather, gatherGating } = require('./ref-linter');
+const { isTemplateRepo } = require('./adapter');
 
 let pass = 0, fail = 0;
 function check(label, cond) { if (cond) pass++; else { fail++; console.error(`FAIL ${label}`); } }
@@ -40,11 +43,22 @@ check('유령 ADR은 여전히 깨짐', findBroken(extractRefs('[ADR-99]'), new 
 // gather/gatherGating smoke (현재 레포 — 배열, 예외 없이)
 const g = gather();
 check('gather returns array', Array.isArray(g));
-// 실재하는 행(ADR-02는 원장 첫 실행)은 더 이상 미해소로 세지 않는다.
-check('gather가 원장 행을 해소', !g.some(x => x.ref === 'ADR-02' || x.ref === 'GRANT-02'));
-// 게이팅 대상은 정화-면제(예시/가이드/방법론) 제외 → 현재 템플릿은 0이어야 한다(strict 통과 보장).
+// 실재하는 행 앵커는 미해소로 세지 않는다. 어느 ID가 실재하는지는 **이 레포의 원장에서 읽는다** —
+// 특정 ID를 박아 두면 원장이 리셋된 어답터(init 직후가 정상)에서 구조적으로 깨진다.
+const rowIds = ROW_STORES.flatMap(s => {
+  let txt = '';
+  try { txt = fs.readFileSync(path.join(__dirname, '..', s.rel), 'utf8'); } catch { return []; }
+  return rowAnchors(txt, s.re);
+});
+if (rowIds.length) check('gather가 원장·GRANTS 행을 해소', !g.some(x => rowIds.includes(x.ref)));
+else console.log('(행 정본 비어 있음: 신선한 어답터 — 앵커 해소 검사 건너뜀)');
+// 게이팅 대상은 정화-면제(예시/가이드/방법론) 제외 → **템플릿은** 0이어야 한다(strict 통과 보장).
+// 어답터에선 0이 불변식이 아니다: 실콘텐츠에 의도된 forward-ref 가 있고, leakage-guard(면제 판정의
+// 정본)가 drop-template-bits 로 사라져 방법론 문서까지 실콘텐츠로 판정되기 때문이다.
 const gg = gatherGating();
-check('gating empty on template', Array.isArray(gg) && gg.length === 0);
+check('gatherGating returns array', Array.isArray(gg));
+if (isTemplateRepo()) check('gating empty on template', gg.length === 0);
+else console.log(`(어답터: 템플릿 청결도 단언 건너뜀 — 게이팅 대상 ${gg.length}건)`);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

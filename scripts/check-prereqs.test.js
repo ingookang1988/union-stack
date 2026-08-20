@@ -22,8 +22,14 @@ check('ID 없음(null) → 검사 생략', checkLineage(null).length === 0);
 // --- 실레포 통합: 템플릿엔 IDENTITY_example + HANDOFF 5부가 있어야 함 ---
 const g = gather();
 check('실레포 부트스트랩 산출물 OK', checkArtifacts(g).length === 0);
+// 계보 전거 검사는 그 계보가 **이 레포에 실재할 때만** 뜻이 있다. 템플릿의 더미 계보(01a)는
+// init 이 지우는 것이 정상 사용이라, ID를 박아 두면 어답터에서 구조적으로 실패한다.
 const g2 = gather(undefined, '01a');
-check('실레포 01a 계보 전거 존재(템플릿 더미)', g2.fetch === null || checkLineage(g2.fetch).length === 0);
+if (g2.fetch && (g2.fetch.context.length || g2.fetch.lessons.length)) {
+  check('실레포 01a 계보 전거 존재(템플릿 더미)', checkLineage(g2.fetch).length === 0);
+} else {
+  console.log('(01a 계보 없음: 어답터 — 더미 계보 검사 건너뜀)');
+}
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
