@@ -13,6 +13,13 @@ check('부정 스코프 없음', findSmells(GOOD.replace('## 언제 쓰지 않�
 check('호출 절 없음', findSmells(GOOD.replace('## 호출', '## 사용')).some(s => s.code === 'no-invocation'));
 check('kind 없음', findSmells(GOOD.replace('kind: script\n', '')).some(s => s.code === 'no-kind'));
 check('비대 카드', findSmells(GOOD + 'x'.repeat(MAX_CHARS)).some(s => s.code === 'bloat'));
+// 판정이 체크아웃 EOL 에 따라 갈리면 안 된다 — 상한 근처 카드가 Windows(CRLF)에서만 REJECT 됐다.
+const padLines = Math.floor((MAX_CHARS - GOOD.length - 10) / 2);
+const nearCap = GOOD + 'x\n'.repeat(padLines); // LF 기준 상한 10자 아래 — CRLF 면 줄수만큼 더 붙는다
+const bloated = t => findSmells(t).some(s => s.code === 'bloat');
+check('상한 근처 카드: LF 통과', !bloated(nearCap));
+check('상한 근처 카드: CRLF 도 같은 판정(개행은 내용이 아니다)',
+  bloated(nearCap.replace(/\n/g, '\r\n')) === bloated(nearCap));
 check('빈 텍스트 = 다중 smell', findSmells('').length >= 3);
 
 // --- 시나리오(kind: scenario) 추가 규율 [PRO-10] ---

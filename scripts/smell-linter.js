@@ -33,7 +33,11 @@ function findSmells(txt, opts = {}) {
   if (!/^##\s*호출\s*$/m.test(t)) s.push({ code: 'no-invocation', msg: '"## 호출" 절 없음(실행 계약 부재)' });
   const fm = t.match(/^(?:\s|<!--[\s\S]*?-->)*---\r?\n([\s\S]*?)\r?\n---/);
   if (!fm || !/^\s*kind:\s*\S/m.test(fm[1])) s.push({ code: 'no-kind', msg: 'frontmatter에 kind: 없음(script|skill|mcp|cli|scenario)' });
-  if (t.length > MAX_CHARS) s.push({ code: 'bloat', msg: `카드 ${t.length}자 > ${MAX_CHARS}자(컨텍스트 비대 — 상세는 impl 쪽 문서로)` });
+  // 크기는 **LF 정규화 후** 잰다. CRLF 작업트리에서는 줄마다 1바이트가 더 붙어, 같은 커밋이
+  // 체크아웃 EOL 에 따라 통과/차단으로 갈린다(실측: 상한 근처 카드가 Windows 에서만 REJECT).
+  // 개행 표현은 컨텍스트 내용이 아니다 — template-update 의 gitBlobShas 와 같은 정규화 문법.
+  const chars = t.replace(/\r\n/g, '\n').length;
+  if (chars > MAX_CHARS) s.push({ code: 'bloat', msg: `카드 ${chars}자 > ${MAX_CHARS}자(컨텍스트 비대 — 상세는 impl 쪽 문서로)` });
 
   if (fm && /^\s*kind:\s*scenario\s*$/m.test(fm[1])) {
     for (const f of SCENARIO_FIELDS) {
