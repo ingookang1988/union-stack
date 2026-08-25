@@ -14,8 +14,13 @@ function check(label, cond) {
 const index = buildIndex();
 const byFileDomain = (domain, id) => index.find(d => d.domain === domain && d.id === id);
 
-// 픽스처 의존 검사는 *템플릿 모드*(더미 예시 존재)에서만. init 후 실제 프로젝트에선 건너뜀.
-const TEMPLATE = !!byFileDomain('PLAN', '01');
+// 픽스처 의존 검사는 *템플릿 모드*에서만. init 후 실제 프로젝트에선 건너뜀.
+// 판별자는 [ADR-30]이 정한 레포 모드 판별(package.json name)을 쓴다. "PLAN-01 이 색인에
+// 있는가"는 판별자가 될 수 없다 — 어답터도 자기 PLAN-01 을 정당하게 갖기 때문이다
+// (실측: 한 어답터에서 픽스처 검사 7건이 자기 문서를 상대로 돌아 실패했다).
+const TEMPLATE = (() => {
+  try { return require('../package.json').name === 'union-stack'; } catch { return false; }
+})();
 if (TEMPLATE) {
   // 각 디렉터리의 대표 예시가 색인에 잡히는가
   check('FLOW-01a 수집', !!byFileDomain('FLOW', '01a'));
