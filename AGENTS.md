@@ -170,4 +170,5 @@ this file only pins the deterministic core. The detail lives in the structure.
 - **[TOOL-24]** lineage-tree (계보 트리 렌더러) — 평면 전체를 루만 계보 포레스트로 그려 자기완결 HTML 1장으로 낸다. 큰/낯선 평면에서의 (`scripts/lineage-tree.js`)
 - **[TOOL-25]** dashboard (평면 대시보드 — 관측 표면 합성) — 관측 표면을 자기완결 HTML 1장으로 **합성**한다. **개요는 전체 대시보드 그대로**이고(요약 카드·계보 (`scripts/dashboard.js`)
 - **[TOOL-26]** 어답터 팔 (같은 게이트를 다른 형상에서 한 번 더) — 사본을 만들어 **형상을 바꾼 뒤 기존 도구를 그대로 돌린다**([PRO-17]). 새 게이트가 아니라 같은 (`scripts/adopter-arm.js`)
+- **[TOOL-27]** 게이트 체인 + 컨테이너 (CI 제공자 비의존 정본) — 게이트의 **순서와 차단 정책**을 워크플로 YAML 에서 꺼내 스크립트 1벌로 만들고, 컨테이너가 그것을 (`scripts/ci.js`)
 <!-- tools-index:end -->

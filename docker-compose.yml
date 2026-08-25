@@ -1,0 +1,34 @@
+# union-stack 게이트 — 컨테이너가 정본. [TOOL-27]
+#
+# 워크플로(.github/workflows/*.yml)는 이 서비스를 부르는 **얇은 래퍼**다. 어답터는 워크플로를
+# 지우고 여기만 써도 같은 게이트를 얻는다 — Actions 분당 과금(private 레포)에 묶이지 않는다.
+#
+#   docker compose run --rm harness              # 전체 체인(로컬에서 CI 와 같은 판정)
+#   docker compose run --rm harness --range A..B # permission-guard 범위 지정
+#   docker compose run --rm adopter-arm          # 어답터 팔만([PRO-17])
+#   docker compose run --rm leakage              # 누설 가드(공개 템플릿 전용)
+#   docker compose run --rm health
+
+x-runner: &runner
+  build: .
+  image: union-stack-harness:local
+  volumes:
+    - .:/repo
+  working_dir: /repo
+
+services:
+  harness:
+    <<: *runner
+    command: ["scripts/ci.js"]
+
+  adopter-arm:
+    <<: *runner
+    command: ["scripts/adopter-arm.js"]
+
+  leakage:
+    <<: *runner
+    command: ["scripts/leakage-guard.js"]
+
+  health:
+    <<: *runner
+    command: ["scripts/health.js"]

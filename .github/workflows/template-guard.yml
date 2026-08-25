@@ -5,6 +5,9 @@ name: Template Guard (leakage)
 # 이 워크플로는 repo variable TEMPLATE_MODE=true 일 때만 실행된다(기본: 비활성).
 #   켜기: 레포 Settings → Secrets and variables → Actions → Variables → TEMPLATE_MODE=true
 #   실제 프로젝트: 변수를 두지 말 것(자동 skip). 원하면 이 파일과 scripts/leakage-guard.js 삭제.
+#
+# harness.yml 과 같은 규약 — 본문은 컨테이너가 돌린다([TOOL-27]).
+#   로컬 등가물: docker compose run --rm leakage
 
 on:
   push:
@@ -16,7 +19,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
-        with: { node-version: '22' }
       - name: Leakage guard (dummy-marker Fail-close)
-        run: node scripts/leakage-guard.js
+        run: docker compose run --rm leakage
