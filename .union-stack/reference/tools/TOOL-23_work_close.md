@@ -11,7 +11,7 @@ version: 1.0
 # [TOOL-23] work-close
 
 ## 용도
-WO를 닫을 때 상위 축 흔적(`closed_by`)과 증거(`evidence`)를 검사해 미충족을 CLARIFY로 표면화하고, `sprint/next.md` 작업대 뷰를 WO 문서에서 재생성한다([PRO-15]).
+WO를 닫을 때 상위 축 흔적(`closed_by`)과 증거(`evidence`)를 검사해 미충족을 CLARIFY로 표면화하고, `sprint/next.md` 작업대 뷰를 WO 문서에서 재생성한다([PRO-15]). `--table`은 활성 WO의 **발행 계약**(필수 3절 + 실존·계보 일치 `parent:`)도 함께 표면화한다([PRO-19] — 종료 의례의 상류 대칭).
 
 ## 언제 쓰나
 - WO 작업을 마쳤을 때 → `node scripts/work-close.js <WO-ID>`로 닫힘 조건 점검.
@@ -38,3 +38,11 @@ node scripts/work-close.js WO-01a-1 --json   # 기계 판독 (--contract 로 계
 | `closed_by:`가 가리킨 파일에 그 계보 브래킷 참조 없음 | CLARIFY — **선언만 하고 반영 안 함** |
 | `evidence:` 빈 값 | CLARIFY (`none — 이유`는 통과 — 미기입과 해당없음의 구별) |
 | 부모의 자식 WO가 전부 Closed | 정보 — PLAN status 전이 **후보 제시**(강제 전이 없음) |
+| 계보에 PHASE 존재 | 정보 — exit criteria **검토 후보**(로드맵은 Schema — 대필 아닌 표면화, [PRO-19]) |
+
+발행 점검(`--table`, 활성 WO 전수 — [PRO-19]):
+| 검사 | 판정 |
+|---|---|
+| `## 목표`·`## 수용 기준`·`## 증거` 절 부재 | CLARIFY — 해부 미충족(sprint/_GUIDE §Anatomy) |
+| `parent:` 부재 / 색인에 없음(도메인+ID) | CLARIFY — 미기입 / **죽은 부모** |
+| `parent:`와 계보 불일치(`isDescendant` 위반) | CLARIFY — 파티션([PRO-05]) 오분할 |

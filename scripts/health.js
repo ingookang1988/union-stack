@@ -18,7 +18,7 @@ const { load: loadAdapter } = require('./adapter');
 const { gather: gatherBrokenRefs } = require('./ref-linter');
 const { gather: gatherBudget } = require('./context-budget');
 
-const { contractEdges, normEnforcement, concernUsage, NORM_DOMAINS } = require('./query');
+const { contractEdges, normEnforcement, concernUsage, roadmapWiring, NORM_DOMAINS } = require('./query');
 const { gather: gatherCards } = require('./tools-index');
 const { extractRefs } = require('./ref-linter');
 const { withContract } = require('./gate-contract');
@@ -84,7 +84,7 @@ function lastDateIn(txt) {
 }
 
 /** 순수 계산: 1차 지표 → 차원별 평가 리포트. (FS 비의존 → 테스트 용이) */
-function computeHealth({ index, domainsDefined, guideCount, namingViolations, historyViolations, leakageViolations, oversize = [], brokenRefs = 0, budget = null, sync = null, lessons = null, effect = null, contracts = null, norms = null, adapter = null, historyClarifications = 0 }) {
+function computeHealth({ index, domainsDefined, guideCount, namingViolations, historyViolations, leakageViolations, oversize = [], brokenRefs = 0, budget = null, sync = null, lessons = null, effect = null, contracts = null, norms = null, roadmap = null, adapter = null, historyClarifications = 0 }) {
   const used = new Set(index.map(d => d.domain));
   const unused = domainsDefined.filter(d => !used.has(d));
   const locked = index.filter(d => LOCKED.includes(d.status));
@@ -161,6 +161,15 @@ function computeHealth({ index, domainsDefined, guideCount, namingViolations, hi
     dims.push({ name: 'norm enforcement', status: 'INFO', value: bits.join(' · '),
       note: norms.norms.filter(n => n.grade !== 'gated').map(n => n.key).join(' ') });
   }
+  if (roadmap) {
+    // 로드맵 배선 관측([PRO-19] ②) — roadmap 은 Schema 라 에이전트가 되쓰지 못하므로, 죽지 않게
+    // 하는 수단은 대필이 아니라 정체의 표면화다. 갱신은 신호를 본 인간이 한다.
+    const bits = [`PHASE ${roadmap.phases}`, `활성 계보 ${roadmap.active}`];
+    if (roadmap.unanchored.length) bits.push(`로드맵 무연결 ${roadmap.unanchored.length}`);
+    if (roadmap.stale.length) bits.push(`무활동 PHASE ${roadmap.stale.length}`);
+    dims.push({ name: 'roadmap wiring', status: 'INFO', value: bits.join(' · '),
+      note: [...roadmap.unanchored.map(k => `무연결:${k}`), ...roadmap.stale.map(k => `정체:${k}`)].join(' ') });
+  }
   const tiers = { draft: 0, reviewed: 0, ratified: 0, untagged: 0 };
   index.forEach(d => { tiers[d.tier && tiers[d.tier] !== undefined ? d.tier : 'untagged']++; });
   dims.push({ name: 'tier distribution', status: 'INFO',
@@ -205,13 +214,14 @@ function gather(root = path.resolve(__dirname, '..')) {
   const sync = gatherSync(root);
   const contracts = contractEdges(index);
   const norms = normEnforcement(index, gatherEnforcers(root), gatherPlaneCites(root), gatherNormDocs(root, index));
+  const roadmap = roadmapWiring(index);
   const r = computeHealth({
     index, domainsDefined: [...VALID_DOMAINS], guideCount: countGuides(root),
     namingViolations, historyViolations, historyClarifications, leakageViolations, oversize, brokenRefs, budget,
-    sync, lessons: gatherLessons(root), effect: gatherEffectSurface(root), contracts, norms, adapter,
+    sync, lessons: gatherLessons(root), effect: gatherEffectSurface(root), contracts, norms, roadmap, adapter,
   });
   // 판정(dims) 외에 원자료도 함께 낸다 — 대시보드가 같은 수집을 두 번 하지 않도록(합성 원칙).
-  return { ...r, sizes, sizeCapKb: SIZE_CAP_KB, sync, contracts, norms, adapter, concerns: concernUsage(index) };
+  return { ...r, sizes, sizeCapKb: SIZE_CAP_KB, sync, contracts, norms, roadmap, adapter, concerns: concernUsage(index) };
 }
 
 /** 평면별 최종 기입 날짜 + ledger 항목 수를 모은다(관측만 — [PRO-11] C3). */

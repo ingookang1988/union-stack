@@ -81,7 +81,7 @@ Given a task like `WO-01a1-2`:
 
 1. Parse the ID → derive ancestors: `01a1` → `01a` → `01`.
 2. Globally scan for the same lineage across domains and load into working memory:
-   `PLAN-*`, `FLOW-*`, `CON-*` sharing those IDs.
+   `PHASE-*`, `PLAN-*`, `FLOW-*`, `CON-*` sharing those IDs.
 3. **Check `.union-stack/reference/lessons/LSN-*` of the same lineage** — past repeated failures, injected as pre-warnings.
 4. Only after grasping both **space** (parent context) and **time** (past pitfalls), begin.
 
@@ -166,7 +166,7 @@ this file only pins the deterministic core. The detail lives in the structure.
 - **[TOOL-20]** e6-workspace (과제 워크스페이스 빌더 + 숨은 오라클) — `eval/e6-suite/`의 실결함을 **히스토리 없는 레포 사본**에 주입해 A/B 팔이 돌 작업 공간을 만들고, 팔 종료 후 **숨은 오라클**(원 수정 커밋의 회귀 테스트)로 정답 여부를 판정한다. (`scripts/e6-workspace.js`)
 - **[TOOL-21]** 템플릿 업데이트 (어답터 ↔ 상류 버전·드리프트 계측) — 어답터 레포의 템플릿 버전(CHANGELOG 최신 헤딩)과 방법론 파일 드리프트를 상류(github.com/ingookang1988/union-stack)와 대조하고, sync 카테고리만 갱신한다. (`scripts/template-update.js`)
 - **[TOOL-22]** blocks-index (재제안 차단 표식의 상시 주입 인덱스) — 원장·제안의 `blocks:`/`reopen_when:` 표식을 모아 AGENTS.md 마커 블록에 컴파일한다 — 이미 결정된 방향의 재제안을 다음 세션이 반복하지 않게([PRO-14]). (`scripts/blocks-index.js`)
-- **[TOOL-23]** work-close (작업 종료 의례 — 진입 의례의 거울) — WO를 닫을 때 상위 축 흔적(`closed_by`)과 증거(`evidence`)를 검사해 미충족을 CLARIFY로 표면화하고, `sprint/next.md` 작업대 뷰를 WO 문서에서 재생성한다([PRO-15]). (`scripts/work-close.js`)
+- **[TOOL-23]** work-close (작업 종료 의례 — 진입 의례의 거울) — WO를 닫을 때 상위 축 흔적(`closed_by`)과 증거(`evidence`)를 검사해 미충족을 CLARIFY로 표면화하고, `sprint/next.md` 작업대 뷰를 WO 문서에서 재생성한다([PRO-15]). `--table`은 활성 WO의 **발행 계약**(필수 3절 + 실존·계보 일치 `parent:`)도 함께 표면화한다([PRO-19] — 종료 의례의 상류 대칭). (`scripts/work-close.js`)
 - **[TOOL-24]** lineage-tree (계보 트리 렌더러) — 평면 전체를 루만 계보 포레스트로 그려 자기완결 HTML 1장으로 낸다. 큰/낯선 평면에서의 (`scripts/lineage-tree.js`)
 - **[TOOL-25]** dashboard (평면 대시보드 — 관측 표면 합성) — 관측 표면을 자기완결 HTML 1장으로 **합성**한다. **개요는 전체 대시보드 그대로**이고(요약 카드·계보 (`scripts/dashboard.js`)
 - **[TOOL-26]** 어답터 팔 (같은 게이트를 다른 형상에서 한 번 더) — 사본을 만들어 **형상을 바꾼 뒤 기존 도구를 그대로 돌린다**([PRO-17]). 새 게이트가 아니라 같은 (`scripts/adopter-arm.js`)

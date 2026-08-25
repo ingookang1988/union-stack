@@ -3,7 +3,7 @@
 id: WO-01a-1
 title: (예시) 인증 게이트웨이 배선
 status: Draft
-parent: PLAN-01a
+parent: PLAN-01
 evidence: "none — (예시) 아직 착수 전"
 closed_by: []
 version: 1.0
@@ -11,7 +11,7 @@ version: 1.0
 # [WO-01a-1] (예시) 인증 게이트웨이 배선
 
 ## 목표
-(예시) `[PLAN-01a]`가 합의한 소셜 로그인 흐름을 게이트웨이에 배선한다.
+(예시) `[PLAN-01]`이 합의한 소셜 로그인 흐름을 게이트웨이에 배선한다.
 
 ## 수용 기준
 - (예시) `[FLOW-01a]`의 UI→DB 변수 매핑이 그대로 성립한다.

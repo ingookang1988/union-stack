@@ -1,7 +1,7 @@
 // scripts/work-close.test.js
 // 순수 로직 테스트. 실행: node scripts/work-close.test.js
 const {
-  field, listField, parseWo, mentionsLineage, checkClosure, buildTable, inject, CONTRACT,
+  field, listField, parseWo, mentionsLineage, checkClosure, checkIssuance, buildTable, inject, CONTRACT,
 } = require('./work-close');
 const { validateContract } = require('./gate-contract');
 
@@ -69,6 +69,31 @@ const sibs = [wo, { id: '01a-2', parent: 'PLAN-01a', status: 'Closed' }];
 check('형제 전부 Closed → info', checkClosure(wo, traces, sibs).info.length === 1);
 check('형제 미완이면 info 없음',
   checkClosure(wo, traces, [wo, { id: '01a-2', parent: 'PLAN-01a', status: 'Active' }]).info.length === 0);
+
+// 계보에 PHASE 가 있으면 exit criteria 검토 후보(정보 — 강제 아님, [PRO-19] ②)
+check('계보 PHASE → info', checkClosure(wo, traces, [], [{ id: '01' }]).info.some(i => i.includes('[PHASE-01]')));
+check('PHASE 없으면 info 없음', checkClosure(wo, traces, [], []).info.length === 0);
+
+// --- 발행 점검 ([PRO-19] ① — 종료 의례의 상류 대칭) ---
+const IDX = [{ domain: 'PLAN', id: '01a', file: 'p.md' }, { domain: 'PRO', id: '10', file: 'q.md' }];
+// 픽스처 WO 는 `## 목표`만 있다 → 나머지 두 절이 걸린다(sprint/_GUIDE §Anatomy 이행).
+check('필수 절 누락 검출', (() => {
+  const i = checkIssuance(wo, IDX).find(x => x.code === 'anatomy-missing');
+  return i && i.msg.includes('수용 기준') && i.msg.includes('증거');
+})());
+const FULL_WO = parseWo('.union-stack/sprint/WO-01a-1_x.md', WO + '\n## 수용 기준\n- x\n## 증거\n- y');
+check('3절 완비 + 실존 parent → 이슈 0', checkIssuance(FULL_WO, IDX).length === 0);
+check('parent 미기입 → no-parent', checkIssuance({ ...FULL_WO, parent: null }, IDX).some(i => i.code === 'no-parent'));
+check('죽은 parent → parent-missing', checkIssuance(FULL_WO, [{ domain: 'PRO', id: '10', file: 'q.md' }]).some(i => i.code === 'parent-missing'));
+// 도메인까지 맞아야 실존 — 다른 도메인의 동일 계보(FLOW-01a)가 죽은 부모(PLAN-01a)를 가리면 안 된다.
+check('도메인 불일치는 실존 아님', checkIssuance(FULL_WO, [{ domain: 'FLOW', id: '01a', file: 'f.md' }]).some(i => i.code === 'parent-missing'));
+// 계보 불일치(승인 §7-⑤ 포함): PLAN-02 는 01a-1 의 조상이 아니다 — 파티션([PRO-05]) 오분할 방지.
+check('계보 절단 → lineage-break', checkIssuance({ ...FULL_WO, parent: 'PLAN-02' }, [{ domain: 'PLAN', id: '02', file: 'p2.md' }])
+  .some(i => i.code === 'lineage-break'));
+// 계보 밖 도메인이라도 계보가 이어지면 통과(현행 관례: WO-10a-1 의 parent PRO-10)
+check('PRO 부모라도 계보 일치면 통과', checkIssuance({ ...FULL_WO, id: '10a-1', parent: 'PRO-10' }, IDX).length === 0);
+check('frontmatter 없으면 no-frontmatter', checkIssuance(parseWo('.union-stack/sprint/WO-01a-2_x.md', '# 본문만'), IDX)
+  .some(i => i.code === 'no-frontmatter'));
 
 // --- 작업대 뷰 ---
 const table = buildTable([

@@ -44,7 +44,12 @@ check('ref integrity INFO', sz.dims.find(d => d.name === 'ref integrity').value.
 const g = gather();
 const nonLeakFails = g.dims.filter(d => d.status === 'FAIL' && d.name !== 'leakage gate').length;
 check('gather 커밋 평면 게이트 그린', nonLeakFails === 0);
-check('gather dims 15 (관측 6절 포함)', g.dims.length === 15);
+check('gather dims 16 (관측 7절 포함)', g.dims.length === 16);
+// 로드맵 배선 관측([PRO-19] ②) — 판정 없는 INFO. roadmap 은 Schema 라 표면화가 수단의 전부다.
+const rDim = g.dims.find(d => d.name === 'roadmap wiring');
+check('roadmap wiring 절은 INFO', rDim && rDim.status === 'INFO');
+check('roadmap wiring 값에 PHASE·활성 계보', /PHASE \d+ · 활성 계보 \d+/.test(rDim.value));
+check('roadmap 원자료도 함께 낸다', typeof g.roadmap.phases === 'number' && Array.isArray(g.roadmap.stale));
 // 당위 축 관측 — 인용 != 집행이므로 판정 없는 INFO.
 const nDim = g.dims.find(d => d.name === 'norm enforcement');
 check('norm enforcement 절은 INFO', nDim.status === 'INFO');

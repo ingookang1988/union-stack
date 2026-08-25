@@ -10,8 +10,11 @@
 > **`status:` in frontmatter is the single source of truth.** `next.md` is a *generated view* of it —
 > never encode the lifecycle in two places (same rule as `plan/_GUIDE`: duplication → drift).
 
-### Anatomy (4 required elements — enforced the way `smell-linter` enforces TOOL cards)
+### Anatomy (4 required elements — enforced by the issuance lint in `work-close --table`, [PRO-19])
 `## 목표` · `## 수용 기준` · `## 증거` sections, plus frontmatter `parent:`.
+The lint also checks that `parent:` **resolves** (domain+ID exist in the ZFS index — no dead parents)
+and **connects** (lineage `isDescendant` — else fleet partitioning [PRO-05] mis-splits). All CLARIFY,
+never blocking — 발행을 막지 않는다.
 ```yaml
 status: Draft | Active | Verifying | Closed
 parent: PLAN-01a
@@ -73,7 +76,9 @@ deleted** — they keep `plan/_GUIDE`'s GC condition ("every successor is termin
 2. **Changed locations as an ID list.** Not prose but `[WO-01a-2] [FLOW-01a]` style.
    The next agent runs Upward Fetching on those IDs to restore context itself.
 3. **Extreme compression.** Don't explain everything. Point *exactly to where to look*.
-4. **Next task as a single entry point.** One clear "start from [WO-01a-3]".
+4. **Next task as a single entry point.** One clear "start from [WO-01a-3]". `handoff-linter` surfaces
+   a §3 without a `[WO-*]` pointer (or explicit `— 해당 없음`) as CLARIFY — a carried-over prose item
+   must take the promotion path ([PRO-13] §4-4 → a WO document), not survive by silence ([PRO-19]).
 5. **Blockers/cautions stated separately.** Open issues and pitfalls as distinct items (so the next session doesn't fall in again).
 
 ### The 5 mandatory parts (miss any one and the relay fails)

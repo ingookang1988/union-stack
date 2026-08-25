@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // scripts/upward-fetch.js
-// 작업 진입 의식(Upward Fetching). 부모 PLAN/FLOW/CON/ARCH/MTG + 같은 계보 LSN.
+// 작업 진입 의식(Upward Fetching). 부모 PHASE/PLAN/FLOW/CON/ARCH/MTG + 같은 계보 LSN.
 // 로직은 query.js(순수)에 있다. 실행: node scripts/upward-fetch.js WO-01a1-2 [--json]
 const { parseId } = require('./zfs_util');
 const { buildIndex } = require('./zfs_index');
@@ -22,7 +22,7 @@ const banner = d => (d.tier === 'draft' ? '  ⚠ tier:draft — 비규범(구속
 
 console.log(`# Upward Fetching: ${r.id}`);
 console.log(`계보(조상 역산): ${r.chain.join(' → ')}\n`);
-console.log('## 공간 맥락 (부모 PLAN/FLOW/CON/ARCH/MTG)');
+console.log('## 공간 맥락 (부모 PHASE/PLAN/FLOW/CON/ARCH/MTG)');
 if (r.context.length) r.context.forEach(d => console.log(`  [${d.domain}-${d.id}] ${d.file}${banner(d)}`));
 else console.log('  (없음)');
 console.log('\n## 시간축 경고 (같은 계보의 LSN — 과거 반복 실패)');

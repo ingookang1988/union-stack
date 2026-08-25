@@ -3,10 +3,12 @@
 // 전부 read-only. 쓰기는 노출하지 않는다(권한 tier·permission-guard 우회 방지).
 const { ancestorChain, isDescendant, parseId } = require('./zfs_util');
 
-const CONTEXT_DOMAINS = new Set(['PLAN', 'FLOW', 'CON', 'ARCH', 'MTG']);
+// PHASE 는 [PRO-19] ②로 편입 — roadmap/_GUIDE 가 선언한 "plan·sprint 의 macro-direction parent"를
+// 진입 의례가 실제로 싣게 한다(선언만 있고 수집 대상 밖이던 것이 병인).
+const CONTEXT_DOMAINS = new Set(['PLAN', 'FLOW', 'CON', 'ARCH', 'MTG', 'PHASE']);
 const LOCKED = new Set(['Verifying']);
 
-/** Upward Fetching: 부모 계보 맥락(PLAN/FLOW/CON/ARCH/MTG) + 같은 계보 LSN. */
+/** Upward Fetching: 부모 계보 맥락(PHASE/PLAN/FLOW/CON/ARCH/MTG) + 같은 계보 LSN. */
 function upwardFetch(id, index) {
   const chain = ancestorChain(id);
   const ancestors = new Set(chain);
@@ -133,6 +135,26 @@ function normEnforcement(index, enforcers = [], planeCites = {}, docs = {}) {
   return { norms, total: norms.length, gated: count('gated'), cited: count('cited'), isolated: count('isolated') };
 }
 
+// WO/PLAN 의 종결 상태 — roadmapWiring 이 "활성"을 거를 때 쓴다(frontmatter status 가 정본).
+const TERMINAL = new Set(['Closed', 'Crystallized']);
+
+/**
+ * 로드맵 배선 관측(순수) — [PRO-19] ②. 판정·점수 없음([PRO-11] §4 측도 금지).
+ * roadmap/_GUIDE 는 PHASE 를 plan·sprint 의 macro-direction parent 로 선언하지만 그 부모 관계를
+ * 보는 계기가 없었다(sprint/ 전체에 PHASE 언급 0건 실측). 양방향 정체를 표면화한다:
+ *   unanchored — 활성 PLAN/WO/WF 인데 계보 뿌리에 PHASE 가 없다(마일스톤 밖의 작업).
+ *   stale     — 어떤 활성 계보도 내려오지 않는 PHASE(정체 중이거나 종료 처리 누락).
+ * 쓰기는 강제하지 않는다 — roadmap 은 Schema(인간 소유)라 갱신은 신호를 본 인간의 몫.
+ */
+function roadmapWiring(index) {
+  const phases = index.filter(d => d.domain === 'PHASE');
+  const active = index.filter(d => ['PLAN', 'WO', 'WF'].includes(d.domain) && !TERMINAL.has(d.status));
+  const key = d => `${d.domain}-${d.id}`;
+  const unanchored = active.filter(w => !phases.some(p => isDescendant(p.id, w.id))).map(key);
+  const stale = phases.filter(p => !active.some(w => isDescendant(p.id, w.id))).map(key);
+  return { phases: phases.length, active: active.length, unanchored, stale };
+}
+
 /** `concern:` 오버레이 채택 관측(순수) — [PRO-04]가 승인했으나 사용 실태를 볼 계기가 없었다. */
 function concernUsage(index) {
   const byTag = {};
@@ -165,4 +187,4 @@ function whereToRecord(kind) {
   return { kind, match: r ? strip(r) : null, all: ROUTES.map(strip) };
 }
 
-module.exports = { upwardFetch, blastRadius, contractEdges, normEnforcement, concernUsage, whereToRecord, CONTEXT_DOMAINS, LOCKED, NORM_DOMAINS };
+module.exports = { upwardFetch, blastRadius, contractEdges, normEnforcement, concernUsage, roadmapWiring, whereToRecord, CONTEXT_DOMAINS, LOCKED, NORM_DOMAINS };

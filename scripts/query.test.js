@@ -1,6 +1,6 @@
 // scripts/query.test.js
 // 순수 조회 로직 단위 테스트(합성 색인 — 레포 비의존). 실행: node scripts/query.test.js
-const { upwardFetch, blastRadius, contractEdges, normEnforcement, concernUsage, whereToRecord } = require('./query');
+const { upwardFetch, blastRadius, contractEdges, normEnforcement, concernUsage, roadmapWiring, whereToRecord } = require('./query');
 
 let pass = 0, fail = 0;
 function check(label, got, exp) {
@@ -23,6 +23,25 @@ const uf = upwardFetch('01a1', index);
 check('uf chain', uf.chain, ['01a1', '01a', '01']);
 check('uf context domains', uf.context.map(c => c.domain), ['CON', 'FLOW', 'MTG', 'PLAN']);
 check('uf lessons', uf.lessons.map(l => l.id), ['01a']);
+// PHASE 도 계보 맥락에 실린다([PRO-19] ② — roadmap 은 plan·sprint 의 macro-direction parent)
+const ufPhase = upwardFetch('01a1', [...index, { domain: 'PHASE', id: '01', file: 'project/roadmap/PHASE-01_x.md' }]);
+check('uf PHASE 편입', ufPhase.context.some(c => c.domain === 'PHASE' && c.id === '01'), true);
+
+// --- roadmapWiring: 로드맵 배선 관측([PRO-19] ② — 판정 없는 표면화) ---
+const rwIndex = [
+  { domain: 'PHASE', id: '01', file: 'PHASE-01.md' },              // 활성 계보 01 이 내려온다
+  { domain: 'PHASE', id: '02', file: 'PHASE-02.md' },              // 아무도 안 내려온다 → 정체
+  { domain: 'PLAN', id: '01a', status: 'Active', file: 'PLAN-01a.md' },
+  { domain: 'WO', id: '01a-1', status: 'Draft', file: 'WO-01a-1.md' },
+  { domain: 'WO', id: '10a-1', status: 'Draft', file: 'WO-10a-1.md' }, // 뿌리에 PHASE 없음 → 무연결
+  { domain: 'WO', id: '02a-1', status: 'Closed', file: 'WO-02a-1.md' }, // 종결 — 활성 아님(PHASE-02 를 못 살린다)
+  { domain: 'FLOW', id: '01a', status: 'Active', file: 'FLOW-01a.md' }, // 작업 도메인 아님 — 계수 제외
+];
+const rw = roadmapWiring(rwIndex);
+check('rw 계수', [rw.phases, rw.active], [2, 3]);
+check('rw 무연결 작업', rw.unanchored, ['WO-10a-1']);
+check('rw 정체 PHASE(종결 자손은 못 살린다)', rw.stale, ['PHASE-02']);
+check('rw 빈 평면', roadmapWiring([]), { phases: 0, active: 0, unanchored: [], stale: [] });
 
 // --- blastRadius ---
 const br = blastRadius('01a', index);

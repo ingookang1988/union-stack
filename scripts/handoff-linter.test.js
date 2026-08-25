@@ -66,7 +66,17 @@ const AMBIG = [
 check('§3 은 세 번째 절이다(§2 의 "진입점"에 뺏기지 않는다)', partBody(AMBIG, 'next'), '다음 본문');
 check('§2 는 변경 위치', partBody(AMBIG, 'changed'), '변경 본문');
 check('§4 는 미결/주의', partBody(AMBIG, 'open'), '주의 본문');
-check('모호 헤더에서도 5부 완비로 인식', analyze(AMBIG).findings.length, 0);
+check('모호 헤더에서도 5부 완비로 인식', analyze(AMBIG).findings.filter(f => f.rule.startsWith('part')).length, 0);
+
+// --- §3 진입점([PRO-19] ③): 다음 작업은 [WO-*] 또는 명시적 '— 해당 없음' ---
+// 실측 병인: prose 진입점이 5세션을 침묵으로 이월했다([PRO-13] "3세션 생존 = 오라우팅" 초과).
+check('prose 진입점 → next-entrypoint', analyze(AMBIG).findings.map(f => f.rule), ['next-entrypoint']);
+check('WO 진입점은 통과', analyze(FULL).findings.filter(f => f.rule === 'next-entrypoint').length, 0);
+const noNext = FULL.replace('- [WO-01a-2]부터', '— 해당 없음');
+check("'— 해당 없음' 진입점도 통과", analyze(noNext).findings.filter(f => f.rule === 'next-entrypoint').length, 0);
+// 빈 §3 은 part-empty 소관 — 이중 판정하지 않는다(같은 사실에 발견 둘이면 소음).
+const emptyNext = FULL.replace('- [WO-01a-2]부터\n', '');
+check('빈 §3 은 part-empty 만', analyze(emptyNext).findings.map(f => f.rule), ['part-empty']);
 check('없는 부는 빈 문자열(예외 아님)', partBody('# 제목만', 'next'), '');
 check('parseSections: `## ` 절만', parseSections('# 제목\n## A\n본문\n### B\n하위').length, 1);
 

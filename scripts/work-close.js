@@ -15,7 +15,8 @@
 const fs = require('fs');
 const path = require('path');
 const { walkFiles } = require('./fs_walk');
-const { parse, ancestorChain } = require('./zfs_util');
+const { parse, parseId, isDescendant, ancestorChain } = require('./zfs_util');
+const { buildIndex } = require('./zfs_index');
 const { withContract, OUTCOME, toShellExit } = require('./gate-contract');
 
 const SPRINT_DIR = '.union-stack/sprint';
@@ -35,11 +36,11 @@ const TRACE_CANDIDATES = [
 
 const CONTRACT = {
   gate: 'Work Close Gate (work-close)',
-  input: 'sprint/ 의 WO-* 문서 frontmatter(status·evidence·closed_by) + closed_by 가 가리킨 파일 본문',
-  predicate: '닫는 WO 는 상위 축 흔적 1곳 이상 + 증거 명시(값 또는 `none — 이유`)를 가지며, 흔적은 실재한다',
-  scope: '흔적의 *존재*만 본다 — 반영 내용이 옳은지, 작업이 실제로 완료됐는지는 판정하지 않는다',
+  input: 'sprint/ 의 WO-* 문서 frontmatter(status·evidence·closed_by)·본문 절 + closed_by 가 가리킨 파일 본문 + ZFS 색인(parent 실존 대조)',
+  predicate: '닫는 WO 는 상위 축 흔적 1곳 이상 + 증거 명시(값 또는 `none — 이유`)를 가지며 흔적은 실재한다. 활성 WO 는 발행 계약(필수 3절 + 실존·계보 일치 parent)을 지킨다([PRO-19])',
+  scope: '흔적·절·parent 의 *존재*만 본다 — 반영 내용이 옳은지, 작업이 실제로 완료됐는지는 판정하지 않는다',
   outcomes: ['PASS', 'CLARIFY'],
-  failure_mode: '미충족을 stderr 로 표면화하고 CLARIFY(3) — 작업 종료를 막지 않는다',
+  failure_mode: '미충족을 stderr 로 표면화하고 CLARIFY(3) — 작업 종료도 발행도 막지 않는다',
 };
 
 /** frontmatter 원문 추출(순수). 없으면 null. */
@@ -76,13 +77,17 @@ function listField(fm, key) {
   return out;
 }
 
+/** 발행 계약의 필수 3절(sprint/_GUIDE §Anatomy — [PRO-19]가 산문을 검사로 이행). */
+const REQUIRED_SECTIONS = ['목표', '수용 기준', '증거'];
+
 /** WO 문서 텍스트 → 레코드(순수). WO 가 아니거나 frontmatter 없으면 null. */
 function parseWo(relFile, txt) {
   const base = relFile.split('/').pop();
   const p = parse(base);
   if (!p || p.domain !== 'WO') return null;
+  const missingSections = REQUIRED_SECTIONS.filter(s => !new RegExp('^##\\s*' + s, 'm').test(String(txt || '')));
   const fm = frontmatter(txt);
-  if (!fm) return { id: p.id, file: relFile, status: null, parent: null, evidence: null, closed_by: [], malformed: true };
+  if (!fm) return { id: p.id, file: relFile, status: null, parent: null, evidence: null, closed_by: [], missingSections, malformed: true };
   return {
     id: p.id,
     file: relFile,
@@ -91,8 +96,41 @@ function parseWo(relFile, txt) {
     parent: field(fm, 'parent'),
     evidence: field(fm, 'evidence'),
     closed_by: listField(fm, 'closed_by'),
+    missingSections,
     malformed: false,
   };
+}
+
+/**
+ * 발행 점검(순수) — [PRO-19] ①, 종료 의례의 상류 대칭. index: zfs_index 레코드 배열.
+ * parent 는 도메인까지 맞아야 실존이다 — ID 만 대조하면 다른 도메인의 우연한 동일 계보
+ * (예: FLOW-01a)가 죽은 부모(PLAN-01a)를 가려 준다.
+ */
+function checkIssuance(wo, index = []) {
+  if (!wo) return [];
+  if (wo.malformed) {
+    return [{ code: 'no-frontmatter', outcome: 'CLARIFY', msg: 'WO 문서에 frontmatter 가 없다 — 발행 계약(status·parent·evidence)을 읽을 수 없다.' }];
+  }
+  const issues = [];
+  if (wo.missingSections && wo.missingSections.length) {
+    issues.push({
+      code: 'anatomy-missing', outcome: 'CLARIFY',
+      msg: `필수 절 누락: ${wo.missingSections.map(s => '## ' + s).join(' · ')} (sprint/_GUIDE §Anatomy).`,
+    });
+  }
+  if (!wo.parent) {
+    issues.push({ code: 'no-parent', outcome: 'CLARIFY', msg: 'frontmatter parent: 가 없다 — 상위 축(PLAN/PRO 등)을 명시하라.' });
+  } else {
+    const m = String(wo.parent).match(/^([A-Z]{2,6})-/);
+    const pid = parseId(String(wo.parent));
+    if (!m || !pid || !index.some(d => d.domain === m[1] && d.id === pid)) {
+      issues.push({ code: 'parent-missing', outcome: 'CLARIFY', msg: `parent(${wo.parent})가 색인에 없다 — 오타이거나 상위 문서 미작성(죽은 부모).` });
+    }
+    if (pid && !isDescendant(pid, wo.id)) {
+      issues.push({ code: 'lineage-break', outcome: 'CLARIFY', msg: `parent(${wo.parent})와 이 WO(${wo.id})의 계보가 이어지지 않는다 — 플릿 파티션([PRO-05])이 오분할된다.` });
+    }
+  }
+  return issues;
 }
 
 /** 이 WO(또는 조상)를 가리키는 브래킷 참조가 텍스트에 있는가(순수). */
@@ -104,8 +142,9 @@ function mentionsLineage(txt, woId) {
 /**
  * 닫힘 점검(순수). traceTexts: {경로: 본문} — 호출부가 읽어 넘긴다.
  * siblings: 같은 부모를 공유하는 WO 레코드들(부모 전이 후보 판정용).
+ * phases: 이 계보의 PHASE 레코드들([PRO-19] ② — 로드맵은 Schema 라 되쓰지 않고 검토 후보로만 제시).
  */
-function checkClosure(wo, traceTexts = {}, siblings = []) {
+function checkClosure(wo, traceTexts = {}, siblings = [], phases = []) {
   const issues = [];
   if (!wo || wo.malformed) {
     issues.push({ code: 'no-frontmatter', outcome: 'CLARIFY', msg: 'WO 문서에 frontmatter 가 없다 — status·evidence·closed_by 를 읽을 수 없다.' });
@@ -136,6 +175,9 @@ function checkClosure(wo, traceTexts = {}, siblings = []) {
   const others = siblings.filter(s => s.id !== wo.id);
   if (others.length && others.every(s => s.status === 'Closed')) {
     info.push(`부모(${wo.parent || ancestorChain(wo.id)[1] || '?'})의 자식 WO 가 모두 Closed 다 — PLAN status 전이 후보(강제 아님).`);
+  }
+  if (phases.length) {
+    info.push(`계보의 로드맵 ${phases.map(p => `[PHASE-${p.id}]`).join(' ')} — exit criteria 검토 후보(강제 아님, [PRO-19]).`);
   }
   return { issues, info };
 }
@@ -186,24 +228,38 @@ function run(argv = process.argv.slice(2), root = path.resolve(__dirname, '..'))
   const json = argv.includes('--json');
 
   if (argv.includes('--table')) {
+    // 발행 점검([PRO-19] ①) — 활성(및 frontmatter 불능) WO 전수. 표면화만, 뷰 생성을 막지 않는다.
+    const index = buildIndex(root);
+    const issuance = wos
+      .filter(w => w.malformed || ACTIVE.has(w.status))
+      .flatMap(w => checkIssuance(w, index).map(i => ({ id: w.id, ...i })));
+    const surface = () => {
+      if (!issuance.length) return;
+      console.error('\n[work-close] 발행 계약 미충족 (CLARIFY — 차단하지 않는다, [PRO-19]):');
+      issuance.forEach(i => console.error(`  ? WO-${i.id} ${i.code}: ${i.msg}`));
+    };
     const nextPath = path.join(root, NEXT);
     const current = fs.readFileSync(nextPath, 'utf8');
     const expected = inject(current, buildTable(wos));
     if (expected === null) {
       console.error('work-close: next.md 에 마커 블록(<!-- worktable:begin/end -->)이 없음 — 블록을 먼저 추가하라.');
+      surface();
       return OUTCOME.CLARIFY;
     }
     if (argv.includes('--write')) {
       if (expected !== current) { fs.writeFileSync(nextPath, expected); console.log('work-close: next.md 작업대 뷰 갱신.'); }
       else console.log('work-close: 작업대 뷰 이미 최신.');
-      return OUTCOME.PASS;
+      surface();
+      return issuance.length ? OUTCOME.CLARIFY : OUTCOME.PASS;
     }
     if (expected !== current) {
       console.error('work-close: next.md 작업대 뷰가 WO 문서와 불일치(드리프트) — `node scripts/work-close.js --table --write` 실행.');
+      surface();
       return OUTCOME.CLARIFY;
     }
     console.log(`work-close 통과: 활성 WO ${wos.filter(w => ACTIVE.has(w.status)).length}건, 작업대 뷰 동기화됨.`);
-    return OUTCOME.PASS;
+    surface();
+    return issuance.length ? OUTCOME.CLARIFY : OUTCOME.PASS;
   }
 
   const target = argv.find(a => !a.startsWith('--'));
@@ -219,7 +275,9 @@ function run(argv = process.argv.slice(2), root = path.resolve(__dirname, '..'))
   }
   const parentId = wo.parent || ancestorChain(wo.id)[1] || null;
   const siblings = wos.filter(w => (w.parent || ancestorChain(w.id)[1] || null) === parentId);
-  const { issues, info } = checkClosure(wo, readTraces(root, wo.closed_by), siblings);
+  const chain = new Set(ancestorChain(wo.id));
+  const phases = buildIndex(root).filter(d => d.domain === 'PHASE' && chain.has(d.id));
+  const { issues, info } = checkClosure(wo, readTraces(root, wo.closed_by), siblings, phases);
 
   if (json) { console.log(JSON.stringify({ wo, issues, info }, null, 2)); return issues.length ? OUTCOME.CLARIFY : OUTCOME.PASS; }
 
@@ -236,8 +294,8 @@ function run(argv = process.argv.slice(2), root = path.resolve(__dirname, '..'))
 }
 
 module.exports = {
-  frontmatter, field, listField, parseWo, mentionsLineage, checkClosure, buildTable, inject, gather,
-  CONTRACT, ACTIVE, TRACE_CANDIDATES,
+  frontmatter, field, listField, parseWo, mentionsLineage, checkClosure, checkIssuance, buildTable, inject, gather,
+  CONTRACT, ACTIVE, TRACE_CANDIDATES, REQUIRED_SECTIONS,
 };
 
 if (require.main === module) process.exit(toShellExit(withContract(CONTRACT, run)()));

@@ -22,8 +22,8 @@ const HANDOFF_PATH = '.union-stack/sprint/HANDOFF.md';
 const CONTRACT = {
   gate: 'Handoff Gate (handoff-linter)',
   input: '.union-stack/sprint/HANDOFF.md 전문',
-  predicate: `5부 존재 + 빈 부의 '— 해당 없음' 명시 + 토큰 예산 ${BUDGETS.handoff} tok 이내`,
-  scope: '구조·크기만 본다 — 항목의 라우팅 적합성(§3 트리)·ID 포인터의 유효성·내용 품질은 보지 않음',
+  predicate: `5부 존재 + 빈 부의 '— 해당 없음' 명시 + 토큰 예산 ${BUDGETS.handoff} tok 이내 + §3 다음 작업의 WO 진입점([PRO-19])`,
+  scope: '구조·크기만 본다 — 항목의 라우팅 적합성(§3 트리)·ID 포인터의 유효성(WO 존재는 미확인)·내용 품질은 보지 않음',
   outcomes: ['PASS', 'CLARIFY'],
   failure_mode: 'REJECT 없음 — 어떤 판정도 커밋·세션 종료를 막지 않는다([PRO-13] §5). CLARIFY로 표면화만',
 };
@@ -95,6 +95,17 @@ function analyze(text) {
     const body = sec.body.join('\n').trim();
     if (!body) {
       findings.push({ rule: 'part-empty', msg: `"${p.label}" 부가 비어 있음 — 미기입인지 해당없음인지 구별 불가. '— 해당 없음' 명시 권장` });
+    }
+  }
+  // §3 진입점([PRO-19] ③): 다음 작업은 WO ID(브래킷) 또는 명시적 '— 해당 없음'이어야 한다.
+  // prose 이월은 [PRO-13] §4-4 의 승격 경로(HANDOFF 체류 → WO 고정)를 타야 한다 — [WO-10a-1]이 선례.
+  // 실측 병인: prose 진입점이 5세션을 침묵으로 이월하며 "3세션 생존 = 오라우팅" 기준을 넘겼다.
+  const nextSec = assigned.next;
+  if (nextSec) {
+    const body = nextSec.body.join('\n').trim();
+    if (body && !/—\s*해당\s*없음/.test(body) && !/\[WO-[0-9][0-9a-z-]*\]/.test(body)) {
+      findings.push({ rule: 'next-entrypoint', msg:
+        '다음 작업이 WO 를 가리키지 않는다 — 이월 중인 prose 라면 WO 로 승격해 진입점을 [WO-*] 로 적어라([PRO-13] §4-4 · [PRO-19])' });
     }
   }
   return { findings, tokens, budget: BUDGETS.handoff };
