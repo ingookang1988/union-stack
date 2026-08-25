@@ -5,6 +5,11 @@
 #
 #   docker compose run --rm harness              # 전체 체인(로컬에서 CI 와 같은 판정)
 #   docker compose run --rm harness --range A..B # permission-guard 범위 지정
+#
+# ⚠ 서비스마다 `entrypoint` 에 **스크립트까지** 박는다(`command` 아님). `docker compose run`
+#   의 추가 인자는 `command` 를 *교체*하고 `entrypoint` 뒤에는 *이어붙기* 때문이다 —
+#   command 에 두면 `--range` 가 스크립트 경로를 밀어내 `node --range` 가 된다(실측: CI 에서
+#   `node: bad option: --range`. 로컬 검증이 인자 없이만 돌아 놓쳤다 — [ADR-45]).
 #   docker compose run --rm adopter-arm          # 어답터 팔만([PRO-17])
 #   docker compose run --rm leakage              # 누설 가드(공개 템플릿 전용)
 #   docker compose run --rm health
@@ -19,16 +24,16 @@ x-runner: &runner
 services:
   harness:
     <<: *runner
-    command: ["scripts/ci.js"]
+    entrypoint: ["node", "scripts/ci.js"]
 
   adopter-arm:
     <<: *runner
-    command: ["scripts/adopter-arm.js"]
+    entrypoint: ["node", "scripts/adopter-arm.js"]
 
   leakage:
     <<: *runner
-    command: ["scripts/leakage-guard.js"]
+    entrypoint: ["node", "scripts/leakage-guard.js"]
 
   health:
     <<: *runner
-    command: ["scripts/health.js"]
+    entrypoint: ["node", "scripts/health.js"]

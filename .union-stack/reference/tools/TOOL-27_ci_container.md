@@ -48,6 +48,11 @@ YAML 을 손으로 번역해야 하고, 번역본은 곧 원본과 어긋난다.
   깨지면 지식이 다시 YAML 로 새고 있는 것이다.
 - **셸 비의존.** 스위트 목록을 셸 glob(`scripts/*.test.js`)이 아니라 `readdirSync` 로 만든다 —
   ENTRYPOINT 가 `node` 라 컨테이너에 셸이 끼지 않는다.
+- **인자는 `entrypoint` 뒤에 붙는다.** compose 서비스는 스크립트 경로까지 `entrypoint` 에 박는다 —
+  `docker compose run` 의 추가 인자는 `command` 를 *교체*하고 `entrypoint` 에는 *이어붙기* 때문이다.
+  `command` 에 두면 `--range` 가 경로를 밀어내 `node --range` 가 된다([ADR-45] 실측).
+- **검증은 배송 호출 형태로.** 위 결함은 로컬 검증이 인자 없이(`run --rm harness`)만 돌아서 놓쳤다.
+  CI 는 `--range` 를 준다 — **CI 가 실제로 치는 명령 그대로** 돌려야 잡힌다([ADR-26] 의 재발).
 - **알 수 없는 종료 코드는 차단.** [PRO-11] 4값에 없는 코드(2·5…)와 spawn 실패는 UNKNOWN → 차단이다.
   모르는 실패를 통과시키는 것이 게이트의 가장 흔한 죽는 방식이다.
 
