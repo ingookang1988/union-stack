@@ -27,6 +27,7 @@
 //   node scripts/permission-guard.js --range A..B # 커밋 범위 (CI)
 //   node scripts/permission-guard.js --strict     # Schema 승인 + 티어까지 검사
 //   node scripts/permission-guard.js --contract   # 계약 선언(JSON) 출력
+//   node scripts/permission-guard.js --allow-no-git # 검사 불가를 인간이 명시 승인(경고 후 통과)
 const { execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -36,7 +37,7 @@ const { readFront } = require('./zfs_index');
 const CONTRACT = {
   gate: 'Permission Gate (permission-guard)',
   input: 'git diff 경로·줄수 + 범위 끝 커밋의 트레일러(Approved-by/Co-Authored-by) + 문서 frontmatter tier',
-  predicate: 'A: append-only 평면의 실질 줄 소멸 금지(같은 diff 안 다른 append-only 경로로의 축자 이동은 허용) · B(strict): Schema 편집의 승인 스탬프 · C(strict): tier 자기승격 금지, draft 자유 편집, 신규 tier 미기입 표면화',
+  predicate: 'P(preflight): 검사를 수행할 수 있는 상태여야 한다(git 저장소 + 제어평면이 그 안) — 아니면 통과가 아니라 REJECT · A: append-only 평면의 실질 줄 소멸 금지(같은 diff 안 다른 append-only 경로로의 축자 이동은 허용) · B(strict): Schema 편집의 승인 스탬프 · C(strict): tier 자기승격 금지, draft 자유 편집, 신규 tier 미기입 표면화',
   scope: '경로·diff·트레일러·frontmatter만 본다 — 변경 내용의 의미·품질, 코드 결합, GRANTS 행 추가의 정당성은 보지 않음. 보존 검사는 줄의 축자 일치만 본다(옮긴 자리가 적절한지·순서는 보지 않음)',
   outcomes: ['PASS', 'REJECT', 'CLARIFY'],
   failure_mode: 'REJECT: 위반 목록 출력 후 차단 · CLARIFY: 질문 표면화 후 진행(비차단)',
@@ -196,6 +197,43 @@ function git(args) {
   return execFileSync('git', ['-c', 'core.quotepath=false', ...args], { encoding: 'utf8' });
 }
 
+// --- 검사 가능 상태 판정 (preflight) ---
+// Fail-close(AGENTS.md 규칙 1): 검사를 *수행할 수 없는* 상태는 통과가 아니다.
+// git 저장소가 아니거나 제어평면이 저장소 밖에 있으면 diff를 뜰 수 없고, 그러면
+// 이 게이트는 아무것도 막지 못한 채 초록불만 켠다. 그 상태를 REJECT로 드러낸다.
+// `--allow-no-git` = 인간의 명시 우회(경고 후 통과, 검사는 수행 안 함).
+
+/**
+ * 저장소 루트. git이 아니면 null.
+ * 여기서만 stderr를 버린다 — "저장소가 아니다"는 이 함수가 *판정하려는 사실*이지 오류가 아니고,
+ * git의 `fatal: not a git repository`가 우리 메시지 앞에 끼면 진짜 진단이 묻힌다.
+ * 공용 git() 헬퍼는 그대로 둔다(다른 호출부는 stderr가 보여야 한다).
+ */
+function gitRoot() {
+  try {
+    return execFileSync('git', ['rev-parse', '--show-toplevel'], {
+      encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim() || null;
+  } catch { return null; }
+}
+
+/**
+ * 검사를 수행할 수 있는 상태인가(순수). git 비의존 → 테스트 용이.
+ * env: {gitRoot: string|null, controlPlaneInRepo: boolean}  opts: {allowNoGit: boolean}
+ * @returns {{ok: boolean, code: number, reason: string|null}}
+ */
+function preflight(env, opts = {}) {
+  const bypass = (reason) => opts.allowNoGit
+    ? { ok: false, code: OUTCOME.PASS, reason: `${reason} (--allow-no-git으로 우회됨)` }
+    : { ok: false, code: OUTCOME.REJECT, reason };
+
+  if (!env.gitRoot) return bypass('git 저장소가 아니다 — staged diff를 뜰 수 없다');
+  if (!env.controlPlaneInRepo) {
+    return bypass(`제어평면(.union-stack/)이 저장소(${env.gitRoot}) 밖에 있다 — 변경을 추적할 수 없다`);
+  }
+  return { ok: true, code: OUTCOME.PASS, reason: null };
+}
+
 // append-only 위반은 *실제 엔트리*만 본다(판정은 isSubstantiveLine — 순수, 테스트됨).
 // 계수가 아니라 **줄 자체**를 낸다 — 보존 검사가 축자 대조를 하려면 내용이 필요하다.
 function substantiveLines(range, file, sign) {
@@ -288,8 +326,22 @@ function run(argv = process.argv.slice(2)) {
   const strict = argv.includes('--strict');
   const ri = argv.indexOf('--range');
   const range = ri >= 0 ? argv[ri + 1] : null;
+  // 검사 가능 상태 판정(fail-close — 위 preflight 주석 참조).
+  const root = gitRoot();
+  const pf = preflight(
+    { gitRoot: root, controlPlaneInRepo: !!root && fs.existsSync(path.join(root, '.union-stack')) },
+    { allowNoGit: argv.includes('--allow-no-git') }
+  );
+  if (!pf.ok) {
+    console.error(`권한 가드: ${pf.reason}`);
+    return pf.code;
+  }
   let changes = readChanges(range);
-  if (changes === null || changes.length === 0) {
+  if (changes === null) {
+    console.error('권한 가드: git diff 실패 — 검사 불가는 통과가 아니다(fail-close).');
+    return OUTCOME.REJECT;
+  }
+  if (changes.length === 0) {
     console.log('권한 가드: 검사할 변경 없음 — 통과.');
     return OUTCOME.PASS;
   }
@@ -314,6 +366,6 @@ function run(argv = process.argv.slice(2)) {
   return OUTCOME.PASS;
 }
 
-module.exports = { classify, findViolations, accountRemovals, isSubstantiveLine, globToRe, readGrants, enrichForTier, run, CONTRACT, SCHEMA, APPEND_ONLY };
+module.exports = { classify, findViolations, accountRemovals, isSubstantiveLine, preflight, globToRe, readGrants, enrichForTier, run, CONTRACT, SCHEMA, APPEND_ONLY };
 
 if (require.main === module) process.exit(withContract(CONTRACT, run)());
