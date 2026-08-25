@@ -65,6 +65,19 @@ check('worktable: 제목 이스케이프', !ws.includes('<b>x</b>') && ws.includ
 const wm = worktableSection([{ id: null, file: 'sprint/broken.md', malformed: true, closed_by: [] }]);
 check('worktable: malformed 경고', wm.includes('frontmatter 없는 WO 1건'));
 
+// 제목·증거는 평면의 자유 산문이다 — 코드 스팬·볼드가 원문 마커로 새면 안 된다([ADR-35] 계열).
+// 실측: 어답터의 evidence 가 `--allow-no-git`·**병합은 PO 판단** 같은 문장을 담아 마커 8개가 샜다.
+const wp = worktableSection([{
+  id: '05-3', title: '`상류` 기여', parent: 'PLAN-05', status: 'Verifying',
+  evidence: '**병합은 PO 판단** — `template-update --apply` 로 복원', closed_by: [], malformed: false,
+}]);
+check('worktable: 증거의 코드 스팬·볼드가 렌더된다', wp.includes('<code>') && wp.includes('<b>'));
+check('worktable: 증거에 원문 마커가 남지 않는다',
+  !/\*\*|`/.test(wp.slice(wp.indexOf('<table')).replace(/title="[^"]*"/g, '').replace(/<[^>]*>/g, '')));
+check('worktable: 제목도 같은 처리', wp.includes('<code>상류</code>'));
+// 식별자 칼럼(부모·상태)은 산문이 아니다 — esc 유지.
+check('worktable: 부모·상태는 그대로', wp.includes('<td>PLAN-05</td>') && wp.includes('<td>Verifying</td>'));
+
 // sizeSection — 헤드룸: 초과·근접·정상 3단계, 빈 입력은 조각 없음
 check('size: 빈 입력 → 조각 없음', sizeSection([], 30) === '');
 const ss = sizeSection([
