@@ -3,7 +3,7 @@ name: Harness Checks
 # ⚠ 이 워크플로는 **얇은 래퍼다.** 게이트 순서·차단 정책은 `scripts/ci.js` 가 소유하고
 # 컨테이너가 그것을 돌린다([TOOL-27]). 여기 남은 것은 **CI 제공자에 고유한 배선**뿐이다:
 # 체크아웃 · diff 범위 계산 · 증거 커밋 권한. 이 파일을 통째로 지워도 게이트는 산다 —
-# `docker compose run --rm harness` 가 같은 판정을 낸다(어답터는 대개 그렇게 쓴다:
+# `docker compose -f docker-compose.harness.yml run --rm harness` 가 같은 판정을 낸다(어답터는:
 # private 레포에서 Actions 는 분당 과금이지만 컨테이너는 어디서든 무료다).
 on:
   push:
@@ -27,7 +27,7 @@ jobs:
           if [ -z "$BASE" ] || ! git cat-file -e "$BASE" 2>/dev/null; then
             BASE=$(git rev-parse "${{ github.sha }}~1" 2>/dev/null || git hash-object -t tree /dev/null)
           fi
-          docker compose run --rm harness --range "$BASE..${{ github.sha }}"
+          docker compose -f docker-compose.harness.yml run --rm harness --range "$BASE..${{ github.sha }}"
 
       - name: Append gate evidence to Raw plane (PRO-11 — "시스템만 Append"의 이행)
         # 게이트 전부 그린으로 여기 도달했을 때만 실행된다. [skip ci]로 자기 재트리거 방지.

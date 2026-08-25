@@ -48,6 +48,10 @@ YAML 을 손으로 번역해야 하고, 번역본은 곧 원본과 어긋난다.
   깨지면 지식이 다시 YAML 로 새고 있는 것이다.
 - **셸 비의존.** 스위트 목록을 셸 glob(`scripts/*.test.js`)이 아니라 `readdirSync` 로 만든다 —
   ENTRYPOINT 가 `node` 라 컨테이너에 셸이 끼지 않는다.
+- **어답터의 루트를 침범하지 않는다.** 파일은 `ci/Dockerfile` · `docker-compose.harness.yml` 이다 —
+  어답터 루트에는 대개 **자기 앱의** Dockerfile·compose 가 있고(실측: 한 어답터의 루트 Dockerfile 은
+  Railway 배포용 멀티스테이지 빌드였다), 하네스가 그 이름을 쓰면 sync 가 남의 배포를 덮어쓴다([ADR-46]).
+  같은 이유로 빌드 컨텍스트는 `ci/` 로 좁히고 루트 `.dockerignore` 는 두지 않는다.
 - **인자는 `entrypoint` 뒤에 붙는다.** compose 서비스는 스크립트 경로까지 `entrypoint` 에 박는다 —
   `docker compose run` 의 추가 인자는 `command` 를 *교체*하고 `entrypoint` 에는 *이어붙기* 때문이다.
   `command` 에 두면 `--range` 가 경로를 밀어내 `node --range` 가 된다([ADR-45] 실측).
@@ -63,7 +67,8 @@ node scripts/ci.js --range A..B         # permission-guard 의 diff 범위
 node scripts/ci.js --skip tests         # 단계 제외(쉼표 구분)
 node scripts/ci.js --json
 
-docker compose run --rm harness         # 컨테이너 정본(CI 와 동일 판정)
-docker compose run --rm adopter-arm     # 형상 팔만([TOOL-26])
-docker compose run --rm leakage         # 누설 가드(공개 템플릿 전용)
+docker compose -f docker-compose.harness.yml run --rm harness      # 컨테이너 정본(CI 와 동일 판정)
+docker compose -f docker-compose.harness.yml run --rm adopter-arm  # 형상 팔만([TOOL-26])
+docker compose -f docker-compose.harness.yml run --rm leakage      # 누설 가드(공개 템플릿 전용)
+npm run ci:docker                                                 # 같은 것(별칭)
 ```

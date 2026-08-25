@@ -7,7 +7,7 @@ name: Template Guard (leakage)
 #   실제 프로젝트: 변수를 두지 말 것(자동 skip). 원하면 이 파일과 scripts/leakage-guard.js 삭제.
 #
 # harness.yml 과 같은 규약 — 본문은 컨테이너가 돌린다([TOOL-27]).
-#   로컬 등가물: docker compose run --rm leakage
+#   로컬 등가물: docker compose -f docker-compose.harness.yml run --rm leakage
 
 on:
   push:
@@ -20,4 +20,4 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Leakage guard (dummy-marker Fail-close)
-        run: docker compose run --rm leakage
+        run: docker compose -f docker-compose.harness.yml run --rm leakage

@@ -50,6 +50,9 @@ const SYNC_RULES = [
   /^scripts\/[^/]+\.js$/,
   /^\.github\/workflows\/harness\.yml$/,
   /^\.github\/workflows\/template-guard\.yml$/,
+  // 하네스 컨테이너([TOOL-27]). **이름이 어답터의 앱 파일과 겹치지 않는 것**이 sync 안전의 전제다 —
+  // 루트 `Dockerfile`·`docker-compose.yml` 이었다면 이 규칙이 남의 배포를 덮어썼다([ADR-46]).
+  /^ci\/Dockerfile$/, /^docker-compose\.harness\.yml$/,
   /^CHANGELOG\.md$/, /^MIGRATION\.md$/, /^DESIGN_RATIONALE\.md$/,
 ];
 const REVIEW_RULES = [
