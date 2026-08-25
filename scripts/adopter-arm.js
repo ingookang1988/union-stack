@@ -102,6 +102,17 @@ function dataShape() {
   }
   files['.union-stack/project/HISTORY.md'] = hist.join('\n') + '\n';
 
+  // ④ 규범 문서 — **헤딩에 인라인 코드**가 있는 형상([ADR-47]). 상류 규범 헤딩엔 백틱이 없어
+  //    안 드러났고, 실어답터(`raw \`pg\` Pool` · `단일 Dockerfile + \`PACKAGE\` 빌드 인자`)에서 발현했다.
+  //    당위 축의 '절 구조' 칩이 헤딩을 그대로 넣던 경로가 이 픽스처의 과녁이다.
+  files['.union-stack/architecture/ARCH-09_shape_probe.md'] = [
+    '<!-- [Schema] 규범 픽스처(example). -->', '---', 'id: ARCH-09', 'status: Active', '---', '',
+    '# 규범 픽스처', '',
+    '## 결정: DB 접근은 raw `pg` Pool', '- 본문.', '',
+    '## 결정: 루트 단일 Dockerfile + `PACKAGE` 빌드 인자', '- 본문.', '',
+    '## **볼드 헤딩** — 부제', '- 본문.', '',
+  ].join('\n') + '\n';
+
   // ④ HANDOFF §3 — 인용 + 헤딩 + 볼드 + 코드가 섞인 산문([ADR-35])
   files['.union-stack/sprint/HANDOFF.md'] = [
     '<!-- [Wiki] 세션 이어달리기. -->', '---', 'session_id: shape-probe', 'date: 2026-08-20T00:00:00Z',

@@ -108,6 +108,15 @@ function gistOf(text, n) {
  * → ③줄 단위로 행두 마커(인용·헤딩) 처리 → ④`<br>` 로 잇기.
  * ⚠ 속성값(`title="…"`)에는 쓰지 마라 — 태그가 들어가면 안 되는 자리이므로 거긴 `esc` 가 정본이다.
  */
+/**
+ * 이미 스타일이 입혀진 칩(`<code>` 등)에 넣을 **평문** — 인라인 마커를 *해석해서 벗긴다*.
+ * `esc` 만 하면 백틱·볼드가 원문으로 샌다(실측: 어답터 규범 헤딩의 `` `pg` `` · `` `PACKAGE` `` —
+ * 상류 헤딩엔 백틱이 없어 안 드러난 형상이다). `prose` 를 쓰면 칩 안에 칩이 중첩된다.
+ * 그래서 proseInline 으로 파싱한 뒤 태그만 걷는다 — **마커 문법은 여전히 한 벌**이다([ADR-47]).
+ */
+function plain(s) {
+  return proseInline(esc(String(s == null ? '' : s))).replace(/<\/?(code|b)>/g, '');
+}
 function prose(txt) {
   return proseInline(esc(String(txt == null ? '' : txt))).split('\n').map(line => {
     const quoted = /^&gt;\s?/.test(line);   // esc 이후라 인용 마커는 '&gt;' 다
@@ -700,7 +709,7 @@ function normView(norms, sync, concerns) {
     <div class="meta"><span class="pill ${g.cls}"><b>${g.label}</b></span>
       <span class="note">${esc(g.why)}</span></div>
     <div class="meta"><span class="note">${esc(n.file)} · ${n.kb}KB · status ${esc(n.status || '없음')} · tier ${esc(n.tier || '미기입')}</span></div>
-    ${n.headings.length ? `<div class="frow"><span class="flabel">절 구조</span><span class="fvals">${n.headings.map(h => `<code>${esc(h)}</code>`).join('')}</span></div>` : ''}
+    ${n.headings.length ? `<div class="frow"><span class="flabel">절 구조</span><span class="fvals">${n.headings.map(h => `<code>${plain(h)}</code>`).join('')}</span></div>` : ''}
     ${n.gateContracts.length ? n.gateContracts.map(contractBlock).join('')
       : `<div class="frow"><span class="flabel">집행</span><span class="fvals t">판정하는 게이트 없음</span></div>`}
     ${fileList('코드 인용', n.cites)}
@@ -1019,7 +1028,7 @@ module.exports = {
   sizeSection, syncSection, effectSection, contractSection, normCard, normView,
   gatherSprint, sprintView, gatherTime, timeView,
   gatherProduct, productView, parseExitCriteria, parseLiveRows, PHASE_TERMINAL,
-  esc, prose, proseInline, clip, gistOf, closeDanglingMarker,
+  esc, prose, proseInline, plain, clip, gistOf, closeDanglingMarker,
   loadSections, renderSection, buildViews, routerCss,
   render, gatherAll, VIEWS, MARKS,
 };
