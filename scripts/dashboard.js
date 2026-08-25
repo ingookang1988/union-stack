@@ -772,8 +772,10 @@ function worktableSection(wos) {
   if (!act.length && !bad.length) {
     return `<section class="card" id="wo"><h2>작업대 — 활성 WO<label class="more" data-nav="sprint" for="v-sprint">자세히 →</label></h2><div class="meta">활성 WO 없음</div></section>`;
   }
-  const tr = w => `<tr><td class="nm">[WO-${w.id}]</td><td>${esc(w.title || '')}</td>`
-    + `<td>${esc(w.parent || '')}</td><td>${esc(w.status || '')}</td><td class="note">${esc(w.evidence || '')}</td></tr>`;
+  // 제목·증거는 평면의 자유 산문이라 prose 를 거친다(부모·상태는 식별자 → esc 유지, [ADR-35]).
+  // 증거는 특히 코드 스팬·볼드가 잦다 — `sync-db --force`, **병합은 PO 판단** 같은 문장이 그대로 들어온다.
+  const tr = w => `<tr><td class="nm">[WO-${w.id}]</td><td>${prose(w.title || '')}</td>`
+    + `<td>${esc(w.parent || '')}</td><td>${esc(w.status || '')}</td><td class="note">${prose(w.evidence || '')}</td></tr>`;
   const warn = bad.length
     ? `<div class="meta bad">frontmatter 없는 WO ${bad.length}건: ${bad.map(w => esc(w.file)).join(' ')}</div>` : '';
   return `<section class="card" id="wo"><h2>작업대 — 활성 WO<label class="more" data-nav="sprint" for="v-sprint">자세히 →</label></h2>${warn}
