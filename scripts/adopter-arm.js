@@ -95,10 +95,14 @@ function dataShape() {
   files['.union-stack/archive_ledger.md'] = ledger.join('\n') + '\n';
 
   // ③ HISTORY — 헤딩형([ADR-31]). 근거 라벨을 달아 CLARIFY 가 아니라 정상 계수가 되게 한다.
+  //    값이 **여는 마커로 시작**하는 형상은 #7(LifeSaju 실측 4건) — 라벨 추출이 그 마커를
+  //    먹으면 짝이 한 칸 밀려 시간축 카드의 강조가 반대 토큰에 걸린다(픽스처가 곧 회귀 고정).
   const hist = ['<!-- [Schema/Raw] 프로젝트 전략적 분기점. -->', '# Project History', ''];
   for (let i = 1; i <= HISTORY_ENTRIES; i++) {
     hist.push(`### 2026-0${i}-15 — 전략 분기점 ${i}`, '',
-      `- **Context:** 상황 ${i}`, `- **Rationale:** 근거 ${i} — \`이유\`가 있다`, `- **Impact:** 시사점 ${i}`, '');
+      `- **Context:** 상황 ${i}`,
+      `- 근거: **핵심 ${i}** 때문 — \`이유\`가 있다`,
+      `- **Impact:** \`A${i}\` → \`B${i}\`.`, '');
   }
   files['.union-stack/project/HISTORY.md'] = hist.join('\n') + '\n';
 
