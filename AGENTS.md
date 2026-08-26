@@ -71,6 +71,7 @@ summary · changed-location IDs · next task (single entry point) · open issues
 - ⛔ **[ADR-21]** feature/live.md 의 Status 열 어휘 정의 — 재개 조건: work-close 가 행의 존재가 아니라 값을 봐야 하는 요구가 실제로 생길 때
 - ⛔ **[ADR-22]** Live 상태값 재도입 — 재개 조건: 운영 중인 산출물을 보호해야 했는데 못 한 사례가 실제로 관측될 때
 - ⛔ **[ADR-25]** 계수 도메인의 계보 ID 공간 분리(코드 수정) — 재개 조건: 잠금 오탐 또는 GC 오차단이 실제 관측될 때
+- ⛔ **[ADR-48]** feature 하위 uxflow(화면 흐름) 축·신규 도메인 신설 재제안 — 재개 조건: UX 사실 오라우팅이 같은 계보에서 2~3회 반복되거나, FLOW 가 UX 표로 회전 임계(~30KB)를 넘거나, UI 제품 어답터의 실사용 제보가 1건 이상 올 때
 <!-- blocks-index:end -->
 
 ---
