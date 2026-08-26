@@ -49,6 +49,14 @@ check('충족 시 이슈 0', checkClosure(wo, traces).issues.length === 0);
 
 const noTrace = { ...wo, closed_by: [] };
 check('흔적 없음 → no-trace', checkClosure(noTrace, {}).issues.some(i => i.code === 'no-trace'));
+// #8 회귀: 후보 목록은 사실상 규범으로 읽힌다 — feature/flow/ 가 빠지면 E2E 경로를
+// 바꾼 WO 가 FLOW-* 되쓰기에서 멀어진다(하류 실측: 어트랙션 스트리밍 WO 5건).
+check('#8: 후보에 feature/flow/ 포함',
+  checkClosure(noTrace, {}).issues.find(i => i.code === 'no-trace').msg.includes('.union-stack/feature/flow/'));
+check('#8: FLOW 흔적 지정 시 정상 통과', checkClosure(
+  { ...wo, closed_by: ['.union-stack/feature/flow/FLOW-01a_example_lineage.md'] },
+  { '.union-stack/feature/flow/FLOW-01a_example_lineage.md': '| UI | x | [WO-01a-1] 반영 |' },
+).issues.length === 0);
 
 const noEv = { ...wo, evidence: null };
 check('증거 없음 → no-evidence', checkClosure(noEv, traces).issues.some(i => i.code === 'no-evidence'));

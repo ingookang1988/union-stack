@@ -26,9 +26,12 @@ const BLOCK_RE = /(<!-- worktable:begin[^\n]*-->)\r?\n([\s\S]*?)(<!-- worktable:
 /** 활성 = 작업대에 오르는 상태. Closed 는 뷰에서 자동으로 빠진다(행 제거가 절차가 아니라 부수효과). */
 const ACTIVE = new Set(['Draft', 'Active', 'Verifying']);
 
-/** 상위 축 흔적의 후보 — work-close 가 "여기에 반영했나"를 묻는 곳. */
+/** 상위 축 흔적의 후보 — work-close 가 "여기에 반영했나"를 묻는 곳.
+ *  feature/flow/ 포함은 이슈 #8(하류 실측): E2E 경로가 바뀐 WO 는 FLOW-* 의 해당 단계를
+ *  되써야 하는데, 이 목록이 사실상 규범으로 읽혀 후보에 없으면 그 축에서 멀어진다. */
 const TRACE_CANDIDATES = [
   '.union-stack/feature/live.md',
+  '.union-stack/feature/flow/',
   '.union-stack/verification/derived/state.md',
   '.union-stack/verification/derived/gap.md',
   '.union-stack/reference/contracts/',
