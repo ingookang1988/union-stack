@@ -50,6 +50,8 @@ function chain({ range = null } = {}) {
     // permission-guard: 범위가 없으면 자기 기본값(작업트리)을 쓴다. CI 는 --range 를 준다.
     { name: 'permission-guard', args: ['scripts/permission-guard.js', ...(range ? ['--range', range] : [])], blocking: false },
     { name: 'handoff-linter', args: ['scripts/handoff-linter.js'], blocking: false },
+    // 생성 뷰 드리프트([PRO-21] 2단계) — CLARIFY 만 내는 비차단 게이트([TOOL-28]).
+    { name: 'test-catalog', args: ['scripts/test-catalog.js'], blocking: false },
     { name: 'tests', args: ['--test', ...testFiles()] },
     { name: 'health', args: ['scripts/health.js'] },
     { name: 'adopter-arm', args: ['scripts/adopter-arm.js'] },

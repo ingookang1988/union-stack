@@ -72,6 +72,7 @@ const ROWS_PER_ZONE = 4;
 const HISTORY_ENTRIES = 3; // [ADR-31]: 헤딩형 분기점
 
 /** 대안 형상의 평면 데이터를 만든다(순수). 반환: {rel: 내용} + 정답(ground truth). */
+// @test-asset 하류 형상 픽스처 :: dataShape() — 어답터에서만 참인 데이터 형상. 하류 제보로 잡은 형상은 여기에 추가(회귀 고정, [ADR-40])
 function dataShape() {
   const files = {};
   // ① live.md — 존별 표 N개, 한국어 헤더, 백틱 경로, 볼드 상태([ADR-37] B)
