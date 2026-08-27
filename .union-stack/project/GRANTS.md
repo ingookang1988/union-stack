@@ -11,6 +11,7 @@
 |---|---|---|---|---|
 | GRANT-01 | .union-stack/project/roadmap/** | ingookang1988 | 2026-07-24 | roadmap 갱신(PHASE·GATE) 위임 — E3 등 트랙 종료 표기를 에이전트가 수행. 철회하려면 이 행을 지운다 |
 | GRANT-02 | .union-stack/**/_GUIDE.md | ingookang1988 | 2026-08-18 | 방법론 표면 갱신 위임 — Schema 파일 편집의 50%(실측 27/54, 최근 65커밋)가 `_GUIDE.md`다. `_GUIDE`는 어답터의 프로젝트 규범이 아니라 템플릿 방법론 표면이며, 다른 5개 게이트(zfs·leakage·ref·smell·tools-index)가 이미 별도 클래스로 취급하고 `template-update`는 review(상류 소유)로 분류한다 — 완화가 아니라 정합. 규범 문서(ARCH-00 등)는 스코프 밖. 철회하려면 이 행을 지운다 |
+| GRANT-03 | .union-stack/reference/contracts/CON-00_test_infra_catalog.md | ingookang1988 | 2026-08-27 | [PRO-21] §3-2 생성 뷰 재생성 위임 — `test-catalog --write` 가 CON-00 의 마커 블록을 갱신한다(코드가 진실, 블록은 투영). 파일 하나로 스코프 최소. 수기 절(규약·경계)은 이 grant 의 취지 밖이니 실질 변경은 여전히 채팅 승인으로. 철회하려면 이 행을 지운다 |
 | (예시) GRANT-90 | .union-stack/example_scope/** | human-architect | 2026-01-01 | (예시) 형식 데모 — 스코프 최소·근거 명시. 이 행은 예시라 가드가 무시한다 |
 
 > **스탬프 규율**

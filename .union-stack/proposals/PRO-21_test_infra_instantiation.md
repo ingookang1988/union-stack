@@ -2,8 +2,10 @@
 ---
 id: PRO-21
 title: 테스트 인프라 — 선언된 3분할의 이행(도그푸딩 · 자동 추출 · 관측)
-status: Proposed
-version: 0.1
+status: Approved
+decided_by: ingookang1988 (chat approval, 2026-08-27)
+reason: "새 구조 0 — 기배정 셀의 내용물·동기화·계기판만 채운다. 1단계는 [ADR-51]로 선이행, 2·3단계 승인. §6 미결 2건(init 처리·ARCH 전략 층)은 열어 둔다."
+version: 1.0
 ---
 
 # [PRO-21] 테스트 인프라의 이행 — 새 구조 0, 선언≠이행 공백 3개
