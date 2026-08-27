@@ -84,7 +84,7 @@ function lastDateIn(txt) {
 }
 
 /** 순수 계산: 1차 지표 → 차원별 평가 리포트. (FS 비의존 → 테스트 용이) */
-function computeHealth({ index, domainsDefined, guideCount, namingViolations, historyViolations, leakageViolations, oversize = [], brokenRefs = 0, budget = null, sync = null, lessons = null, effect = null, contracts = null, norms = null, roadmap = null, adapter = null, historyClarifications = 0 }) {
+function computeHealth({ index, domainsDefined, guideCount, namingViolations, historyViolations, leakageViolations, oversize = [], brokenRefs = 0, budget = null, sync = null, lessons = null, effect = null, contracts = null, norms = null, roadmap = null, adapter = null, historyClarifications = 0, testInfra = null }) {
   const used = new Set(index.map(d => d.domain));
   const unused = domainsDefined.filter(d => !used.has(d));
   const locked = index.filter(d => LOCKED.includes(d.status));
@@ -170,6 +170,15 @@ function computeHealth({ index, domainsDefined, guideCount, namingViolations, hi
     dims.push({ name: 'roadmap wiring', status: 'INFO', value: bits.join(' · '),
       note: [...roadmap.unanchored.map(k => `무연결:${k}`), ...roadmap.stale.map(k => `정체:${k}`)].join(' ') });
   }
+  if (testInfra) {
+    // 테스트 인프라 관측([PRO-21] 3단계) — 게이트가 아니라 계기판이다. §5.5 실측(재사용 실패는
+    // 의지가 아니라 가시성 문제)이 하드 게이트를 기각했으므로, 여기는 영원히 INFO 다.
+    const bits = [`스위트 ${testInfra.testFiles}`,
+      testInfra.catalogAssets === null ? '카탈로그 무기입' : `카탈로그 자산 ${testInfra.catalogAssets}`,
+      `FLOW 케이스 ${testInfra.flowCases}${testInfra.flowCases ? `(체크 ${testInfra.flowChecked})` : ''}`];
+    if (testInfra.evidenceLast) bits.push(`evidence ${testInfra.evidenceLast}`);
+    dims.push({ name: 'test infra', status: 'INFO', value: bits.join(' · ') });
+  }
   const tiers = { draft: 0, reviewed: 0, ratified: 0, untagged: 0 };
   index.forEach(d => { tiers[d.tier && tiers[d.tier] !== undefined ? d.tier : 'untagged']++; });
   dims.push({ name: 'tier distribution', status: 'INFO',
@@ -219,9 +228,36 @@ function gather(root = path.resolve(__dirname, '..')) {
     index, domainsDefined: [...VALID_DOMAINS], guideCount: countGuides(root),
     namingViolations, historyViolations, historyClarifications, leakageViolations, oversize, brokenRefs, budget,
     sync, lessons: gatherLessons(root), effect: gatherEffectSurface(root), contracts, norms, roadmap, adapter,
+    testInfra: gatherTestInfra(root),
   });
   // 판정(dims) 외에 원자료도 함께 낸다 — 대시보드가 같은 수집을 두 번 하지 않도록(합성 원칙).
   return { ...r, sizes, sizeCapKb: SIZE_CAP_KB, sync, contracts, norms, roadmap, adapter, concerns: concernUsage(index) };
+}
+
+/**
+ * 테스트 인프라 관측([PRO-21] 3단계, 순수 수집). 소프트 의존([ADR-28]) — 카탈로그 부재
+ * (어답터 미작성)는 null 로, 층 3 평면 부재는 0 으로 낸다. 고장과 부재를 구별한다.
+ */
+function gatherTestInfra(root) {
+  let testFiles = 0;
+  try { testFiles = fs.readdirSync(path.join(root, 'scripts')).filter(f => f.endsWith('.test.js')).length; } catch {}
+  let catalogAssets = null;
+  try {
+    const tc = require('./test-catalog');
+    if (fs.existsSync(path.join(root, tc.CATALOG))) catalogAssets = tc.gather(root).length;
+  } catch {} // test-catalog 스크립트 부재(구버전 형상) — 무기입이 정직한 값이다
+  let flowCases = 0, flowChecked = 0;
+  try {
+    walkFiles(root, '.union-stack/feature/flow', rel => {
+      if (!rel.endsWith('.md') || rel.endsWith('_GUIDE.md')) return;
+      const txt = fs.readFileSync(path.join(root, rel), 'utf8');
+      flowCases += (txt.match(/^\s*- \[[ xX]\]/gm) || []).length;
+      flowChecked += (txt.match(/^\s*- \[[xX]\]/gm) || []).length;
+    });
+  } catch {}
+  let evidenceLast = null;
+  try { evidenceLast = lastDateIn(fs.readFileSync(path.join(root, '.union-stack/verification/raw/evidence.md'), 'utf8')); } catch {}
+  return { testFiles, catalogAssets, flowCases, flowChecked, evidenceLast };
 }
 
 /** 평면별 최종 기입 날짜 + ledger 항목 수를 모은다(관측만 — [PRO-11] C3). */
@@ -364,6 +400,6 @@ function run(root) {
   return r.fails ? 1 : 0;
 }
 
-module.exports = { computeHealth, gather, gatherSync, gatherLessons, computeEffectSurface, gatherEffectSurface, parseContract, lastDateIn, CONTRACT };
+module.exports = { computeHealth, gather, gatherSync, gatherLessons, gatherTestInfra, computeEffectSurface, gatherEffectSurface, parseContract, lastDateIn, CONTRACT };
 
 if (require.main === module) process.exit(withContract(CONTRACT, () => run())());

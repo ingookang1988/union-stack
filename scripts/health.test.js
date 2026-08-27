@@ -44,7 +44,7 @@ check('ref integrity INFO', sz.dims.find(d => d.name === 'ref integrity').value.
 const g = gather();
 const nonLeakFails = g.dims.filter(d => d.status === 'FAIL' && d.name !== 'leakage gate').length;
 check('gather 커밋 평면 게이트 그린', nonLeakFails === 0);
-check('gather dims 16 (관측 7절 포함)', g.dims.length === 16);
+check('gather dims 17 (관측 8절 포함 — test infra [PRO-21])', g.dims.length === 17);
 // 로드맵 배선 관측([PRO-19] ②) — 판정 없는 INFO. roadmap 은 Schema 라 표면화가 수단의 전부다.
 const rDim = g.dims.find(d => d.name === 'roadmap wiring');
 check('roadmap wiring 절은 INFO', rDim && rDim.status === 'INFO');
@@ -104,6 +104,19 @@ check('effect: 파일 2개 기록', es.files.length === 2);
 const noEffect = computeHealth({ index, domainsDefined: defined, guideCount: 5, namingViolations: 0, historyViolations: 0, leakageViolations: 0, effect: computeEffectSurface({}) });
 check('effect: 설정 없으면 관측 불가', noEffect.dims.find(d => d.name === 'effect surface').value.includes('관측 불가'));
 check('effect 절은 INFO(판정 없음)', noEffect.dims.find(d => d.name === 'effect surface').status === 'INFO');
+
+// --- test infra 관측([PRO-21] 3단계) — 영원히 INFO, 부재와 고장을 구별 ---
+const ti = computeHealth({ index, domainsDefined: defined, guideCount: 5, namingViolations: 0, historyViolations: 0, leakageViolations: 0,
+  testInfra: { testFiles: 38, catalogAssets: 3, flowCases: 2, flowChecked: 1, evidenceLast: '2026-08-25' } });
+const tiDim = ti.dims.find(d => d.name === 'test infra');
+check('test infra: 차원 존재 + INFO', tiDim && tiDim.status === 'INFO');
+check('test infra: 값 합성', tiDim.value.includes('스위트 38') && tiDim.value.includes('카탈로그 자산 3') && tiDim.value.includes('체크 1'));
+const tiNull = computeHealth({ index, domainsDefined: defined, guideCount: 5, namingViolations: 0, historyViolations: 0, leakageViolations: 0,
+  testInfra: { testFiles: 5, catalogAssets: null, flowCases: 0, flowChecked: 0, evidenceLast: null } });
+check('test infra: 카탈로그 부재는 0이 아니라 무기입', tiNull.dims.find(d => d.name === 'test infra').value.includes('카탈로그 무기입'));
+check('test infra: 미수집이면 차원 없음(구버전 소비자 호환)',
+  computeHealth({ index, domainsDefined: defined, guideCount: 5, namingViolations: 0, historyViolations: 0, leakageViolations: 0 })
+    .dims.every(d => d.name !== 'test infra'));
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
