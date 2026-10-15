@@ -61,7 +61,9 @@ This file is adopter-owned — upstream never touches it.
 ```json
 {
   "private": true,
-  "zfsIgnored": ["mechanism.md"]
+  "zfsIgnored": ["mechanism.md"],
+  "statusMap": { "Done": "Closed", "Review": "Verifying" },
+  "evidenceFields": { "evidence": ["implementation_commit"], "closed_by": ["surfaces"] }
 }
 ```
 
@@ -71,6 +73,17 @@ This file is adopter-owned — upstream never touches it.
   the gate itself is unchanged, only the scorecard's verdict.
 - `zfsIgnored: [...]` — extra fixed manifest **filenames** (not paths) exempt from ZFS naming, merged
   with the built-in exemption list.
+- `statusMap: { local: upstream }` — your own status vocabulary (`Done`, `Review`, …) read **as** the
+  upstream one by `zfs_index` and `work-close` (so locks, the worktable, health and the roadmap view all
+  follow). Values not in the map pass through unchanged — nothing is enforced; the original is kept as
+  `rawStatus`. (PRO-27 ②)
+- `evidenceFields: { evidence: [...], closed_by: [...] }` — local aliases for the two closure fields.
+  The upstream field wins when present; aliases are tried in order.
+- Documents without a `status:` line are counted as *nothing* by every tool. List them with
+  `node scripts/frontmatter-backfill.js` (dry-run: estimate from a body marker such as `Status: Done`,
+  then from an `archived/` directory, else left blank and reported) and apply with `--apply` — it inserts
+  **one `status:` line** in your own vocabulary; the map above does the rest. Upstream never edits your
+  documents: the script and the dry-run are its part, applying and committing are yours.
 
 Unknown keys and wrong types are reported as warnings rather than silently ignored — a typo that looks
 applied but isn't is the standard failure of this kind of config.

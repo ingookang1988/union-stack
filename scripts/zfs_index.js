@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const { parse } = require('./zfs_util');
 const { walkFiles } = require('./fs_walk');
+const { load: loadAdapter, mapStatus } = require('./adapter');
 
 // ZFS ID를 갖는 원자적 문서가 사는 디렉터리(.union-stack/ 격리 구조, 린터와 동일 집합).
 const BASE = '.union-stack';
@@ -63,14 +64,15 @@ function parseList(fm, key) {
 
 function readStatus(full) { return readFront(full).status; }
 
-function collect(dir, root, out) {
+function collect(dir, root, out, cfg = null) {
   walkFiles(root, dir, rel => {
     const entry = rel.split('/').pop();
     if (!entry.endsWith('.md')) return;
     const parsed = parse(entry); // {domain, id, slug} 또는 null(가이드·매니페스트)
     if (!parsed) return;
     const front = readFront(path.join(root, rel));
-    out.push({ file: rel, ...parsed, status: front.status, tier: front.tier,
+    // status 는 어답터 statusMap 으로 매핑한 값([PRO-27] ② — 로컬 어휘를 강제하지 않고 읽는다), 원문은 rawStatus.
+    out.push({ file: rel, ...parsed, status: mapStatus(cfg, front.status), rawStatus: front.status, tier: front.tier,
       consumers: front.consumers || [], concerns: front.concerns || [] });
   });
 }
@@ -78,7 +80,8 @@ function collect(dir, root, out) {
 /** 레포 루트 기준 전체 ZFS 문서 인덱스를 만든다. */
 function buildIndex(root = path.resolve(__dirname, '..')) {
   const out = [];
-  SCAN_DIRS.forEach(d => collect(d, root, out));
+  const cfg = loadAdapter(root);
+  SCAN_DIRS.forEach(d => collect(d, root, out, cfg));
   return out;
 }
 

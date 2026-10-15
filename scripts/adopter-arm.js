@@ -21,6 +21,10 @@
 //   serial : **전역 일련번호 WO** — 산술 조상이 0 인 WO(계보는 frontmatter `plan:` 에만). 빈 upward-fetch 가 조용히
 //            exit 0 하던 것과, `health --root` 가 플래그를 무시하던 것. 근거 [PRO-27] ③④ (SURVEY-02).
 //
+//   vocab  : **로컬 상태 어휘** — `status: Done`·`Review`, 별칭 증거 필드, frontmatter 없는 WO·PRO(본문 산문 상태), 종결 디렉터리 문서.
+//            statusMap·evidenceFields 로 읽히는가, 백필 dry-run 이 쓰지 않는가, --apply 뒤 대상 0 인가. 근거 [PRO-27] ② (SURVEY-02:
+//            WO 99/179 frontmatter 없음 · PRO 17/17 YAML 없음 · status 38종 자유 문자열).
+//
 // **왜 data 축이 따로 필요한가**: env 팔의 사본은 `init` 만 돌린 것이라 여전히 *상류의 데이터*를
 // 쓴다. [PRO-17] §5 는 형상 매트릭스를 "형상 하나를 통과했는데 실어답터가 깨진 사례가 나오면"
 // 으로 보류했고, [ADR-31]·[ADR-37]이 정확히 그 사례다 — 재개 조건이 충족되어 축을 하나 늘렸다.
@@ -29,7 +33,7 @@
 //
 // 실행:
 //   node scripts/adopter-arm.js                 # 두 축 전부
-//   node scripts/adopter-arm.js --shape env     # 한 축만 (env|data|legacy|serial)
+//   node scripts/adopter-arm.js --shape env     # 한 축만 (env|data|legacy|serial|vocab)
 //   node scripts/adopter-arm.js --keep <dir>    # 워크스페이스 보존(디버깅)
 //   node scripts/adopter-arm.js --json
 const fs = require('fs');
@@ -317,8 +321,60 @@ function serialArm(ws) {
   return bars;
 }
 
-const SHAPES = ['env', 'data', 'legacy', 'serial'];
-const ARMS = { env: envArm, data: dataArm, legacy: legacyArm, serial: serialArm };
+/** 로컬 상태 어휘 형상(순수) — statusMap · evidenceFields · 백필([PRO-27] ②). */
+function vocabShape() {
+  const files = {};
+  files['.union-stack/adapter.json'] = JSON.stringify({
+    statusMap: { Done: 'Closed', Review: 'Verifying' },
+    evidenceFields: { evidence: ['implementation_commit'], closed_by: ['surfaces'] },
+  }, null, 2) + '\n';
+  files['.union-stack/sprint/WO-40_local_vocab.md'] = [
+    '<!-- (example) 로컬 어휘 WO -->', '---', 'id: WO-40', 'title: 로컬 어휘 작업(example)', 'status: Done', 'parent: PLAN-01',
+    'implementation_commit: "abc123 (example)"', 'surfaces: [.union-stack/feature/live.md]', '---', '',
+    '# [WO-40] 로컬 어휘 작업', '## 목표', '- 예시', '## 수용 기준', '- 예시', '## 증거', '- 예시', '',
+  ].join('\n');
+  files['.union-stack/sprint/WO-41_review_no_fm.md'] = ['# [WO-41] frontmatter 없는 작업(example)', '', '**Status:** Review', '- 본문', ''].join('\n');
+  files['.union-stack/proposals/PRO-41_prose_status.md'] = ['# [PRO-41] 산문 상태 제안(example)', '', '상태: Approved — 2026-01-01', ''].join('\n');
+  files['.union-stack/sprint/archived/WO-42_archived_no_fm.md'] = ['# [WO-42] 종결 디렉터리 문서(example)', '- 본문뿐', ''].join('\n');
+  return { files, truth: { mappedClosed: '40', backfillRows: 3, estimable: 3, afterApplyVerifying: '41' } };
+}
+
+function vocabArm(ws) {
+  const { files, truth } = vocabShape();
+  writeShape(ws, files);
+  const bars = [];
+  const probe = run(ws, ['-e', [
+    "const w=require('./scripts/work-close').gather('.');const z=require('./scripts/zfs_index').buildIndex('.');",
+    "const a=w.find(x=>x.id==='40');const b=z.find(d=>d.domain==='WO'&&d.id==='40');",
+    "console.log(JSON.stringify({status:a&&a.status,raw:a&&a.rawStatus,ev:a&&a.evidence,cb:a&&a.closed_by,idx:b&&b.status}));",
+  ].join('')]);
+  let p = null;
+  try { p = JSON.parse(probe.stdout.trim().split('\n').pop()); } catch { /* null */ }
+  bars.push({ name: 'statusMap: Done → Closed(work-close · 색인 둘 다)', ok: !!p && p.status === 'Closed' && p.raw === 'Done' && p.idx === 'Closed',
+    detail: p ? `${p.raw} → ${p.status} · 색인 ${p.idx}` : '측정 실패' });
+  bars.push({ name: 'evidenceFields: 별칭 증거·흔적이 읽힌다', ok: !!p && /abc123/.test(p.ev || '') && Array.isArray(p.cb) && p.cb.length === 1,
+    detail: p ? `evidence=${p.ev} · closed_by ${(p.cb || []).length}곳` : '측정 실패' });
+  // 백필 — dry-run 은 **쓰지 않는다**(상류가 어답터 문서를 고치지 않는 경계의 기계 검사).
+  const watched = ['.union-stack/sprint/WO-41_review_no_fm.md', '.union-stack/proposals/PRO-41_prose_status.md', '.union-stack/sprint/archived/WO-42_archived_no_fm.md'];
+  const snap = () => watched.map(f => fs.readFileSync(path.join(ws, f), 'utf8')).join('\u0000');
+  const before = snap();
+  const dry = run(ws, ['scripts/frontmatter-backfill.js', '--json']);
+  let rows = null;
+  try { rows = JSON.parse(dry.stdout).rows; } catch { /* null */ }
+  bars.push({ name: `백필 dry-run: 대상 ${truth.backfillRows}건 나열 · 파일 쓰기 0`, ok: dry.code === 3 && !!rows && rows.length === truth.backfillRows && snap() === before,
+    detail: rows ? `${rows.length}건 · exit ${dry.code}` : '측정 실패' });
+  const ap = run(ws, ['scripts/frontmatter-backfill.js', '--apply']);
+  const after = run(ws, ['scripts/frontmatter-backfill.js']);
+  const probe2 = run(ws, ['-e', "const z=require('./scripts/zfs_index').buildIndex('.');const b=z.find(d=>d.domain==='WO'&&d.id==='41');console.log(JSON.stringify({s:b&&b.status,r:b&&b.rawStatus}))"]);
+  let p2 = null;
+  try { p2 = JSON.parse(probe2.stdout.trim().split('\n').pop()); } catch { /* null */ }
+  bars.push({ name: '--apply 뒤 대상 0 · 삽입값은 로컬 어휘(Review → Verifying 은 매핑이 한다)', ok: ap.code === 0 && after.code === 0 && !!p2 && p2.r === 'Review' && p2.s === 'Verifying',
+    detail: `apply exit ${ap.code} · 재검사 exit ${after.code}${p2 ? ` · ${p2.r} → ${p2.s}` : ''}` });
+  return bars;
+}
+
+const SHAPES = ['env', 'data', 'legacy', 'serial', 'vocab'];
+const ARMS = { env: envArm, data: dataArm, legacy: legacyArm, serial: serialArm, vocab: vocabArm };
 
 function main(argv = process.argv.slice(2)) {
   const si = argv.indexOf('--shape');
@@ -355,6 +411,6 @@ function main(argv = process.argv.slice(2)) {
   return failed ? 1 : 0;
 }
 
-module.exports = { dataShape, legacyShape, serialShape, SHAPES, rawMarkers, noJsReachable, crashed, ZONES, ROWS_PER_ZONE, HISTORY_ENTRIES };
+module.exports = { dataShape, legacyShape, serialShape, vocabShape, SHAPES, rawMarkers, noJsReachable, crashed, ZONES, ROWS_PER_ZONE, HISTORY_ENTRIES };
 
 if (require.main === module) process.exit(main());

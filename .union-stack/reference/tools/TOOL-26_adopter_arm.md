@@ -22,6 +22,7 @@ version: 1.0
 | `data` | 평면 **내용의 모양**만 교체(표 13개·한국어 헤더·`**제목 — 부제**`·헤딩형 HISTORY) | 도구 3종 크래시 0 · **렌더 본문 원문 마커 0** · live 계수 정확 · HISTORY 분기점 계수 정확 | [ADR-31]·[ADR-35]·[ADR-37] |
 | `legacy` | **독립 채번 레거시** — 같은 번호·다른 도메인(PLAN-36 ≠ PRO-36) · 같은 도메인 중복 파일 · `[up:…]` 를 담은 실콘텐츠 | 중복 ID → zfs-linter REJECT · **`[up:…]` strict 참조 린터 통과** · 상류 참조 INFO 계수 · **`health --root` 가 사본을 측정** | [PRO-27] ①⑤ (SURVEY-02 어답터 실측) |
 | `serial` | **전역 일련번호 WO** — 산술 조상 0, 계보는 `plan:` frontmatter 에만 | 빈 upward-fetch → **CLARIFY(3)** · `health --root <없는 경로>` REJECT · `health --root <사본>` 크래시 0 | [PRO-27] ③④ (SURVEY-02 어답터 실측) |
+| `vocab` | **로컬 상태 어휘** — `status: Done`·별칭 증거 · frontmatter 없는 WO·PRO(본문 산문 상태) · 종결 디렉터리 문서 + `adapter.json statusMap/evidenceFields` | Done → Closed(work-close·색인) · 별칭 증거 읽힘 · **백필 dry-run 쓰기 0** · `--apply` 뒤 대상 0 | [PRO-27] ② (SURVEY-02 어답터 실측) |
 
 ## 언제 쓰나
 - CI 매 실행(`ci.js` 체인의 `adopter-arm` 단계 — [TOOL-27]). 로컬에선 배송 형상을 손으로 재현하기 전에.
@@ -47,7 +48,7 @@ version: 1.0
 ## 호출
 ```bash
 node scripts/adopter-arm.js                # 두 축 (exit 0 = 성공 바 전부 충족)
-node scripts/adopter-arm.js --shape env    # 한 축만 (env|data|legacy|serial)
+node scripts/adopter-arm.js --shape env    # 한 축만 (env|data|legacy|serial|vocab)
 node scripts/adopter-arm.js --keep ./ws    # 워크스페이스 보존(디버깅)
 node scripts/adopter-arm.js --json
 ```

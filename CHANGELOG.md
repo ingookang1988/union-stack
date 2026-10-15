@@ -12,6 +12,19 @@ design, see [`DESIGN_RATIONALE.md`](./DESIGN_RATIONALE.md). Entries marked **⚠
 action in already-adopted projects.
 
 ## [Unreleased]
+- **PRO-27 — cross-repo prerequisites: upstream tools read the adopter's plane as it is.** Three adopters
+  showed the upstream's assumptions do not hold downstream: upstream and local IDs share one space, status
+  is a free vocabulary and often absent, lineage lives in frontmatter rather than ID arithmetic, and
+  `health --root` silently measured the upstream itself. **①** `[up:ID]` names an upstream document from an
+  adopter; `ref-linter`, `upward-fetch`, `blast-radius` and the MCP server treat it as an external reference
+  (INFO), never a local miss — `scripts/upstream-prefix.js` adds the prefix when upstream docs are shipped.
+  **②** `adapter.json` gains `statusMap` and `evidenceFields`; `zfs_index` and `work-close` map local vocabulary
+  on read (`rawStatus` keeps the original). `scripts/frontmatter-backfill.js` (**TOOL-29**) lists documents
+  without `status:` with an estimate and source, dry-run by default; `--apply` inserts one line in *your*
+  vocabulary. **④** `health --root <dir>` measures that repo and REJECTs a root without `.union-stack`.
+  **⑤** `zfs-linter` REJECTs duplicate IDs within a domain. An empty `upward-fetch` is now CLARIFY (exit 3),
+  not a silent pass. Adopter arm gains `legacy`, `serial` and `vocab` shapes. No migration required —
+  the keys are optional and absent means the previous behaviour.
 - **PRO-17 / ADR-40 — adopter arm: the same gates, run once more in a different shape.**
   Upstream only ever runs its own shape, so a fact that is only true in another shape is observed
   nowhere — eight measured defects across three axes ([LSN-17]). `scripts/adopter-arm.js` (**TOOL-26**)

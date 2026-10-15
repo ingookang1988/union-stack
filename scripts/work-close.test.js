@@ -123,5 +123,18 @@ check('지배적 EOL 보존(CRLF)', !/(?<!\r)\n/.test(inject(CRLF, table)));
 
 check('CONTRACT 필수 필드 완비', validateContract(CONTRACT).length === 0);
 
+// --- [PRO-27] ② parseWo 가 statusMap·evidenceFields 로 로컬 어휘·별칭을 읽는다 ---
+const { parseConfig: parseAdapter } = require('./adapter');
+const vocabCfg = parseAdapter('{"statusMap": {"Done": "Closed"}, "evidenceFields": {"evidence": ["implementation_commit"], "closed_by": ["surfaces"]}}');
+const LOCAL_WO = ['---', 'id: WO-40', 'status: Done', 'parent: PLAN-01', 'implementation_commit: "abc123"', 'surfaces: [.union-stack/feature/live.md]', '---', '## 목표', '## 수용 기준', '## 증거'].join('\n');
+const lw = parseWo('.union-stack/sprint/WO-40_x.md', LOCAL_WO, vocabCfg);
+check('statusMap: Done → Closed', lw.status === 'Closed');
+check('rawStatus 보존', lw.rawStatus === 'Done');
+check('evidence 별칭(implementation_commit)', lw.evidence === 'abc123');
+check('closed_by 별칭(surfaces)', lw.closed_by.length === 1 && lw.closed_by[0].includes('live.md'));
+check('매핑 없이 읽으면 로컬 어휘·별칭 미인식(상류 기본)', parseWo('.union-stack/sprint/WO-40_x.md', LOCAL_WO).status === 'Done' && parseWo('.union-stack/sprint/WO-40_x.md', LOCAL_WO).evidence === null);
+check('상류 필드가 있으면 상류 필드 우선', parseWo('.union-stack/sprint/WO-40_x.md', LOCAL_WO.replace('parent: PLAN-01', 'parent: PLAN-01\nevidence: "real"'), vocabCfg).evidence === 'real');
+check('Closed 로 매핑된 WO 는 작업대에서 빠진다', !buildTable([lw]).includes('WO-40'));
+
 console.log(`work-close.test: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

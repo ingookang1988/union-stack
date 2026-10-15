@@ -57,5 +57,18 @@ check('readFront 가 consumers 를 낸다',
   JSON.stringify(readFront(w('d.md', '---\nstatus: Active\nconsumers: [FLOW-01a]\n---\n')).consumers) === '["FLOW-01a"]');
 fs.rmSync(tmp, { recursive: true, force: true });
 
+// --- [PRO-27] ② 색인이 adapter.json statusMap 으로 status 를 매핑하고 원문은 rawStatus 로 남긴다 ---
+const tmp2 = fs.mkdtempSync(path.join(os.tmpdir(), 'zfsidx-vocab-'));
+try {
+  const w2 = (rel, s) => { const p = path.join(tmp2, rel); fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, s); };
+  w2('.union-stack/sprint/WO-07_x.md', '---\nstatus: Done\n---\n# (예시)\n');
+  const unmapped = buildIndex(tmp2).find(d => d.domain === 'WO' && d.id === '07');
+  check('adapter.json 없으면 로컬 어휘 그대로', unmapped.status === 'Done' && unmapped.rawStatus === 'Done');
+  w2('.union-stack/adapter.json', '{"statusMap": {"Done": "Closed"}}');
+  const mapped = buildIndex(tmp2).find(d => d.domain === 'WO' && d.id === '07');
+  check('statusMap 으로 Done → Closed', mapped.status === 'Closed');
+  check('원문은 rawStatus 에 보존', mapped.rawStatus === 'Done');
+} finally { fs.rmSync(tmp2, { recursive: true, force: true }); }
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

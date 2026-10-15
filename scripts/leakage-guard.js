@@ -52,7 +52,7 @@ const METHODOLOGY = new Set([
   'TOOL-18_scenario_rubric.md', 'TOOL-19_eval_arm.md', 'TOOL-20_e6_workspace.md',
   'TOOL-21_template_update.md', 'TOOL-22_blocks_index.md', 'TOOL-23_work_close.md',
   'TOOL-24_lineage_tree.md', 'TOOL-25_dashboard.md', 'TOOL-26_adopter_arm.md',
-  'TOOL-27_ci_container.md', 'TOOL-28_test_catalog.md',
+  'TOOL-27_ci_container.md', 'TOOL-28_test_catalog.md', 'TOOL-29_frontmatter_backfill.md',
   // 자기 도그푸딩 작업 오더 — 공개 방법론(eval/PROTOCOL §3-bis · eval/e6-suite)의 *실행* 지시다.
   // 위탁 데이터 0. 더미로 만들면 실행 불가한 지시가 되므로 마커 대신 등재로 닫는다.
   'WO-10a-1_e6_scenario_ab_cycle.md',
@@ -60,7 +60,7 @@ const METHODOLOGY = new Set([
   // eval/SURVEY-01_results.md 에 익명 집계로만 있고 이 WO 는 그 결론을 상류 자신에게 이행하는 지시다.
   'WO-22b-1_check_declaration_receipts.md',
   // [PRO-27] 승인 구현 오더(2026-10-15) — 같은 근거(상류 도구 변경 지시, 위탁 데이터 0).
-  'WO-27a-1_prereq_upstream_tools.md',
+  'WO-27a-1_prereq_upstream_tools.md', 'WO-27a-2_status_map_backfill.md',
   // 이 템플릿 자신의 개발에서 얻은 교훈([LSN-17]). 위탁 데이터 0이고, 더미로 만들면 선주입되는
   // *경고*가 경고이기를 그만둔다 — WO-10a-1 과 같은 근거로 마커 대신 등재로 닫는다.
   'LSN-17_shape_blind_spot.md',

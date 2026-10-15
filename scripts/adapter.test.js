@@ -81,5 +81,21 @@ fs.rmSync(path.join(tmp2, 'package.json'));
 check('package.json 부재 → 템플릿 아님(추측 금지)', isTemplateRepo(tmp2) === false);
 fs.rmSync(tmp2, { recursive: true, force: true });
 
+// --- [PRO-27] ② statusMap · evidenceFields — 로컬 어휘를 매핑으로 읽는다(강제하지 않는다) ---
+const { mapStatus, fieldAliases } = require('./adapter');
+const vocab = parseConfig('{"statusMap": {"Done": "Closed", "Review": "Verifying"}, "evidenceFields": {"evidence": ["implementation_commit"], "closed_by": ["surfaces"]}}');
+check('statusMap 파싱', vocab.statusMap.Done === 'Closed' && vocab.warnings.length === 0);
+check('evidenceFields 파싱', JSON.stringify(vocab.evidenceFields.evidence) === '["implementation_commit"]');
+check('mapStatus: 매핑 있으면 상류 어휘', mapStatus(vocab, 'Done') === 'Closed');
+check('mapStatus: 매핑 없으면 그대로(강제 아님)', mapStatus(vocab, 'Active') === 'Active');
+check('mapStatus: null 은 null', mapStatus(vocab, null) === null);
+check('fieldAliases: 상류 필드가 먼저, 별칭이 뒤', JSON.stringify(fieldAliases(vocab, 'evidence')) === '["evidence","implementation_commit"]');
+check('fieldAliases: 설정 없으면 필드 하나', JSON.stringify(fieldAliases(parseConfig('{}'), 'closed_by')) === '["closed_by"]');
+const vocabBad = parseConfig('{"statusMap": ["Done"], "evidenceFields": {"evidence": "x", "foo": ["y"]}}');
+check('statusMap 객체 아님 → 경고 + 미적용', Object.keys(vocabBad.statusMap).length === 0 && vocabBad.warnings.some(w => w.includes('statusMap')));
+check('evidenceFields 값이 배열 아님 → 경고', vocabBad.warnings.some(w => w.includes('evidence')));
+check('evidenceFields 알 수 없는 상류 필드 → 경고', vocabBad.warnings.some(w => w.includes('foo')));
+check('load 기본값에 statusMap·evidenceFields', (() => { const d = load(require('os').tmpdir()); return d.present === false && typeof d.statusMap === 'object' && typeof d.evidenceFields === 'object'; })());
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

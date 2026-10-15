@@ -16,6 +16,9 @@
 //                     템플릿 보호용**이라 비공개 실콘텐츠 레포에서는 의미가 반전된다(실콘텐츠가 정상).
 //                     게이트 자체(`leakage-guard.js`)는 그대로 둔다 — 강등은 *점수표*의 판정이다.
 //   · `zfsIgnored`  → zfs-linter 의 면제 목록에 합산(어답터 고유 매니페스트 파일명).
+//   · `statusMap`   → 로컬 상태 어휘 → 상류 어휘 매핑([PRO-27] ②). zfs_index·work-close 가 읽기 시 적용하고 원문은 rawStatus 로
+//                     남긴다. 어휘를 **강제하지 않는다** — 매핑에 없는 값은 그대로 산다(어답터 실측: `Done`·`Review`·status 38종).
+//   · `evidenceFields` → 상류 필드(evidence·closed_by) 의 로컬 별칭 배열. 상류 필드가 있으면 그것이 우선, 없으면 별칭 순서대로.
 //
 // 설정은 **선언이고 검증 대상**이다: 알 수 없는 키·형식 오류는 조용히 삼키지 않고 `warnings` 로
 // 낸다(설정 오타가 "적용된 줄 알았는데 아니었다"로 끝나는 것이 이 부류 도구의 표준 사고).
@@ -23,8 +26,11 @@ const fs = require('fs');
 const path = require('path');
 
 const CONFIG_PATH = '.union-stack/adapter.json';
-const DEFAULTS = { private: false, zfsIgnored: [] };
-const KNOWN_KEYS = new Set(['private', 'zfsIgnored', '$schema']);
+const DEFAULTS = { private: false, zfsIgnored: [], statusMap: {}, evidenceFields: {} };
+const KNOWN_KEYS = new Set(['private', 'zfsIgnored', 'statusMap', 'evidenceFields', '$schema']);
+// evidenceFields 가 별칭을 달 수 있는 상류 필드 — work-close 의 닫힘 계약이 읽는 둘뿐이다.
+const ALIASABLE_FIELDS = new Set(['evidence', 'closed_by']);
+const fresh = present => ({ ...DEFAULTS, zfsIgnored: [], statusMap: {}, evidenceFields: {}, warnings: [], present });
 
 /**
  * JSON 텍스트 → 정규화된 설정(순수 — FS 비의존).
@@ -33,7 +39,7 @@ const KNOWN_KEYS = new Set(['private', 'zfsIgnored', '$schema']);
  * 죽이면 안 된다: 이 모듈은 게이트가 아니라 게이트의 입력이다).
  */
 function parseConfig(txt) {
-  const out = { ...DEFAULTS, zfsIgnored: [], warnings: [], present: true };
+  const out = fresh(true);
   let j;
   try { j = JSON.parse(String(txt)); } catch (e) {
     out.warnings.push(`${CONFIG_PATH} 파싱 실패 — 기본값으로 진행: ${e.message}`);
@@ -60,14 +66,46 @@ function parseConfig(txt) {
       }).filter(Boolean);
     } else out.warnings.push(`${CONFIG_PATH}: 'zfsIgnored' 는 문자열 배열이어야 함 — 무시됨`);
   }
+  if ('statusMap' in j) {
+    const m = j.statusMap;
+    if (m && typeof m === 'object' && !Array.isArray(m)) {
+      for (const [k, v] of Object.entries(m)) {
+        if (typeof v === 'string' && v.trim()) out.statusMap[k] = v.trim();
+        else out.warnings.push(`${CONFIG_PATH}: 'statusMap.${k}' 는 비지 않은 문자열이어야 함 — 무시됨`);
+      }
+    } else out.warnings.push(`${CONFIG_PATH}: 'statusMap' 은 {로컬: 상류} 객체여야 함 — 무시됨`);
+  }
+  if ('evidenceFields' in j) {
+    const e = j.evidenceFields;
+    if (e && typeof e === 'object' && !Array.isArray(e)) {
+      for (const [k, v] of Object.entries(e)) {
+        if (!ALIASABLE_FIELDS.has(k)) { out.warnings.push(`${CONFIG_PATH}: 'evidenceFields.${k}' — 별칭을 달 수 있는 상류 필드는 ${[...ALIASABLE_FIELDS].join('·')} 뿐 — 무시됨`); continue; }
+        if (Array.isArray(v) && v.every(x => typeof x === 'string' && x.trim())) out.evidenceFields[k] = v.map(x => x.trim());
+        else out.warnings.push(`${CONFIG_PATH}: 'evidenceFields.${k}' 는 문자열 배열이어야 함 — 무시됨`);
+      }
+    } else out.warnings.push(`${CONFIG_PATH}: 'evidenceFields' 는 {상류필드: [별칭]} 객체여야 함 — 무시됨`);
+  }
   return out;
+}
+
+/** 로컬 상태 → 상류 어휘(순수). 매핑에 없으면 그대로(강제 아님), null 은 null. */
+function mapStatus(cfg, raw) {
+  if (raw == null) return null;
+  const m = cfg && cfg.statusMap;
+  return m && Object.prototype.hasOwnProperty.call(m, raw) ? m[raw] : raw;
+}
+
+/** 상류 필드의 읽기 순서(순수): 상류 필드 → 로컬 별칭들. */
+function fieldAliases(cfg, key) {
+  const a = cfg && cfg.evidenceFields && cfg.evidenceFields[key];
+  return [key, ...(Array.isArray(a) ? a : [])];
 }
 
 /** 설정 로드(얇은 FS 층). 파일이 없으면 기본값 + present:false — **부재는 정상**(템플릿·무설정 어답터). */
 function load(root = path.resolve(__dirname, '..')) {
   const abs = path.join(root, CONFIG_PATH);
   let txt;
-  try { txt = fs.readFileSync(abs, 'utf8'); } catch { return { ...DEFAULTS, zfsIgnored: [], warnings: [], present: false }; }
+  try { txt = fs.readFileSync(abs, 'utf8'); } catch { return fresh(false); }
   return parseConfig(txt);
 }
 
@@ -86,4 +124,4 @@ function isTemplateRepo(root = path.resolve(__dirname, '..')) {
   } catch { return false; }
 }
 
-module.exports = { CONFIG_PATH, DEFAULTS, parseConfig, load, isTemplateRepo };
+module.exports = { CONFIG_PATH, DEFAULTS, ALIASABLE_FIELDS, parseConfig, load, isTemplateRepo, mapStatus, fieldAliases };

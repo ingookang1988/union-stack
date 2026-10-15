@@ -19,7 +19,7 @@ version: 1.1
 > (앵커 없음 — 판별 불가)은 **건너뛴다**. `--force` 로만 덮어쓴다.
 > 앵커는 `.union-stack/template-sync.json` — `--apply` 가 쓴 파일의 상류 sha 를 기록하고 `init.js`
 > 가 클론 시점에 시딩한다. **개조를 없애는 정공법은 설정 흡수다**: `.union-stack/adapter.json` 의
-> `private`·`zfsIgnored`(MIGRATION.md §"Adopter configuration").
+> `private`·`zfsIgnored`·`statusMap`·`evidenceFields`(MIGRATION.md §"Adopter configuration").
 
 ## 언제 쓰나
 - 주기 점검 또는 상류 릴리스 공지 후. `--apply` 전에 보고를 먼저 읽는다.

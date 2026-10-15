@@ -9,4 +9,5 @@
 | [WO-10a-1] | E6 시나리오 A/B 1사이클 (팔 2개 × 5런) | PRO-10 | Draft | 해당없음 |
 | [WO-22b-1] | 검사 선언 + 실행 영수증 — [PRO-22] §3 단계 1·2 구현 (0건 검사 = 실패 포함) | PRO-22 | Active | 해당없음 |
 | [WO-27a-1] | 교차 레포 전제 — 상류 도구 몫 구현 ([PRO-27] ④ health --root · ⑤ ID 유일성 · ① up: 네임스페이스 인식) | PRO-27 | Verifying | 있음 |
+| [WO-27a-2] | 교차 레포 전제 — ② 상태 어휘 매핑(adapter.json statusMap·evidenceFields) + frontmatter 백필 스크립트(dry-run 기본) | PRO-27 | Verifying | 있음 |
 <!-- worktable:end -->

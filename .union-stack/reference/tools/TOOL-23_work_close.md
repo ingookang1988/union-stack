@@ -38,6 +38,8 @@ node scripts/work-close.js WO-01a-1 --json   # 기계 판독 (--contract 로 계
 | `closed_by:`가 가리킨 파일에 그 계보 브래킷 참조 없음 | CLARIFY — **선언만 하고 반영 안 함** |
 | `evidence:` 빈 값 | CLARIFY (`none — 이유`는 통과 — 미기입과 해당없음의 구별) |
 | 부모의 자식 WO가 전부 Closed | 정보 — PLAN status 전이 **후보 제시**(강제 전이 없음) |
+
+어답터 어휘([PRO-27] ②): `adapter.json statusMap` 이 `Done`→`Closed` 처럼 매핑하면 그대로 집계되고(원문은 `rawStatus`), `evidenceFields` 의 별칭(`implementation_commit`·`surfaces`)도 `evidence`·`closed_by` 로 읽힌다. `status:` 가 없는 문서는 [TOOL-29] 로 백필.
 | 계보에 PHASE 존재 | 정보 — exit criteria **검토 후보**(로드맵은 Schema — 대필 아닌 표면화, [PRO-19]) |
 
 발행 점검(`--table`, 활성 WO 전수 — [PRO-19]):

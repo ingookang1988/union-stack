@@ -73,5 +73,13 @@ const srWo = Object.entries(sr.files).find(([k]) => /WO-345_/.test(k));
 check('serial: 전역 일련번호 WO + plan: frontmatter', !!srWo && /^plan: /m.test(srWo[1]));
 check('serial: 정답(산술 조상 0)', sr.truth.arithmeticAncestors === 0);
 
+// --- [PRO-27] ② 로컬 상태 어휘 형상 vocab ---
+const { vocabShape } = require('./adopter-arm');
+check('형상 목록에 vocab', SHAPES.includes('vocab'));
+const vs = vocabShape();
+check('vocab: adapter.json 에 statusMap·evidenceFields', /statusMap/.test(vs.files['.union-stack/adapter.json']) && /evidenceFields/.test(vs.files['.union-stack/adapter.json']));
+check('vocab: 로컬 어휘 WO(status: Done) + 별칭 증거', Object.values(vs.files).some(t => /^status: Done$/m.test(t) && /implementation_commit/.test(t)));
+check('vocab: frontmatter 없는 WO·PRO + 종결 디렉터리 문서(백필 대상 3)', vs.truth.backfillRows === 3 && Object.keys(vs.files).some(k => /archived\//.test(k)));
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

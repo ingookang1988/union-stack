@@ -18,6 +18,7 @@ const { walkFiles } = require('./fs_walk');
 const { parse, parseId, isDescendant, ancestorChain } = require('./zfs_util');
 const { buildIndex } = require('./zfs_index');
 const { withContract, OUTCOME, toShellExit } = require('./gate-contract');
+const { load: loadAdapter, mapStatus, fieldAliases } = require('./adapter');
 
 const SPRINT_DIR = '.union-stack/sprint';
 const NEXT = '.union-stack/sprint/next.md';
@@ -83,22 +84,29 @@ function listField(fm, key) {
 /** 발행 계약의 필수 3절(sprint/_GUIDE §Anatomy — [PRO-19]가 산문을 검사로 이행). */
 const REQUIRED_SECTIONS = ['목표', '수용 기준', '증거'];
 
-/** WO 문서 텍스트 → 레코드(순수). WO 가 아니거나 frontmatter 없으면 null. */
-function parseWo(relFile, txt) {
+/**
+ * WO 문서 텍스트 → 레코드(순수). WO 가 아니면 null, frontmatter 없으면 malformed.
+ * cfg(adapter 설정, [PRO-27] ②): status 는 statusMap 으로 매핑(원문은 rawStatus), evidence·closed_by 는 상류 필드 → 별칭 순으로 읽는다.
+ */
+function parseWo(relFile, txt, cfg = null) {
   const base = relFile.split('/').pop();
   const p = parse(base);
   if (!p || p.domain !== 'WO') return null;
   const missingSections = REQUIRED_SECTIONS.filter(s => !new RegExp('^##\\s*' + s, 'm').test(String(txt || '')));
   const fm = frontmatter(txt);
   if (!fm) return { id: p.id, file: relFile, status: null, parent: null, evidence: null, closed_by: [], missingSections, malformed: true };
+  const raw = field(fm, 'status');
+  const pick = key => { for (const k of fieldAliases(cfg, key)) { const v = field(fm, k); if (v) return v; } return null; };
+  const pickList = key => { for (const k of fieldAliases(cfg, key)) { const v = listField(fm, k); if (v.length) return v; } return []; };
   return {
     id: p.id,
     file: relFile,
     title: field(fm, 'title'),
-    status: field(fm, 'status'),
+    status: mapStatus(cfg, raw),
+    rawStatus: raw,
     parent: field(fm, 'parent'),
-    evidence: field(fm, 'evidence'),
-    closed_by: listField(fm, 'closed_by'),
+    evidence: pick('evidence'),
+    closed_by: pickList('closed_by'),
     missingSections,
     malformed: false,
   };
@@ -209,10 +217,11 @@ function inject(nextTxt, table) {
 
 function gather(root = path.resolve(__dirname, '..')) {
   const out = [];
+  const cfg = loadAdapter(root);
   walkFiles(root, SPRINT_DIR, rel => {
     if (!rel.endsWith('.md')) return;
     let rec = null;
-    try { rec = parseWo(rel, fs.readFileSync(path.join(root, rel), 'utf8')); } catch { rec = null; }
+    try { rec = parseWo(rel, fs.readFileSync(path.join(root, rel), 'utf8'), cfg); } catch { rec = null; }
     if (rec) out.push(rec);
   });
   return out;
@@ -284,7 +293,7 @@ function run(argv = process.argv.slice(2), root = path.resolve(__dirname, '..'))
 
   if (json) { console.log(JSON.stringify({ wo, issues, info }, null, 2)); return issues.length ? OUTCOME.CLARIFY : OUTCOME.PASS; }
 
-  console.log(`# work-close ${target} — status: ${wo.status || '(미기입)'}`);
+  console.log(`# work-close ${target} — status: ${wo.status || '(미기입)'}${wo.rawStatus && wo.rawStatus !== wo.status ? ` (로컬 어휘 ${wo.rawStatus} → statusMap)` : ''}`);
   if (info.length) info.forEach(i => console.log(`  · ${i}`));
   if (!issues.length) {
     console.log(`  ✓ 닫힘 조건 충족 — 흔적 ${wo.closed_by.length}곳 · 증거 명시됨.`);
