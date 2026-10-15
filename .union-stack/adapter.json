@@ -1,0 +1,13 @@
+{
+  "checks": [
+    {
+      "name": "suite",
+      "cmd": "node --test \"scripts/*.test.js\"",
+      "blocking": true,
+      "kind": "동작",
+      "cost": "push",
+      "runs_on": ["pre-push", "ci"],
+      "covers": "상류 스크립트 단위 스위트(도그푸딩 — [WO-22b-1])"
+    }
+  ]
+}

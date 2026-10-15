@@ -37,6 +37,6 @@ jobs:
           echo "- [$(date -u +%F)][EVD-ci] gates green @ ${SHORT} (run ${{ github.run_id }}) — ci.js chain in container ([TOOL-27])" >> .union-stack/verification/raw/evidence.md
           git config user.name 'harness-ci'
           git config user.email 'actions@users.noreply.github.com'
-          git add .union-stack/verification/raw/evidence.md
-          git commit -m 'chore(evidence): CI gate green append [skip ci]' || exit 0
+          git add .union-stack/verification/raw/evidence.md .union-stack/verification/raw/receipts.md
+          git commit -m 'chore(evidence): CI gate green + receipts append [skip ci]' || exit 0
           git push || echo "::warning::evidence push 실패(브랜치 보호/권한) — 다음 그린 런에서 재시도됨"

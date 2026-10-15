@@ -5,6 +5,9 @@
 
 ## raw/ (input) — Permission: Append-only, written by the system (CI/CD) only, agent read-only
 - A temporary inbox for external signals. Test logs · CI results. The agent cannot forge them.
+- `raw/receipts.md` — execution receipts (PRO-22): one line per check run, written only by the runner (`ci.js`):
+  sha · dirty · scope harness/product · name · exit · outcome · targets · passed/failed/skipped · reason · env · dur · gen · cmd.
+  **targets = 0 is a failure, not a pass** (2-bis). `health` reads the age per blocking check; `work-close` matches `rcpt:` citations in WO evidence against these lines.
 
 ## derived/ (output) — Permission: Wiki, written by the agent
 - gap.md: drift between norms (architecture) ↔ reality.

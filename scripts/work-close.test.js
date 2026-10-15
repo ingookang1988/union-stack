@@ -142,5 +142,16 @@ const serialIdx = [{ domain: 'PLAN', id: '07', file: 'p' }, { domain: 'WO', id: 
 check('arithmetic:false → lineage-break 없음', !checkIssuance(serialWo, serialIdx).some(i => i.code === 'lineage-break'));
 check('arithmetic 적용이면 여전히 lineage-break', checkIssuance(serialWo, [{ domain: 'PLAN', id: '07', file: 'p' }, { domain: 'WO', id: '345', file: 'w', arithmetic: true }]).some(i => i.code === 'lineage-break'));
 
+// --- [PRO-22] 단계 2 영수증 인용 — 선언 검사가 있는 레포에서 실값 evidence 는 rcpt: 를 인용한다(소급 없음: n/a 허용) ---
+const rcptCtx = { declared: true, receipts: [{ date: '2026-10-16', scope: 'product', name: 'unit', sha: 'abc1234', outcome: 'PASS' }] };
+const evWo = ev => ({ ...FULL_WO, evidence: ev, closed_by: ['.union-stack/feature/live.md'] });
+const rcTraces = { '.union-stack/feature/live.md': '[WO-01a-1] 반영' };
+check('인용 없음 → no-receipt CLARIFY', checkClosure(evWo('테스트 12/12'), rcTraces, [], [], rcptCtx).issues.some(i => i.code === 'no-receipt'));
+check('rcpt:n/a → 통과', !checkClosure(evWo('rcpt:n/a — 소급 없음'), rcTraces, [], [], rcptCtx).issues.length);
+check('실재하는 영수증 인용 → 통과', !checkClosure(evWo('스위트 녹색 rcpt:unit@abc1234'), rcTraces, [], [], rcptCtx).issues.length);
+check('없는 영수증 인용 → receipt-missing(수기 인용 의심)', checkClosure(evWo('rcpt:unit@deadbee'), rcTraces, [], [], rcptCtx).issues.some(i => i.code === 'receipt-missing'));
+check('none — 이유 는 인용 면제', !checkClosure(evWo('none — 문서 작업'), rcTraces, [], [], rcptCtx).issues.length);
+check('선언 없는 레포는 묻지 않는다', !checkClosure(evWo('테스트 12/12'), rcTraces, [], [], { declared: false, receipts: [] }).issues.length && !checkClosure(evWo('테스트 12/12'), rcTraces, [], []).issues.length);
+
 console.log(`work-close.test: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

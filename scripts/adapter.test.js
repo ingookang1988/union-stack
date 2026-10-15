@@ -111,5 +111,17 @@ check('정수 아닌 arithmeticFrom → 경고 + 기본값', linBad.lineage.arit
 check('알 수 없는 lineage 하위 키 → 경고', linBad.warnings.some(w => w.includes('foo')));
 check('lineage 객체 아님 → 경고', parseConfig('{"lineage": 36}').warnings.some(w => w.includes('lineage')));
 
+// --- [PRO-22] §3-1 checks[] 선언 — 닫힌 어휘(kind·cost·expected_zero_unless)와 필수 필드 ---
+const { CHECK_KINDS } = require('./adapter');
+const chk = parseConfig('{"checks": [{"name": "unit", "cmd": "pnpm test", "blocking": true, "kind": "동작", "cost": "push", "runs_on": ["pre-push"], "env": ["TZ=UTC"], "expected_zero_unless": "env"}, {"name": "lint", "cmd": "eslint ."}]}');
+check('checks 파싱 2건 · 기본 blocking false', chk.checks.length === 2 && chk.checks[0].blocking === true && chk.checks[1].blocking === false && chk.warnings.length === 0);
+check('checks 필드', chk.checks[0].kind === '동작' && chk.checks[0].cost === 'push' && chk.checks[0].expected_zero_unless === 'env' && chk.checks[0].env[0] === 'TZ=UTC');
+const chkBad = parseConfig('{"checks": [{"name": "x"}, {"name": "y", "cmd": "z", "kind": "기타", "cost": "free", "expected_zero_unless": "always"}]}');
+check('cmd 없는 선언은 무시 + 경고', chkBad.checks.length === 1 && chkBad.warnings.some(w => w.includes('checks[0]')));
+check('닫힌 어휘 밖 값은 경고 + null', chkBad.checks[0].kind === null && chkBad.checks[0].cost === null && chkBad.checks[0].expected_zero_unless === null && chkBad.warnings.filter(w => w.includes('checks[1]')).length === 3);
+check('checks 배열 아님 → 경고', parseConfig('{"checks": {}}').warnings.some(w => w.includes('checks')));
+check('CHECK_KINDS 6분류', CHECK_KINDS.size === 6 && CHECK_KINDS.has('수용') && CHECK_KINDS.has('메타'));
+check('load 기본값에 checks []', Array.isArray(load(require('os').tmpdir()).checks));
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

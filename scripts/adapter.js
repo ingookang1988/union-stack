@@ -19,6 +19,8 @@
 //   · `statusMap`   → 로컬 상태 어휘 → 상류 어휘 매핑([PRO-27] ②). zfs_index·work-close 가 읽기 시 적용하고 원문은 rawStatus 로
 //                     남긴다. 어휘를 **강제하지 않는다** — 매핑에 없는 값은 그대로 산다(어답터 실측: `Done`·`Review`·status 38종).
 //   · `evidenceFields` → 상류 필드(evidence·closed_by) 의 로컬 별칭 배열. 상류 필드가 있으면 그것이 우선, 없으면 별칭 순서대로.
+//   · `checks[]`    → 어답터의 제품 검사 선언([PRO-22] §3-1): name · cmd · blocking · runs_on · covers · kind(정적·동작·재현·측정·수용·메타) ·
+//                     env · cost(push·nightly·manual-paid) · expected_zero_unless(diff·env) · scope · runner · known_failures. ci.js 가 돌리고 영수증을 쓴다.
 //   · `lineage.arithmeticFrom` → 그 번호부터만 ID 산술 상속([PRO-27] ③). 레거시 독립 채번 구간(같은 번호가 도메인마다 다른 문서)은
 //                     frontmatter 부모만 본다. 기본 0 = 전부 산술(상류 자신의 형상).
 //
@@ -28,12 +30,16 @@ const fs = require('fs');
 const path = require('path');
 
 const CONFIG_PATH = '.union-stack/adapter.json';
-const DEFAULTS = { private: false, zfsIgnored: [], statusMap: {}, evidenceFields: {}, lineage: { arithmeticFrom: 0 } };
-const KNOWN_KEYS = new Set(['private', 'zfsIgnored', 'statusMap', 'evidenceFields', 'lineage', '$schema']);
+const DEFAULTS = { private: false, zfsIgnored: [], statusMap: {}, evidenceFields: {}, lineage: { arithmeticFrom: 0 }, checks: [] };
+const KNOWN_KEYS = new Set(['private', 'zfsIgnored', 'statusMap', 'evidenceFields', 'lineage', 'checks', '$schema']);
+// 검사 선언의 닫힌 어휘([PRO-22] v1.0) — 6분류·3비용·0건 조건 2종.
+const CHECK_KINDS = new Set(['정적', '동작', '재현', '측정', '수용', '메타']);
+const CHECK_COSTS = new Set(['push', 'nightly', 'manual-paid']);
+const ZERO_CONDS = new Set(['diff', 'env']);
 const LINEAGE_KEYS = new Set(['arithmeticFrom']);
 // evidenceFields 가 별칭을 달 수 있는 상류 필드 — work-close 의 닫힘 계약이 읽는 둘뿐이다.
 const ALIASABLE_FIELDS = new Set(['evidence', 'closed_by']);
-const fresh = present => ({ ...DEFAULTS, zfsIgnored: [], statusMap: {}, evidenceFields: {}, lineage: { arithmeticFrom: 0 }, warnings: [], present });
+const fresh = present => ({ ...DEFAULTS, zfsIgnored: [], statusMap: {}, evidenceFields: {}, lineage: { arithmeticFrom: 0 }, checks: [], warnings: [], present });
 
 /**
  * JSON 텍스트 → 정규화된 설정(순수 — FS 비의존).
@@ -87,6 +93,27 @@ function parseConfig(txt) {
         else out.warnings.push(`${CONFIG_PATH}: 'evidenceFields.${k}' 는 문자열 배열이어야 함 — 무시됨`);
       }
     } else out.warnings.push(`${CONFIG_PATH}: 'evidenceFields' 는 {상류필드: [별칭]} 객체여야 함 — 무시됨`);
+  }
+  if ('checks' in j) {
+    if (Array.isArray(j.checks)) {
+      j.checks.forEach((c, i) => {
+        if (!c || typeof c !== 'object' || typeof c.name !== 'string' || !c.name.trim() || typeof c.cmd !== 'string' || !c.cmd.trim()) {
+          out.warnings.push(`${CONFIG_PATH}: 'checks[${i}]' 는 name·cmd(문자열)가 필수 — 무시됨`); return;
+        }
+        const chk = {
+          name: c.name.trim(), cmd: c.cmd.trim(), blocking: c.blocking === true,
+          runs_on: Array.isArray(c.runs_on) ? c.runs_on.map(String) : [], covers: typeof c.covers === 'string' ? c.covers : null,
+          kind: null, env: Array.isArray(c.env) ? c.env.map(String) : [], cost: null, expected_zero_unless: null,
+          scope: c.scope == null ? null : c.scope, runner: typeof c.runner === 'string' ? c.runner : null, prebuild: typeof c.prebuild === 'string' ? c.prebuild : null,
+          known_failures: Array.isArray(c.known_failures) ? c.known_failures : [],
+        };
+        if (c.kind != null) { if (CHECK_KINDS.has(c.kind)) chk.kind = c.kind; else out.warnings.push(`${CONFIG_PATH}: 'checks[${i}].kind' 는 ${[...CHECK_KINDS].join('·')} 중 하나 — 무시됨`); }
+        if (c.cost != null) { if (CHECK_COSTS.has(c.cost)) chk.cost = c.cost; else out.warnings.push(`${CONFIG_PATH}: 'checks[${i}].cost' 는 ${[...CHECK_COSTS].join('·')} 중 하나 — 무시됨`); }
+        if (c.expected_zero_unless != null) { if (ZERO_CONDS.has(c.expected_zero_unless)) chk.expected_zero_unless = c.expected_zero_unless; else out.warnings.push(`${CONFIG_PATH}: 'checks[${i}].expected_zero_unless' 는 diff·env 중 하나 — 무시됨`); }
+        if (c.blocking != null && typeof c.blocking !== 'boolean') out.warnings.push(`${CONFIG_PATH}: 'checks[${i}].blocking' 은 boolean — false 로 간주`);
+        out.checks.push(chk);
+      });
+    } else out.warnings.push(`${CONFIG_PATH}: 'checks' 는 배열이어야 함 — 무시됨`);
   }
   if ('lineage' in j) {
     const l = j.lineage;
@@ -152,4 +179,4 @@ function isTemplateRepo(root = path.resolve(__dirname, '..')) {
   } catch { return false; }
 }
 
-module.exports = { CONFIG_PATH, DEFAULTS, ALIASABLE_FIELDS, parseConfig, load, isTemplateRepo, mapStatus, fieldAliases, arithmeticApplies };
+module.exports = { CONFIG_PATH, DEFAULTS, ALIASABLE_FIELDS, CHECK_KINDS, CHECK_COSTS, parseConfig, load, isTemplateRepo, mapStatus, fieldAliases, arithmeticApplies };

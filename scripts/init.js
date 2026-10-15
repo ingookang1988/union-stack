@@ -21,7 +21,7 @@ const EXPLICIT_DUMMIES = new Set([
 const RESET_TARGETS = new Set([
   '.union-stack/feature/live.md', '.union-stack/sprint/next.md', '.union-stack/sprint/HANDOFF.md',
   '.union-stack/verification/derived/gap.md', '.union-stack/verification/derived/state.md',
-  '.union-stack/verification/raw/evidence.md', '.union-stack/project/HISTORY.md',
+  '.union-stack/verification/raw/evidence.md', '.union-stack/verification/raw/receipts.md', '.union-stack/project/HISTORY.md',
   '.union-stack/project/GRANTS.md', '.union-stack/archive_ledger.md',
 ]);
 const TEMPLATE_BITS = [
@@ -86,6 +86,7 @@ const RESET_TEMPLATES = {
   '.union-stack/verification/derived/gap.md': '<!-- [Wiki] 규범↔현실 괴리. 에이전트가 검증 후 기록. -->\n# Drift / Gap Log\n',
   '.union-stack/verification/derived/state.md': '<!-- [Wiki] 관찰된 현재 코드 구조. -->\n# Observed Structure\n',
   '.union-stack/verification/raw/evidence.md': '<!-- [Raw] 시스템만 Append. 에이전트 read-only. -->\n# Evidence Log (CI/CD 자동 기록)\n',
+  '.union-stack/verification/raw/receipts.md': '<!-- [Raw] 실행 영수증 — 러너(ci.js)만 Append. 사람·에이전트 read-only. 한 줄 = 검사 1회. (예시) 줄은 꼴 안내. -->\n# Execution Receipts ([PRO-22] 영수증)\n- (예시) [2026-01-01][RCPT] sha=0000000 dirty=no scope=product name=unit exit=0 outcome=PASS targets=12 passed=12 failed=0 skipped=0 reason=- env=- dur=1ms gen=ci.js@0.0.0 cmd="pnpm test"\n',
   '.union-stack/project/HISTORY.md': '<!-- [Schema/Raw] 프로젝트 전략적 분기점. 사실+근거는 한 쌍(근거 없는 사실 등재 불가). -->\n# Project History — strategic turning points\n\n| Date | Turning point (fact) | Reason (why) | Implication |\n|---|---|---|---|\n',
   '.union-stack/archive_ledger.md': '<!-- [Raw] 결정화된 ADR 영구 원장. Append-only. 전술 결정만(전략은 HISTORY). -->\n# Architecture Decision Ledger\n',
   '.union-stack/project/GRANTS.md': '<!-- [Schema] 에이전트 Schema 편집 상시 스탬프 원장. 인간만 grant를 추가한다(자기부여 방지 — 에이전트는 인간 명시 승인이 있을 때만 이 파일 편집). 커밋에 `Approved-by: GRANT-id` 인용, `permission-guard --strict`가 스코프 커버 검증. 철회=행 삭제. [PRO-09] -->\n# Schema Edit Grants — 승인 스탬프 원장\n\n| Grant | Scope (glob) | Granted-by | Date | Rationale / 철회 |\n|---|---|---|---|---|\n',

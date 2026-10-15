@@ -88,6 +88,13 @@ This file is adopter-owned — upstream never touches it.
   list or a block list, may point at any domain (an umbrella WO or a mid-level PLAN is a valid root), and are
   followed transitively by `upward-fetch`, `blast-radius` (declared children are in the blast set, locks
   included) and the roadmap-wiring observation.
+- `checks: [...]` — your product checks (PRO-22): `{ name, cmd, blocking, runs_on, covers, kind, env, cost, expected_zero_unless }`.
+  `node scripts/ci.js` runs them after the harness chain and appends one **receipt** line per check to
+  `.union-stack/verification/raw/receipts.md` (runner-only; nobody types receipts). A check that saw
+  **zero targets is a failure** for a blocking full scan; `kind: 메타` / `expected_zero_unless: diff` make it a
+  NOOP_PASS, `expected_zero_unless: env` a CLARIFY. `node scripts/ci.js --scan` drafts the declarations from
+  `package.json` scripts, hooks and workflows; you confirm `blocking` and `cost`. `health` shows the latest
+  receipt age per blocking check; `work-close` asks WO evidence to cite `rcpt:<name>@<sha>` (new WOs only).
 - Documents without a `status:` line are counted as *nothing* by every tool. List them with
   `node scripts/frontmatter-backfill.js` (dry-run: estimate from a body marker such as `Status: Done`,
   then from an `archived/` directory, else left blank and reported) and apply with `--apply` — it inserts

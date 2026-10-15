@@ -23,6 +23,9 @@
 //
 //            ③ 뒤: plan: 부모가 맥락으로 실리고(exit 0) 부모 없는 고아 WO 만 CLARIFY. legacy 는 arithmeticFrom 아래 도메인 횡단 상속 차단.
 //
+//   nonjs  : **비-JS 제품 검사 선언** — adapter.json checks[] 4행(0건 전수·정상·메타·env 조건부), 영수증 0 에서 시작.
+//            health 가 영수증 공백을 표면화하는가, ci.js 가 0건 검사를 3분할로 판정하고 영수증을 선언 행마다 쓰는가. 근거 [PRO-22] §3 1·2·2-bis.
+//
 //   vocab  : **로컬 상태 어휘** — `status: Done`·`Review`, 별칭 증거 필드, frontmatter 없는 WO·PRO(본문 산문 상태), 종결 디렉터리 문서.
 //            statusMap·evidenceFields 로 읽히는가, 백필 dry-run 이 쓰지 않는가, --apply 뒤 대상 0 인가. 근거 [PRO-27] ② (SURVEY-02:
 //            WO 99/179 frontmatter 없음 · PRO 17/17 YAML 없음 · status 38종 자유 문자열).
@@ -35,7 +38,7 @@
 //
 // 실행:
 //   node scripts/adopter-arm.js                 # 두 축 전부
-//   node scripts/adopter-arm.js --shape env     # 한 축만 (env|data|legacy|serial|vocab)
+//   node scripts/adopter-arm.js --shape env     # 한 축만 (env|data|legacy|serial|vocab|nonjs)
 //   node scripts/adopter-arm.js --keep <dir>    # 워크스페이스 보존(디버깅)
 //   node scripts/adopter-arm.js --json
 const fs = require('fs');
@@ -44,6 +47,7 @@ const path = require('path');
 const { execFileSync } = require('child_process');
 const { copyTree } = require('./fs_walk');
 const { read: readLedger } = require('./ledger');
+const receipts = require('./receipts');
 
 const ROOT = path.resolve(__dirname, '..');
 
@@ -410,8 +414,49 @@ function vocabArm(ws) {
   return bars;
 }
 
-const SHAPES = ['env', 'data', 'legacy', 'serial', 'vocab'];
-const ARMS = { env: envArm, data: dataArm, legacy: legacyArm, serial: serialArm, vocab: vocabArm };
+/** 비-JS 제품 검사 선언 형상(순수) — 런너는 무엇이든(여기선 node -e 로 pytest 꼴 출력을 흉내). */
+function nonjsShape() {
+  const files = {};
+  files['.union-stack/adapter.json'] = JSON.stringify({ checks: [
+    { name: 'zero', cmd: "node -e \"console.log('collected 0 items')\"", blocking: true, kind: '동작', cost: 'push', covers: '(example) 빈 스테이지 전수 검사' },
+    { name: 'ok', cmd: "node -e \"console.log('3 passed in 0.1s')\"", blocking: true, kind: '동작', cost: 'push', covers: '(example) 정상' },
+    { name: 'guard', cmd: "node -e \"console.log('collected 0 items')\"", blocking: true, kind: '메타', cost: 'push', covers: '(example) diff 조건부 가드' },
+    { name: 'probe', cmd: "node -e \"console.log('collected 0 items')\"", blocking: true, kind: '동작', expected_zero_unless: 'env', cost: 'nightly', covers: '(example) env 조건부' },
+  ] }, null, 2) + '\n';
+  return { files, truth: { declared: 4, blocking: 4, expect: { zero: 'REJECT', ok: 'PASS', guard: 'NOOP_PASS', probe: 'CLARIFY' } } };
+}
+
+function nonjsArm(ws) {
+  const { files, truth } = nonjsShape();
+  writeShape(ws, files);
+  // 사본은 상류 영수증을 물려받는다 — "선언만 있고 영수증 0" 형상을 만들기 위해 비운다(러너 외의 쓰기는 팔의 픽스처 준비뿐).
+  fs.mkdirSync(path.dirname(path.join(ws, receipts.FILE)), { recursive: true });
+  fs.writeFileSync(path.join(ws, receipts.FILE), receipts.HEADER);
+  const bars = [];
+  const dimOf = r => { try { return JSON.parse(r.stdout).dims.find(d => d.name === 'receipts'); } catch { return null; } };
+  const h0 = run(ROOT, ['scripts/health.js', '--root', ws, '--json']);
+  const d0 = dimOf(h0);
+  bars.push({ name: `선언 ${truth.declared}(차단 ${truth.blocking}) · 영수증 0 → health 가 공백을 표면화(INFO)`,
+    ok: !crashed(h0) && !!d0 && d0.status === 'INFO' && d0.value.includes(`선언 ${truth.declared}`) && /영수증 없음/.test(d0.value), detail: d0 ? d0.value : `exit ${h0.code} · 측정 실패` });
+  const ci = run(ws, ['scripts/ci.js', '--only-checks', '--json']);
+  let res = null;
+  try { res = JSON.parse(ci.stdout).results; } catch { /* null */ }
+  const got = res ? Object.fromEntries(res.map(r => [r.name, r.outcome])) : {};
+  const judged = !!res && Object.entries(truth.expect).every(([k, v]) => got[k] === v);
+  bars.push({ name: '0건 검사 3분할: 차단 전수 → REJECT · 메타 → NOOP_PASS · env 조건부 → CLARIFY · 정상 → PASS · 체인 exit 1',
+    ok: ci.code === 1 && !crashed(ci) && judged, detail: res ? Object.entries(got).map(([k, v]) => `${k}=${v}`).join(' · ') : `exit ${ci.code} · 측정 실패` });
+  const recs = receipts.parseReceipts(receipts.read(ws) || '');
+  bars.push({ name: '영수증: 러너가 선언 행마다 1줄(scope=product · targets) — 수기 경로 0', ok: recs.length === truth.declared && recs.every(r => r.scope === 'product' && 'targets' in r),
+    detail: `${recs.length}줄` });
+  const h1 = run(ROOT, ['scripts/health.js', '--root', ws, '--json']);
+  const d1 = dimOf(h1);
+  bars.push({ name: '영수증 뒤 health: 차단 검사별 최신 포인터·나이 · 크래시 0', ok: !crashed(h1) && !!d1 && /zero 0d\(REJECT/.test(d1.value) && /ok 0d\(PASS/.test(d1.value),
+    detail: d1 ? d1.value : `exit ${h1.code} · 측정 실패` });
+  return bars;
+}
+
+const SHAPES = ['env', 'data', 'legacy', 'serial', 'vocab', 'nonjs'];
+const ARMS = { env: envArm, data: dataArm, legacy: legacyArm, serial: serialArm, vocab: vocabArm, nonjs: nonjsArm };
 
 function main(argv = process.argv.slice(2)) {
   const si = argv.indexOf('--shape');
@@ -448,6 +493,6 @@ function main(argv = process.argv.slice(2)) {
   return failed ? 1 : 0;
 }
 
-module.exports = { dataShape, legacyShape, serialShape, vocabShape, SHAPES, rawMarkers, noJsReachable, crashed, ZONES, ROWS_PER_ZONE, HISTORY_ENTRIES };
+module.exports = { dataShape, legacyShape, serialShape, vocabShape, nonjsShape, SHAPES, rawMarkers, noJsReachable, crashed, ZONES, ROWS_PER_ZONE, HISTORY_ENTRIES };
 
 if (require.main === module) process.exit(main());

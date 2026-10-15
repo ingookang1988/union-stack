@@ -44,7 +44,7 @@ check('ref integrity INFO', sz.dims.find(d => d.name === 'ref integrity').value.
 const g = gather();
 const nonLeakFails = g.dims.filter(d => d.status === 'FAIL' && d.name !== 'leakage gate').length;
 check('gather 커밋 평면 게이트 그린', nonLeakFails === 0);
-check('gather dims 17 (관측 8절 포함 — test infra [PRO-21])', g.dims.length === 17);
+check('gather dims 18 (관측 9절 포함 — test infra [PRO-21] · receipts [PRO-22])', g.dims.length === 18);
 // 로드맵 배선 관측([PRO-19] ②) — 판정 없는 INFO. roadmap 은 Schema 라 표면화가 수단의 전부다.
 const rDim = g.dims.find(d => d.name === 'roadmap wiring');
 check('roadmap wiring 절은 INFO', rDim && rDim.status === 'INFO');
@@ -137,6 +137,22 @@ try {
   check('CLI --root <빈 디렉터리> → exit 1(REJECT)', r.status === 1);
   check('CLI REJECT 문구 측정 대상 아님', /측정 대상 아님/.test(r.stderr + r.stdout));
 } finally { fsR.rmSync(emptyDir, { recursive: true, force: true }); }
+
+// --- [PRO-22] 단계 2 receipts 절: 차단 검사별 최신 영수증 포인터·나이 — INFO, 선언 부재는 무기입 ---
+const { computeReceipts } = require('./health');
+const rcpt = computeReceipts(
+  [{ name: 'unit', blocking: true }, { name: 'e2e', blocking: true }, { name: 'lint', blocking: false }],
+  [{ date: '2026-10-10', scope: 'product', name: 'unit', outcome: 'PASS', targets: 12 }, { date: '2026-10-14', scope: 'product', name: 'unit', outcome: 'REJECT', targets: 0 }, { date: '2026-10-15', scope: 'harness', name: 'tests', outcome: 'PASS', targets: 41 }],
+  new Date('2026-10-16T12:00:00'));
+check('receipts: 선언·차단·줄 수', rcpt.declared === 3 && rcpt.blocking === 2 && rcpt.lines === 3);
+check('receipts: 최신 영수증(날짜 기준) + 나이', rcpt.latest.find(l => l.name === 'unit').age === 2 && rcpt.latest.find(l => l.name === 'unit').outcome === 'REJECT');
+check('receipts: 영수증 없는 차단 검사는 missing', JSON.stringify(rcpt.missing) === '["e2e"]');
+check('receipts: harness 줄은 제품 검사 포인터에 안 섞인다', !rcpt.latest.some(l => l.name === 'tests'));
+const rcDim = computeHealth({ index, domainsDefined: defined, guideCount: 5, namingViolations: 0, historyViolations: 0, leakageViolations: 0, receiptsInfo: rcpt }).dims.find(d => d.name === 'receipts');
+check('receipts 절은 INFO · 값에 포인터·나이·공백', rcDim.status === 'INFO' && /unit 2d\(REJECT · 0\)/.test(rcDim.value) && /e2e 영수증 없음/.test(rcDim.value) && rcDim.note.includes('e2e'));
+const rNone = computeHealth({ index, domainsDefined: defined, guideCount: 5, namingViolations: 0, historyViolations: 0, leakageViolations: 0, receiptsInfo: computeReceipts([], []) }).dims.find(d => d.name === 'receipts');
+check('선언 부재는 무기입(0 아님)', /선언 무기입/.test(rNone.value) && rNone.status === 'INFO');
+check('미수집이면 절 없음(구버전 호환)', computeHealth({ index, domainsDefined: defined, guideCount: 5, namingViolations: 0, historyViolations: 0, leakageViolations: 0 }).dims.every(d => d.name !== 'receipts'));
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

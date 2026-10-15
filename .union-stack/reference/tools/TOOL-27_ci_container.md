@@ -29,6 +29,11 @@ YAML 을 손으로 번역해야 하고, 번역본은 곧 원본과 어긋난다.
 | `permission-guard` | — | 범위(`--range`)는 래퍼가 준다 |
 | `handoff-linter` | — | REJECT 자체가 없다([PRO-13] §5) |
 | `tests` · `health` · `adopter-arm` | ✔ | `adopter-arm` 은 [TOOL-26] |
+| **선언 검사**(`adapter.json checks[]`) | 선언별 | 하네스 뒤에 어답터의 제품 검사([PRO-22] §3-1). **0건 검사 = 실패**(2-bis, 3분할: 차단 전수 → REJECT · 메타/diff 조건부 → NOOP_PASS · env 조건부 → CLARIFY). 선언 부재는 무기입 |
+
+단계마다 **영수증 1줄**을 `verification/raw/receipts.md` 에 남긴다(sha · dirty · scope harness/product · name · exit · outcome · targets · passed/failed/skipped ·
+reason · env · dur · gen · cmd). 러너만 쓴다 — 사람·에이전트 경로는 없다. `health` 가 차단 검사별 최신 영수증 나이를 INFO 로, `work-close` 가 evidence 의
+`rcpt:` 인용을 대조한다([TOOL-04]·[TOOL-23]).
 
 ## 언제 쓰나
 - **커밋·푸시 전 로컬에서** — `docker compose run --rm harness` 가 CI 와 **같은 판정**을 낸다.
@@ -66,6 +71,9 @@ node scripts/ci.js                      # 로컬 전체 체인(호스트 node)
 node scripts/ci.js --range A..B         # permission-guard 의 diff 범위
 node scripts/ci.js --skip tests         # 단계 제외(쉼표 구분)
 node scripts/ci.js --json
+node scripts/ci.js --only-checks        # 선언 검사만(하네스 체인 생략 — 팔·디버깅)
+node scripts/ci.js --no-receipts        # 영수증을 쓰지 않는 드라이런
+node scripts/ci.js --scan               # package.json·훅·워크플로에서 checks[] 선언 초안(사람이 차단·비용 확정)
 
 docker compose -f docker-compose.harness.yml run --rm harness      # 컨테이너 정본(CI 와 동일 판정)
 docker compose -f docker-compose.harness.yml run --rm adopter-arm  # 형상 팔만([TOOL-26])

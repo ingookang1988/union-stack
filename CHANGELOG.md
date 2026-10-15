@@ -12,6 +12,16 @@ design, see [`DESIGN_RATIONALE.md`](./DESIGN_RATIONALE.md). Entries marked **⚠
 action in already-adopted projects.
 
 ## [Unreleased]
+- **PRO-22 §3 1·2 — check declarations and execution receipts; a check that saw nothing is a failure.**
+  Nine downstream answers found the same defect class in 3/3 repos: a type check idling for three days, a
+  permission guard passing an empty stage, a disabled CI staying green. `adapter.json checks[]` declares the
+  product checks (`kind` 정적·동작·재현·측정·수용·메타, `env`, `cost`, `expected_zero_unless`); `ci.js` runs them
+  after the harness chain and writes one **receipt** line per step to `verification/raw/receipts.md` — runner
+  only, with sha · dirty · scope harness/product · targets · passed/failed/skipped · env · generator.
+  **targets = 0 → REJECT** for a blocking full scan, NOOP_PASS for diff-conditional (`kind: 메타`), CLARIFY for
+  env-conditional. `ci.js --scan` drafts declarations from package scripts, hooks and workflows. `health` gains a
+  `receipts` row (latest receipt age per blocking check), `work-close` asks evidence to cite `rcpt:<name>@<sha>`
+  (new WOs only). Adopter arm gains the `nonjs` shape. ⚠ `init` now resets `receipts.md` like `evidence.md`.
 - **PRO-24 ② — adopter census: read-only measurement of sibling repos, anonymised rows.**
   `scripts/adopter-census.js` (**TOOL-30**) runs the upstream tools with `--root` against a private list of
   local adopter checkouts (never executing adopter scripts, never reading document bodies, never writing to

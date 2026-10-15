@@ -22,6 +22,7 @@ version: 1.0
 | `data` | 평면 **내용의 모양**만 교체(표 13개·한국어 헤더·`**제목 — 부제**`·헤딩형 HISTORY) | 도구 3종 크래시 0 · **렌더 본문 원문 마커 0** · live 계수 정확 · HISTORY 분기점 계수 정확 | [ADR-31]·[ADR-35]·[ADR-37] |
 | `legacy` | **독립 채번 레거시** — 같은 번호·다른 도메인(PLAN-36 ≠ PRO-36) · 같은 도메인 중복 파일 · `[up:…]` 를 담은 실콘텐츠 · `lineage.arithmeticFrom: 36` 아래 WO | 중복 ID → zfs-linter REJECT · **`[up:…]` strict 참조 린터 통과** · 상류 참조 INFO 계수 · **`health --root` 가 사본을 측정** · **arithmeticFrom 아래 WO 는 무관한 PLAN 상속 안 함 + 선언 부모 수집** | [PRO-27] ①③⑤ (SURVEY-02 어답터 실측) |
 | `serial` | **전역 일련번호 WO** — 산술 조상 0, 계보는 `plan:` frontmatter 에만 + 부모 없는 고아 WO | **`plan:` 부모 수집 · exit 0** · 고아 WO 는 **CLARIFY(3)** · `health --root <없는 경로>` REJECT · `health --root <사본>` 크래시 0 | [PRO-27] ③④ (SURVEY-02 어답터 실측) |
+| `nonjs` | **비-JS 제품 검사 선언** — `adapter.json checks[]` 4행(0건 전수·정상·메타·env 조건부), 영수증 0 에서 시작 | health 가 **영수증 공백 표면화** · ci.js 0건 검사 **3분할**(REJECT·NOOP_PASS·CLARIFY·PASS) · 영수증 선언 행마다 1줄 · 영수증 뒤 포인터·나이 | [PRO-22] §3 1·2·2-bis (SURVEY-01 3/3 "검사가 아무것도 안 보고 초록") |
 | `vocab` | **로컬 상태 어휘** — `status: Done`·별칭 증거 · frontmatter 없는 WO·PRO(본문 산문 상태) · 종결 디렉터리 문서 + `adapter.json statusMap/evidenceFields` | Done → Closed(work-close·색인) · 별칭 증거 읽힘 · **백필 dry-run 쓰기 0** · `--apply` 뒤 대상 0 · **센서스([TOOL-30])가 사본을 재고 행에 경로·제목 0 · 사본 변경 0** | [PRO-27] ② · [PRO-24] ② (SURVEY-02 어답터 실측) |
 
 ## 언제 쓰나
@@ -48,7 +49,7 @@ version: 1.0
 ## 호출
 ```bash
 node scripts/adopter-arm.js                # 두 축 (exit 0 = 성공 바 전부 충족)
-node scripts/adopter-arm.js --shape env    # 한 축만 (env|data|legacy|serial|vocab)
+node scripts/adopter-arm.js --shape env    # 한 축만 (env|data|legacy|serial|vocab|nonjs)
 node scripts/adopter-arm.js --keep ./ws    # 워크스페이스 보존(디버깅)
 node scripts/adopter-arm.js --json
 ```

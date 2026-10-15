@@ -19,6 +19,7 @@ const { parse, parseId, isDescendant, ancestorChain } = require('./zfs_util');
 const { buildIndex } = require('./zfs_index');
 const { withContract, OUTCOME, toShellExit } = require('./gate-contract');
 const { load: loadAdapter, mapStatus, fieldAliases } = require('./adapter');
+const receipts = require('./receipts');
 
 const SPRINT_DIR = '.union-stack/sprint';
 const NEXT = '.union-stack/sprint/next.md';
@@ -158,7 +159,7 @@ function mentionsLineage(txt, woId) {
  * siblings: 같은 부모를 공유하는 WO 레코드들(부모 전이 후보 판정용).
  * phases: 이 계보의 PHASE 레코드들([PRO-19] ② — 로드맵은 Schema 라 되쓰지 않고 검토 후보로만 제시).
  */
-function checkClosure(wo, traceTexts = {}, siblings = [], phases = []) {
+function checkClosure(wo, traceTexts = {}, siblings = [], phases = [], receiptCtx = null) {
   const issues = [];
   if (!wo || wo.malformed) {
     issues.push({ code: 'no-frontmatter', outcome: 'CLARIFY', msg: 'WO 문서에 frontmatter 가 없다 — status·evidence·closed_by 를 읽을 수 없다.' });
@@ -184,6 +185,19 @@ function checkClosure(wo, traceTexts = {}, siblings = [], phases = []) {
       code: 'no-evidence', outcome: 'CLARIFY',
       msg: '증거(evidence)가 비었다. 값을 적거나, 없으면 `none — 이유`로 명시하라(미기입과 해당없음의 구별).',
     });
+  }
+  // 영수증 인용([PRO-22] 단계 2): 선언 검사(adapter.checks)가 있는 레포에서 실값 증거는 러너가 쓴 영수증을 인용해야 한다 —
+  // `rcpt:<검사명>@<sha>` 또는 `rcpt:n/a — 이유`(소급 없음 — 신규 WO 부터). 수기 영수증 경로는 없다: 인용은 receipts.md 의 실제 줄과 대조한다.
+  if (receiptCtx && receiptCtx.declared && wo.evidence && !/^none\b/i.test(wo.evidence)) {
+    const { refs, na } = receipts.citations(wo.evidence);
+    if (!refs.length && !na) {
+      issues.push({ code: 'no-receipt', outcome: 'CLARIFY', msg: 'evidence 가 영수증을 인용하지 않는다 — `rcpt:<검사명>@<sha>`(ci.js 가 쓴 receipts.md 줄) 또는 `rcpt:n/a — 이유`([PRO-22] 단계 2, 소급 없음).' });
+    }
+    for (const r of refs) {
+      if (!(receiptCtx.receipts || []).some(x => x.name === r.name && String(x.sha || '').startsWith(r.sha.slice(0, 7)))) {
+        issues.push({ code: 'receipt-missing', outcome: 'CLARIFY', msg: `인용한 영수증이 없다: rcpt:${r.name}@${r.sha} — receipts.md 에 그 검사·커밋 줄이 없다(수기 인용인가?).` });
+      }
+    }
   }
   const info = [];
   const others = siblings.filter(s => s.id !== wo.id);
@@ -292,7 +306,9 @@ function run(argv = process.argv.slice(2), root = path.resolve(__dirname, '..'))
   const siblings = wos.filter(w => (w.parent || ancestorChain(w.id)[1] || null) === parentId);
   const chain = new Set(ancestorChain(wo.id));
   const phases = buildIndex(root).filter(d => d.domain === 'PHASE' && chain.has(d.id));
-  const { issues, info } = checkClosure(wo, readTraces(root, wo.closed_by), siblings, phases);
+  const cfgClose = loadAdapter(root);
+  const receiptCtx = { declared: (cfgClose.checks || []).length > 0, receipts: receipts.parseReceipts(receipts.read(root) || '') };
+  const { issues, info } = checkClosure(wo, readTraces(root, wo.closed_by), siblings, phases, receiptCtx);
 
   if (json) { console.log(JSON.stringify({ wo, issues, info }, null, 2)); return issues.length ? OUTCOME.CLARIFY : OUTCOME.PASS; }
 

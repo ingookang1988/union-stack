@@ -30,7 +30,7 @@ const TARGET_DIRS = [
 const IGNORED = new Set([
   'README.md', '_GUIDE.md', 'DESIGN_RATIONALE.md',
   'next.md', 'prev.md', 'live.md', 'target.md', 'hold.md',
-  'state.md', 'evidence.md', 'gap.md', 'HANDOFF.md', 'HISTORY.md',
+  'state.md', 'evidence.md', 'receipts.md', 'gap.md', 'HANDOFF.md', 'HISTORY.md',
 ]);
 const IGNORED_SUFFIX = ['_GUIDE.md'];
 

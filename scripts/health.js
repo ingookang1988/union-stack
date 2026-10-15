@@ -19,6 +19,7 @@ const { walkFiles } = require('./fs_walk');
 const { load: loadAdapter } = require('./adapter');
 const { gather: gatherBrokenRefs } = require('./ref-linter');
 const { gather: gatherBudget } = require('./context-budget');
+const receipts = require('./receipts');
 
 const { contractEdges, normEnforcement, concernUsage, roadmapWiring, NORM_DOMAINS } = require('./query');
 const { gather: gatherCards } = require('./tools-index');
@@ -86,7 +87,7 @@ function lastDateIn(txt) {
 }
 
 /** 순수 계산: 1차 지표 → 차원별 평가 리포트. (FS 비의존 → 테스트 용이) */
-function computeHealth({ index, domainsDefined, guideCount, namingViolations, historyViolations, leakageViolations, oversize = [], brokenRefs = 0, budget = null, sync = null, lessons = null, effect = null, contracts = null, norms = null, roadmap = null, adapter = null, historyClarifications = 0, testInfra = null }) {
+function computeHealth({ index, domainsDefined, guideCount, namingViolations, historyViolations, leakageViolations, oversize = [], brokenRefs = 0, budget = null, sync = null, lessons = null, effect = null, contracts = null, norms = null, roadmap = null, adapter = null, historyClarifications = 0, testInfra = null, receiptsInfo = null }) {
   const used = new Set(index.map(d => d.domain));
   const unused = domainsDefined.filter(d => !used.has(d));
   const locked = index.filter(d => LOCKED.includes(d.status));
@@ -181,6 +182,15 @@ function computeHealth({ index, domainsDefined, guideCount, namingViolations, hi
     if (testInfra.evidenceLast) bits.push(`evidence ${testInfra.evidenceLast}`);
     dims.push({ name: 'test infra', status: 'INFO', value: bits.join(' · ') });
   }
+  if (receiptsInfo) {
+    // 영수증 관측([PRO-22] 단계 2) — 차단 검사별 **최신 영수증 포인터·나이**. 영수증이 끊기면 꺼진 CI 가 여기서 보인다.
+    // 선언 부재는 무기입(INFO)이지 0 이 아니다([ADR-28]). 판정하지 않는다 — 나이의 임계는 어답터·사람이 정한다.
+    const bits = receiptsInfo.declared
+      ? [`선언 ${receiptsInfo.declared}(차단 ${receiptsInfo.blocking})`, `영수증 ${receiptsInfo.lines}줄`,
+        ...receiptsInfo.latest.map(l => l.date ? `${l.name} ${l.age}d(${l.outcome}${l.targets != null && l.targets !== '-' ? ' · ' + l.targets : ''})` : `${l.name} 영수증 없음`)]
+      : ['선언 무기입', `영수증 ${receiptsInfo.lines}줄`];
+    dims.push({ name: 'receipts', status: 'INFO', value: bits.join(' · '), note: receiptsInfo.missing.length ? '영수증 없음: ' + receiptsInfo.missing.join(' ') : '' });
+  }
   const tiers = { draft: 0, reviewed: 0, ratified: 0, untagged: 0 };
   index.forEach(d => { tiers[d.tier && tiers[d.tier] !== undefined ? d.tier : 'untagged']++; });
   dims.push({ name: 'tier distribution', status: 'INFO',
@@ -230,10 +240,26 @@ function gather(root = path.resolve(__dirname, '..')) {
     index, domainsDefined: [...VALID_DOMAINS], guideCount: countGuides(root),
     namingViolations, historyViolations, historyClarifications, leakageViolations, oversize, brokenRefs, budget,
     sync, lessons: gatherLessons(root), effect: gatherEffectSurface(root), contracts, norms, roadmap, adapter,
-    testInfra: gatherTestInfra(root),
+    testInfra: gatherTestInfra(root), receiptsInfo: gatherReceipts(root, adapter),
   });
   // 판정(dims) 외에 원자료도 함께 낸다 — 대시보드가 같은 수집을 두 번 하지 않도록(합성 원칙).
   return { ...r, sizes, sizeCapKb: SIZE_CAP_KB, sync, contracts, norms, roadmap, adapter, concerns: concernUsage(index) };
+}
+
+/** 영수증 관측 수집([PRO-22] 단계 2) — 선언(adapter.checks)과 receipts.md 를 대조. 순수 계산은 computeReceipts. */
+function computeReceipts(checks, recs, today = new Date()) {
+  const latest = receipts.latestByName(recs, 'product');
+  const blocking = (checks || []).filter(c => c.blocking);
+  const rows = blocking.map(c => {
+    const r = latest.get(c.name);
+    return r ? { name: c.name, date: r.date, age: receipts.ageDays(r.date, today), outcome: r.outcome, targets: r.targets == null ? null : r.targets } : { name: c.name, date: null, age: null, outcome: null, targets: null };
+  });
+  return { declared: (checks || []).length, blocking: blocking.length, lines: recs.length, latest: rows, missing: rows.filter(r => !r.date).map(r => r.name) };
+}
+function gatherReceipts(root, adapter) {
+  let recs = [];
+  try { recs = receipts.parseReceipts(receipts.read(root) || ''); } catch { recs = []; }
+  return computeReceipts((adapter && adapter.checks) || [], recs);
 }
 
 /**
@@ -433,6 +459,6 @@ function run(argv = process.argv.slice(2)) {
   return r.fails ? 1 : 0;
 }
 
-module.exports = { computeHealth, gather, gatherSync, gatherLessons, gatherTestInfra, computeEffectSurface, gatherEffectSurface, parseContract, lastDateIn, resolveRoot, validateRoot, CONTRACT };
+module.exports = { computeHealth, gather, gatherSync, gatherLessons, gatherTestInfra, computeReceipts, gatherReceipts, computeEffectSurface, gatherEffectSurface, parseContract, lastDateIn, resolveRoot, validateRoot, CONTRACT };
 
 if (require.main === module) process.exit(withContract(CONTRACT, argv => run(argv))());

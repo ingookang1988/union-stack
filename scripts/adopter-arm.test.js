@@ -88,5 +88,13 @@ const lg3 = legacyShape();
 check('legacy: adapter.json lineage.arithmeticFrom', /arithmeticFrom/.test(lg3.files['.union-stack/adapter.json'] || ''));
 check('legacy: arithmeticFrom 아래 WO(parent PRO-36) + 무관한 PLAN-12', Object.keys(lg3.files).some(k => /WO-12a-1_/.test(k)) && Object.keys(lg3.files).some(k => /PLAN-12_/.test(k)));
 
+// --- [PRO-22] 비-JS 제품 검사 선언 형상 nonjs ---
+const { nonjsShape } = require('./adopter-arm');
+check('형상 목록에 nonjs', SHAPES.includes('nonjs'));
+const nj = nonjsShape();
+const njChecks = JSON.parse(nj.files['.union-stack/adapter.json']).checks;
+check('nonjs: 선언 4행 — 0건 전수·정상·메타·env 조건부', njChecks.length === 4 && njChecks.some(c => c.kind === '메타') && njChecks.some(c => c.expected_zero_unless === 'env'));
+check('nonjs: 정답 3분할', nj.truth.expect.zero === 'REJECT' && nj.truth.expect.guard === 'NOOP_PASS' && nj.truth.expect.probe === 'CLARIFY' && nj.truth.expect.ok === 'PASS');
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

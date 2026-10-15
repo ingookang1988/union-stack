@@ -2,9 +2,9 @@
 ---
 id: WO-22b-1
 title: 검사 선언 + 실행 영수증 — [PRO-22] §3 단계 1·2 구현 (0건 검사 = 실패 포함)
-status: Active
+status: Verifying
 parent: PRO-22
-evidence: "none — 미착수(2026-10-15 발행). 착수 순서는 [ADR-40] 절차: 가드(테스트)를 먼저 물린다"
+evidence: "구현 완료(2026-10-16, 가드 먼저): scripts/receipts.js(순수: 러너 출력 파싱 · 2-bis 3분할 judge · 줄 스키마 · 나이 · --scan 초안 · 인용) + ci.js(선언 검사 실행 · 단계마다 영수증 1줄 scope=harness/product · --only-checks · --no-receipts · --scan) · adapter.json checks[](6분류·3비용·expected_zero_unless) · health receipts 절(차단 검사별 최신 포인터·나이, 선언 부재 무기입) · work-close rcpt: 인용 CLARIFY(소급 없음 — n/a 허용) · init 이 receipts.md 리셋 · 팔 nonjs 형상 4 바 충족. 도그푸딩: 상류 adapter.json 선언 1(suite) + 영수증 rcpt:suite@2133507(REJECT — 미커밋 fdt spike 귀속 실패 2를 정직하게 기록). [PRO-22] §3 단계 3~5 는 [WO-22b-2]부터"
 closed_by: []
 version: 1.0
 ---
@@ -43,4 +43,12 @@ version: 1.0
 5. 어답터 팔 비-JS 형상 → 6. 카드·가이드 → 7. [PRO-22] §3 단계 3~5 는 이 WO 종료 후 [WO-22b-2]부터 발행.
 
 ## 증거
-- 테스트 파일 · 어답터 팔 실행 출력 · 이 레포의 raw 영수증 줄 · 커밋.
+- 테스트: `scripts/receipts.test.js`(신설, 28) · adapter(+7) · health(+8, dims 18) · work-close(+6) · adopter-arm(+3) — 전부 녹색. 스위트 42 중 40 통과,
+  실패 2 = 미커밋 fdt spike 귀속(leakage·ref — 이전과 동일). lint 체인 15종 중 leakage 외 전부 exit 0.
+- 어답터 팔 `nonjs`: 선언 4·영수증 0 → health 가 공백 표면화 / `ci.js --only-checks` → zero=REJECT · ok=PASS · guard=NOOP_PASS · probe=CLARIFY, 체인 exit 1 /
+  영수증 4줄(scope=product · targets) / 영수증 뒤 health 포인터·나이. 6 형상 성공 바 전부 충족.
+- 도그푸딩: `.union-stack/adapter.json` 에 `suite` 선언 1 · `verification/raw/receipts.md` 에 러너가 쓴 줄 1 — rcpt:suite@2133507, targets=42 passed=40 failed=2 →
+  **REJECT**(exit 1). 영수증은 판정을 미화하지 않는다: 실패 2는 의도적 미커밋 spike 귀속이고, 그것이 이 줄에 그대로 적힌다. `health` receipts 절: suite 0d(REJECT · 42).
+- 러너 외 쓰기 경로 0: receipts.append 는 ci.js 와 팔(픽스처 초기화)만 호출. CI 래퍼(harness.yml)는 evidence.md 와 함께 receipts.md 를 커밋한다.
+- 결정: 하네스 단계도 영수증을 쓴다(scope=harness) — tests 단계는 node --test 출력에서 targets 를 읽는다. `work-close` 인용 규칙은 선언 검사가 있는 레포에서만,
+  `rcpt:n/a — 이유` 로 소급 면제(기존 Verifying WO 4건은 Closed 판정 시 사람이 n/a 를 적는다).
