@@ -83,6 +83,7 @@ function gatherConSpread(root) {
       if (!e.endsWith('.md')) continue;
       if (rel.includes('reference/contracts')) continue; // 정의 파일 자신은 제외(외부 참조만)
       for (const r of extractRefs(fs.readFileSync(path.join(root, rel), 'utf8'))) {
+        if (r.external) continue; // 상류 참조(up:)는 로컬 해소 대상이 아니다([PRO-27] ①)
         if (r.domain === 'CON' && conIds.includes(r.id)) ext.add(r.id);
       }
     }

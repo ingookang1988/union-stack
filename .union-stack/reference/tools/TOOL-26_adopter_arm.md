@@ -14,12 +14,14 @@ version: 1.0
 사본을 만들어 **형상을 바꾼 뒤 기존 도구를 그대로 돌린다**([PRO-17]). 새 게이트가 아니라 같은
 게이트의 두 번째 실행이라 로직은 1벌이다. 상류가 자기 형상만 도는 사각지대([LSN-17])를 CI 로 닫는다.
 
-두 축 — 축마다 **실측 결함이 근거**다(가공한 시나리오가 아니다):
+네 축 — 축마다 **실측 결함이 근거**다(가공한 시나리오가 아니다):
 
 | 축 | 사본에 하는 일 | 성공 바 | 근거 |
 |---|---|---|---|
 | `env` | `init --apply --drop-template-bits` | init 적용 · **상류 ADR 잔존 0** · 스위트 실패 0 · health exit 0 · **무JS 도달성** | [ADR-26]·[ADR-27]·[ADR-28]·[ADR-30]·[ADR-36]① |
 | `data` | 평면 **내용의 모양**만 교체(표 13개·한국어 헤더·`**제목 — 부제**`·헤딩형 HISTORY) | 도구 3종 크래시 0 · **렌더 본문 원문 마커 0** · live 계수 정확 · HISTORY 분기점 계수 정확 | [ADR-31]·[ADR-35]·[ADR-37] |
+| `legacy` | **독립 채번 레거시** — 같은 번호·다른 도메인(PLAN-36 ≠ PRO-36) · 같은 도메인 중복 파일 · `[up:…]` 를 담은 실콘텐츠 | 중복 ID → zfs-linter REJECT · **`[up:…]` strict 참조 린터 통과** · 상류 참조 INFO 계수 · **`health --root` 가 사본을 측정** | [PRO-27] ①⑤ (SURVEY-02 어답터 실측) |
+| `serial` | **전역 일련번호 WO** — 산술 조상 0, 계보는 `plan:` frontmatter 에만 | 빈 upward-fetch → **CLARIFY(3)** · `health --root <없는 경로>` REJECT · `health --root <사본>` 크래시 0 | [PRO-27] ③④ (SURVEY-02 어답터 실측) |
 
 ## 언제 쓰나
 - CI 매 실행(`ci.js` 체인의 `adopter-arm` 단계 — [TOOL-27]). 로컬에선 배송 형상을 손으로 재현하기 전에.
@@ -45,7 +47,7 @@ version: 1.0
 ## 호출
 ```bash
 node scripts/adopter-arm.js                # 두 축 (exit 0 = 성공 바 전부 충족)
-node scripts/adopter-arm.js --shape env    # 한 축만 (env|data)
+node scripts/adopter-arm.js --shape env    # 한 축만 (env|data|legacy|serial)
 node scripts/adopter-arm.js --keep ./ws    # 워크스페이스 보존(디버깅)
 node scripts/adopter-arm.js --json
 ```

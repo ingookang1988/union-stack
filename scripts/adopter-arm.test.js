@@ -60,5 +60,18 @@ check('status 없음은 크래시', crashed({ code: -1, stderr: '', signal: null
 // 회귀: execFileSync 래퍼 문구를 stderr 로 섞으면 모든 비영 종료가 크래시로 오판됐다(실측).
 check('"Command failed" 래퍼 문구에 속지 않는다', !crashed({ code: 1, stderr: '', signal: null }));
 
+// --- [PRO-27] 어답터 팔 형상 2 추가 — 독립 채번 레거시 · 전역 일련번호 WO(하류 실측, SURVEY-02) ---
+const { legacyShape, serialShape, SHAPES } = require('./adopter-arm');
+check('형상 목록에 legacy·serial', SHAPES.includes('legacy') && SHAPES.includes('serial'));
+const lg = legacyShape();
+const lgKeys = Object.keys(lg.files);
+check('legacy: 같은 번호·다른 도메인(PLAN-36 · PRO-36)', lgKeys.some(k => /PLAN-36_/.test(k)) && lgKeys.some(k => /PRO-36_/.test(k)));
+check('legacy: 상류 참조 [up:…] 를 담은 실콘텐츠 문서', Object.values(lg.files).some(t => /\[up:[A-Z]+-/.test(t) && !/예시|example|dummy|더미/i.test(t)));
+check('legacy: 중복 ID 픽스처(REJECT 재료)', lg.truth.duplicateKey === 'PRO-36' && lgKeys.filter(k => /PRO-36_/.test(k)).length === 2);
+const sr = serialShape();
+const srWo = Object.entries(sr.files).find(([k]) => /WO-345_/.test(k));
+check('serial: 전역 일련번호 WO + plan: frontmatter', !!srWo && /^plan: /m.test(srWo[1]));
+check('serial: 정답(산술 조상 0)', sr.truth.arithmeticAncestors === 0);
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

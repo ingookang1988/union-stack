@@ -126,5 +126,33 @@ check('route env not lessons', /lessons/.test(whereToRecord('cross-repo environm
 // 레포/제품 특정 반복 실패는 여전히 lessons(환경 키워드 없으면)
 check('route repo pitfall→lessons still', whereToRecord('a repeated pitfall in this feature').match.destination, '.union-stack/reference/lessons/LSN-*');
 
+// --- [PRO-27] ① 계약 소비자의 up: 참조는 미해소가 아니라 외부(externalConsumers) ---
+const brUp = blastRadius('01', [
+  ...index.filter(d => d.domain !== 'CON'),
+  { domain: 'CON', id: '01', file: 'reference/contracts/CON-01_x.md', consumers: ['up:FLOW-09', 'FLOW-99'] },
+]);
+check('외부 소비자 분류', brUp.externalConsumers.map(u => u.ref), ['up:FLOW-09']);
+check('오타 소비자는 여전히 미해소', brUp.unresolvedConsumers.map(u => u.ref), ['FLOW-99']);
+
+// --- [PRO-27] ③ 일부: 빈 upward-fetch 는 (없음)+PASS 가 아니라 CLARIFY ---
+const { fetchOutcome } = require('./query');
+check('맥락 있으면 PASS', fetchOutcome(upwardFetch('01a1', index)).outcome, 'PASS');
+const empty = fetchOutcome(upwardFetch('345', index));
+check('맥락 0건이면 CLARIFY', empty.outcome, 'CLARIFY');
+check('CLARIFY 에 질문 한 줄', typeof empty.question === 'string' && empty.question.length > 0, true);
+
+// CLI 표면 — 종료코드가 계약([PRO-11] CLARIFY=3)대로 나오는가. 상류 레포에서 실행(색인은 상류 자신).
+const { spawnSync } = require('child_process');
+const cliCwd = require('path').resolve(__dirname, '..');
+const cli = (args) => spawnSync(process.execPath, ['scripts/upward-fetch.js', ...args], { cwd: cliCwd, encoding: 'utf8' });
+const vac = cli(['WO-999']);
+check('CLI: 계보 맥락 0 → exit 3(CLARIFY)', vac.status, 3);
+check('CLI: CLARIFY 문구', /CLARIFY/.test(vac.stdout + vac.stderr), true);
+const ext = cli(['up:PRO-27']);
+check('CLI: up: 인자는 외부 참조 INFO · exit 0', ext.status, 0);
+check('CLI: 외부 참조 문구', /상류 참조/.test(ext.stdout + ext.stderr), true);
+const extBr = spawnSync(process.execPath, ['scripts/blast-radius.js', 'up:PRO-27'], { cwd: cliCwd, encoding: 'utf8' });
+check('blast-radius CLI: up: 인자 exit 0', extBr.status, 0);
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

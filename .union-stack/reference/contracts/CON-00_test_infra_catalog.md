@@ -30,6 +30,7 @@ version: 2.1
 | 하류 형상 픽스처 | `scripts/adopter-arm.js` | dataShape() — 어답터에서만 참인 데이터 형상. 하류 제보로 잡은 형상은 여기에 추가(회귀 고정, [ADR-40]) |
 | 격리 사본 픽스처 | `scripts/fs_walk.js` | copyTree(src, dest) — 파괴적·형상 변경 시나리오는 사본에서([TOOL-20]·[TOOL-26] 공유) |
 | 게이트 계약 검증 | `scripts/gate-contract.js` | validateContract(CONTRACT) · withContract(run) — 새 게이트는 [PRO-11] 계약 선언 필수(gate-contract.test 가 일괄 검사) |
+| ID 유일성 검사 | `scripts/zfs-linter.js` | findDuplicateIds(rels) — 도메인+ID 키로 묶어 ≥2 인 그룹만 반환(zfs-linter.test 가 고정) |
 <!-- test-catalog:end -->
 
 > **검증 순서 규율** (게이트를 먼저 물린다 — [ADR-40]): 수리·가드 배선 전에 *깨진 형상에서 발현*을

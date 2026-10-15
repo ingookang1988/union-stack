@@ -5,7 +5,7 @@
 // 새 게이트가 아니라 **기존 게이트를 다른 형상에서 한 번 더 돌리는 것**이다(로직 1벌 원칙).
 // 사본을 만들고 형상을 바꾼 뒤, 이미 있는 도구(`health`·`dashboard`·스위트)를 그대로 실행한다.
 //
-// 두 축(축마다 실측 결함이 근거다 — 가공한 시나리오가 아니다):
+// 네 축(축마다 실측 결함이 근거다 — 가공한 시나리오가 아니다):
 //
 //   env  : `init --apply --drop-template-bits` 를 실제로 적용한 사본.
 //          픽스처 부재·모듈 부재·스크립트 미실행 뷰어를 견디는가.
@@ -15,6 +15,12 @@
 //          `init` 을 돌리지 않는다 — 축을 섞지 않기 위해서다.
 //          근거 [ADR-31](HISTORY 헤딩형 → 분기점 0) · [ADR-35]·[ADR-37](마커 원문 노출 · 헤더 오계수).
 //
+//   legacy : **독립 채번 레거시** — 같은 번호가 도메인마다 다른 문서(PLAN-36 ≠ PRO-36), 같은 도메인·같은 ID 중복 파일,
+//            상류 참조 `[up:…]` 를 담은 실콘텐츠. 근거 [PRO-27] ①⑤ (SURVEY-02: ID 충돌 3/3 · 중복 2쌍 · strict 린터 오해소).
+//
+//   serial : **전역 일련번호 WO** — 산술 조상이 0 인 WO(계보는 frontmatter `plan:` 에만). 빈 upward-fetch 가 조용히
+//            exit 0 하던 것과, `health --root` 가 플래그를 무시하던 것. 근거 [PRO-27] ③④ (SURVEY-02).
+//
 // **왜 data 축이 따로 필요한가**: env 팔의 사본은 `init` 만 돌린 것이라 여전히 *상류의 데이터*를
 // 쓴다. [PRO-17] §5 는 형상 매트릭스를 "형상 하나를 통과했는데 실어답터가 깨진 사례가 나오면"
 // 으로 보류했고, [ADR-31]·[ADR-37]이 정확히 그 사례다 — 재개 조건이 충족되어 축을 하나 늘렸다.
@@ -23,7 +29,7 @@
 //
 // 실행:
 //   node scripts/adopter-arm.js                 # 두 축 전부
-//   node scripts/adopter-arm.js --shape env     # 한 축만
+//   node scripts/adopter-arm.js --shape env     # 한 축만 (env|data|legacy|serial)
 //   node scripts/adopter-arm.js --keep <dir>    # 워크스페이스 보존(디버깅)
 //   node scripts/adopter-arm.js --json
 const fs = require('fs');
@@ -223,6 +229,97 @@ function dataArm(ws) {
   return bars;
 }
 
+// --- 교차 레포 형상([PRO-27]) ---------------------------------------------------
+// 어답터 3곳 중 2곳이 상류 전제(ID 공간 분리·산술 계보·frontmatter 존재)를 깼다. 상류 형상에서 맞던 규칙이
+// 전제부터 틀린 사례라, 두 형상을 팔에 고정한다(픽스처가 곧 회귀 고정 — [ADR-40]).
+
+/** 독립 채번 레거시 형상(순수). 반환: {rel: 내용} + 정답. */
+function legacyShape() {
+  const files = {};
+  const doc = (comment, id, status, title) => [comment, '---', `id: ${id}`, `status: ${status}`, '---', '', `# [${id}] ${title}`, '- 형상 픽스처(example).', ''].join('\n');
+  // 같은 번호 36 — PLAN 과 PRO 가 서로 무관한 독립 채번. 중복이 **아니다**.
+  files['.union-stack/plan/PLAN-36_legacy_root.md'] = doc('<!-- [Wiki] 레거시 독립 채번(example). -->', 'PLAN-36', 'Active', '레거시 루트');
+  files['.union-stack/proposals/PRO-36_independent_numbering.md'] = doc('<!-- [Proposal] 독립 채번(example). -->', 'PRO-36', 'Proposed', '독립 채번');
+  // 같은 도메인·같은 ID 파일 2개 — 하류 실측(2쌍). 린터가 REJECT 해야 한다.
+  files['.union-stack/proposals/PRO-36_independent_numbering_dup.md'] = doc('<!-- [Proposal] 중복 사본(example). -->', 'PRO-36', 'Proposed', '독립 채번(중복 사본)');
+  // 상류 참조를 담은 **실콘텐츠**(더미 마커 없음 → strict 게이팅 대상). [up:…] 을 로컬 미해소로 잡으면 상류 문서가
+  // 어답터에서 통째로 걸리는 결함(SURVEY-02: 설문 파일 자체가 Fail-close)의 재현이다.
+  files['.union-stack/sprint/WO-36a-1_adopter_note.md'] = [
+    '---', 'id: WO-36a-1', 'title: 어답터 메모', 'status: Active', 'evidence: "none — 형상 픽스처"', 'closed_by: []', '---', '',
+    '# [WO-36a-1] 어답터 메모', '- 상류 [up:PRO-27] ① 을 따른다. 로컬 [PLAN-36] 아래 작업이다.', '',
+  ].join('\n');
+  return { files, truth: { duplicateKey: 'PRO-36', upstreamRefs: 1 } };
+}
+
+/** 전역 일련번호 WO 형상(순수). 계보는 frontmatter `plan:` 에만 있고 산술 조상은 0. */
+function serialShape() {
+  const files = {};
+  files['.union-stack/plan/PLAN-07_serial_parent.md'] = ['<!-- [Wiki] 전역 일련번호 형상의 부모(example). -->', '---', 'id: PLAN-07', 'status: Active', '---', '', '# [PLAN-07] 부모', '- 형상 픽스처(example).', ''].join('\n');
+  files['.union-stack/sprint/WO-345_serial_wo.md'] = [
+    '---', 'id: WO-345', 'title: 전역 일련번호 작업(example)', 'status: Active', 'plan: PLAN-07', 'evidence: "none — 형상 픽스처"', 'closed_by: []', '---', '',
+    '# [WO-345] 전역 일련번호 작업', '- 계보는 plan: 에만 있다(예시).', '',
+  ].join('\n');
+  return { files, truth: { arithmeticAncestors: 0, frontmatterParent: 'PLAN-07' } };
+}
+
+function writeShape(ws, files) {
+  for (const [rel, txt] of Object.entries(files)) {
+    const abs = path.join(ws, rel);
+    fs.mkdirSync(path.dirname(abs), { recursive: true });
+    fs.writeFileSync(abs, txt);
+  }
+}
+
+function legacyArm(ws) {
+  const { files, truth } = legacyShape();
+  writeShape(ws, files);
+  const bars = [];
+  const z = run(ws, ['scripts/zfs-linter.js']);
+  bars.push({ name: `중복 ID(${truth.duplicateKey}) → zfs-linter REJECT`, ok: z.code === 1 && !crashed(z) && z.stderr.includes(`중복 ID ${truth.duplicateKey}`),
+    detail: `exit ${z.code}` });
+  // 사본은 작업트리째라(미커밋 spike 포함) exit 0 을 요구하지 않는다 — 판정은 **픽스처 문서가 strict 목록에 오르는가**다.
+  const strict = run(ws, ['scripts/ref-linter.js', '--strict']);
+  const fixtureHit = strict.stderr.split('\n').filter(l => l.includes('✗') && l.includes('WO-36a-1_adopter_note.md'));
+  bars.push({ name: '[up:…] 를 담은 실콘텐츠가 strict 참조 린터에 걸리지 않는다', ok: !crashed(strict) && fixtureHit.length === 0,
+    detail: fixtureHit.length ? fixtureHit.join(' ') : `exit ${strict.code}(다른 파일의 미해소는 이 바의 과녁이 아니다)` });
+  // 상류 자신도 [up:…] 예문을 갖는다(PRO-27) — 절대 건수가 아니라 **증분**으로 판정한다.
+  const countUp = out => { const m = (out.stdout + out.stderr).match(/상류 참조\(up:\) (\d+)건/); return m ? +m[1] : 0; };
+  const advHere = countUp(run(ROOT, ['scripts/ref-linter.js']));
+  const advThere = countUp(run(ws, ['scripts/ref-linter.js']));
+  bars.push({ name: `상류 참조 INFO 계수가 픽스처만큼(+${truth.upstreamRefs}) 는다`, ok: advThere === advHere + truth.upstreamRefs,
+    detail: `${advHere} → ${advThere}` });
+  // health --root 가 **사본을** 재는가 — 플래그를 무시하고 상류 자신을 재던 결함의 과녁. 도메인 계수 차로 판정한다.
+  const here = run(ROOT, ['scripts/health.js', '--json']);
+  const there = run(ROOT, ['scripts/health.js', '--root', ws, '--json']);
+  let ok = false, detail = '측정 실패';
+  try {
+    const a = JSON.parse(here.stdout), b = JSON.parse(there.stdout);
+    ok = path.resolve(b.root) === path.resolve(ws) && b.byDomain.PRO === a.byDomain.PRO + 2 && b.byDomain.PLAN === a.byDomain.PLAN + 1;
+    detail = `PRO ${a.byDomain.PRO}→${b.byDomain.PRO} · PLAN ${a.byDomain.PLAN}→${b.byDomain.PLAN}`;
+  } catch (e) { detail = e.message; }
+  bars.push({ name: 'health --root 가 사본을 측정(상류 자신 아님)', ok, detail });
+  return bars;
+}
+
+function serialArm(ws) {
+  const { files } = serialShape();
+  writeShape(ws, files);
+  const bars = [];
+  // 빈 맥락은 (없음)+exit 0 이 아니라 CLARIFY(3) — "0건 검사 = 통과" 클래스([PRO-22] 2-bis)의 회귀 고정.
+  const uf = run(ws, ['scripts/upward-fetch.js', 'WO-345']);
+  bars.push({ name: '산술 조상 0 인 WO 의 upward-fetch → CLARIFY(exit 3)', ok: uf.code === 3 && !crashed(uf) && (uf.stdout + uf.stderr).includes('CLARIFY'),
+    detail: `exit ${uf.code}` });
+  const bad = run(ROOT, ['scripts/health.js', '--root', path.join(ws, 'no-such-dir')]);
+  bars.push({ name: 'health --root <없는 경로> → REJECT "측정 대상 아님"', ok: bad.code === 1 && !crashed(bad) && (bad.stderr + bad.stdout).includes('측정 대상 아님'),
+    detail: `exit ${bad.code}` });
+  const h = run(ROOT, ['scripts/health.js', '--root', ws]);
+  bars.push({ name: 'health --root <사본> 크래시 0(exit 무관)', ok: !crashed(h), detail: crashed(h) ? h.stderr.split('\n').find(Boolean) || '스택' : `exit ${h.code}` });
+  return bars;
+}
+
+const SHAPES = ['env', 'data', 'legacy', 'serial'];
+const ARMS = { env: envArm, data: dataArm, legacy: legacyArm, serial: serialArm };
+
 function main(argv = process.argv.slice(2)) {
   const si = argv.indexOf('--shape');
   const shape = si >= 0 && argv[si + 1] ? argv[si + 1] : 'all';
@@ -230,13 +327,13 @@ function main(argv = process.argv.slice(2)) {
   const keep = ki >= 0 && argv[ki + 1] ? path.resolve(argv[ki + 1]) : null;
   const json = argv.includes('--json');
 
-  const shapes = shape === 'all' ? ['env', 'data'] : [shape];
+  const shapes = shape === 'all' ? SHAPES : [shape];
   const results = [];
   for (const s of shapes) {
     const ws = keep ? path.join(keep, s) : fs.mkdtempSync(path.join(os.tmpdir(), `arm-${s}-`));
     fs.mkdirSync(ws, { recursive: true });
     const files = copyTree(ROOT, ws);
-    const bars = s === 'env' ? envArm(ws) : s === 'data' ? dataArm(ws) : [{ name: `알 수 없는 형상 '${s}'`, ok: false, detail: 'env|data|all' }];
+    const bars = ARMS[s] ? ARMS[s](ws) : [{ name: `알 수 없는 형상 '${s}'`, ok: false, detail: `${SHAPES.join('|')}|all` }];
     results.push({ shape: s, workspace: keep ? ws : null, files, bars });
     if (!keep) fs.rmSync(ws, { recursive: true, force: true });
   }
@@ -254,10 +351,10 @@ function main(argv = process.argv.slice(2)) {
   }
   console.log(failed
     ? `성공 바 ${failed}건 미충족 — 상류 형상에서만 참인 사실이 남아 있다([LSN-17]).`
-    : '성공 바 전부 충족 — 두 형상에서 같은 게이트가 성립한다.');
+    : '성공 바 전부 충족 — 모든 형상에서 같은 게이트가 성립한다.');
   return failed ? 1 : 0;
 }
 
-module.exports = { dataShape, rawMarkers, noJsReachable, crashed, ZONES, ROWS_PER_ZONE, HISTORY_ENTRIES };
+module.exports = { dataShape, legacyShape, serialShape, SHAPES, rawMarkers, noJsReachable, crashed, ZONES, ROWS_PER_ZONE, HISTORY_ENTRIES };
 
 if (require.main === module) process.exit(main());

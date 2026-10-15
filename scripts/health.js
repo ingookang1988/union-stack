@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 // scripts/health.js
 // 하네스 자가 건강진단 — "조견표의 코드화". 게이트 상태 + 구조 지표를 자동 산출한다.
-// read-only·zero-dep. 실행: node scripts/health.js [--json]
+// read-only·zero-dep. 실행: node scripts/health.js [--json] [--root <dir>]
+//   --root <dir> : 다른 레포(어답터 평면·팔 사본)를 측정한다([PRO-27] ④). `.union-stack` 이 없으면 REJECT
+//                  "측정 대상 아님" — 플래그를 무시하고 상류 자신을 측정하던 결함("0건 검사 = 통과" 클래스)의 수리.
 // (true A/B eval은 템플릿 단독으론 불가 — 대신 *자기 준수도*를 지속 측정한다.)
 const fs = require('fs');
 const path = require('path');
@@ -343,6 +345,7 @@ function gatherPlaneCites(root) {
     try { txt = fs.readFileSync(path.join(root, rel), 'utf8'); } catch { return; }
     const seen = new Set();
     for (const r of extractRefs(txt)) {
+      if (r.external) continue; // 상류 참조(up:)는 로컬 인용이 아니다([PRO-27] ①)
       if (!NORM_DOMAINS.has(r.domain) || seen.has(r.raw)) continue;
       seen.add(r.raw); // 한 파일이 같은 규범을 여러 번 인용해도 "인용한 파일 1개"로 센다
       const e = cites[r.raw] || (cites[r.raw] = { count: 0, files: [] });
@@ -387,10 +390,40 @@ function gatherLessons(root) {
   return out;
 }
 
-function run(root) {
+/** `--root <dir>` 해석(순수). 없으면 dflt, 값이 비면 null(오용을 조용히 기본값으로 접지 않는다). */
+function resolveRoot(argv, dflt) {
+  const i = argv.indexOf('--root');
+  if (i < 0) return dflt;
+  const v = argv[i + 1];
+  if (!v || v.startsWith('--')) return null;
+  return path.resolve(v);
+}
+
+/** 측정 루트 검증 — `.union-stack` 디렉터리가 있어야 측정 대상이다. 없으면 REJECT 재료(엉뚱한 루트 측정 금지). */
+function validateRoot(root) {
+  if (!root || !fs.existsSync(root)) return { ok: false, reason: `${root}: 경로가 없다 — 측정 대상 아님(.union-stack 없음)` };
+  const us = path.join(root, '.union-stack');
+  let isDir = false;
+  try { isDir = fs.statSync(us).isDirectory(); } catch { /* 없음 */ }
+  if (!isDir) return { ok: false, reason: `${root}: .union-stack 디렉터리가 없다 — 측정 대상 아님` };
+  return { ok: true, reason: null };
+}
+
+function run(argv = process.argv.slice(2)) {
+  const dflt = path.resolve(__dirname, '..');
+  const root = resolveRoot(argv, dflt);
+  if (root === null) { console.error('health: --root <dir> 의 값이 없다.'); return 1; }
+  const v = validateRoot(root);
+  if (!v.ok) { console.error(`health: REJECT — ${v.reason}`); return 1; }
+  const external = root !== dflt;
   const r = gather(root);
-  if (process.argv.includes('--json')) { console.log(JSON.stringify(r, null, 2)); return r.fails ? 1 : 0; }
+  if (argv.includes('--json')) { console.log(JSON.stringify({ root, ...r }, null, 2)); return r.fails ? 1 : 0; }
   console.log('# union-stack health\n');
+  if (external) {
+    // 어답터 평면: 로컬 도메인·설정은 판정이 아니라 INFO([PRO-27] ④ — 상류 enum 을 강제하지 않는다).
+    console.log(`  측정 루트: ${root}  (--root — 어답터 평면)`);
+    console.log(`  · 어답터 설정 adapter.json: ${r.adapter && r.adapter.present ? '있음' : '없음'}${r.adapter && r.adapter.private ? ' · private' : ''} — INFO\n`);
+  }
   for (const d of r.dims) {
     const mark = d.status === 'OK' ? '✓' : d.status === 'FAIL' ? '✗' : d.status === 'WARN' ? '!' : '·';
     console.log(`  ${mark} ${d.name.padEnd(20)} ${d.status.padEnd(5)} ${d.value}${d.note ? '  (' + d.note + ')' : ''}`);
@@ -400,6 +433,6 @@ function run(root) {
   return r.fails ? 1 : 0;
 }
 
-module.exports = { computeHealth, gather, gatherSync, gatherLessons, gatherTestInfra, computeEffectSurface, gatherEffectSurface, parseContract, lastDateIn, CONTRACT };
+module.exports = { computeHealth, gather, gatherSync, gatherLessons, gatherTestInfra, computeEffectSurface, gatherEffectSurface, parseContract, lastDateIn, resolveRoot, validateRoot, CONTRACT };
 
-if (require.main === module) process.exit(withContract(CONTRACT, () => run())());
+if (require.main === module) process.exit(withContract(CONTRACT, argv => run(argv))());

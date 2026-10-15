@@ -24,3 +24,5 @@ version: 1.0
 node scripts/upward-fetch.js WO-01a1-2
 ```
 같은 로직: 슬래시 커맨드 `/upward-fetch`, MCP `upward_fetch`, UserPromptSubmit 훅(자동 주입).
+- 계보 맥락이 **0건이면 `(없음)` 통과가 아니라 CLARIFY(exit 3)** — 기획 없는 진입인지, 계보가 frontmatter(`plan:`)에만 있는지 묻는다([PRO-27] ③). 차단 아님.
+- `up:` 접두 ID(상류 참조, `up:PRO-27`)는 로컬 색인에서 해소하지 않고 외부 참조 INFO 로 끝낸다([PRO-27] ①).

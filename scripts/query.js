@@ -1,7 +1,7 @@
 // scripts/query.js
 // plane 조회의 *순수* 핵심 로직 — CLI / MCP / skill 이 공유한다(로직 1벌, 표면 N개).
 // 전부 read-only. 쓰기는 노출하지 않는다(권한 tier·permission-guard 우회 방지).
-const { ancestorChain, isDescendant, parseId } = require('./zfs_util');
+const { ancestorChain, isDescendant, parseId, isUpstreamRef } = require('./zfs_util');
 
 // PHASE 는 [PRO-19] ②로 편입 — roadmap/_GUIDE 가 선언한 "plan·sprint 의 macro-direction parent"를
 // 진입 의례가 실제로 싣게 한다(선언만 있고 수집 대상 밖이던 것이 병인).
@@ -23,6 +23,21 @@ function upwardFetch(id, index) {
 }
 
 /**
+ * upward-fetch 판정(순수) — [PRO-27] ③ 의 일부. 계보 맥락이 0건이면 `(없음)` + PASS 가 아니라 **CLARIFY** 다.
+ * "0건 검사 = 통과"는 [PRO-22] 2-bis 와 같은 결함 클래스: 전역 일련번호 WO(산술 조상 0, 계보는 frontmatter 에만)에서
+ * 도구가 조용히 빈 결과를 내고 exit 0 하던 것을 하류가 실측했다(SURVEY-02). 차단하지 않는다([ADR-23]) — 질문 한 줄.
+ */
+function fetchOutcome(r) {
+  if (r.context.length) return { outcome: 'PASS', question: null };
+  const parents = r.chain.slice(1);
+  return {
+    outcome: 'CLARIFY',
+    question: `계보 맥락 0건 — ${r.id} 의 산술 조상(${parents.length ? parents.join(' → ') : '없음'})에 PHASE/PLAN/FLOW/CON/ARCH/MTG 문서가 없다. `
+      + '기획 없는 구현 진입인가, 아니면 계보가 frontmatter(plan:/parent:)에만 있는가([PRO-27] ③)?',
+  };
+}
+
+/**
  * Blast Radius: 대상의 모든 자손 **+ 선언된 계약 소비자와 그 자손** + 잠금(Verifying) 여부.
  *
  * 계보 자손만 보면 계약의 영향권을 구조적으로 못 본다([PRO-16] §2-A 실측): 계약은 정의상
@@ -37,8 +52,10 @@ function blastRadius(id, index) {
   const seen = new Set(lineage.map(d => d.file));
   const viaContract = [];
   const unresolved = [];
+  const external = []; // 상류 참조(up:) 소비자 — 로컬 해소 대상이 아니다([PRO-27] ①)
   for (const src of lineage) {
     for (const raw of src.consumers || []) {
+      if (isUpstreamRef(raw)) { external.push({ ref: raw, from: src.file }); continue; }
       const cid = parseId(raw);
       const hit = cid ? index.filter(d => isDescendant(cid, d.id)) : [];
       if (!hit.length) { unresolved.push({ ref: raw, from: src.file }); continue; }
@@ -52,7 +69,7 @@ function blastRadius(id, index) {
   const cmp = (a, b) => a.id.localeCompare(b.id);
   const affected = [...lineage.map(row).sort(cmp), ...viaContract.sort(cmp)];
   const locked = affected.filter(d => LOCKED.has(d.status));
-  return { id, affected, locked, blocked: locked.length > 0, viaContract, unresolvedConsumers: unresolved };
+  return { id, affected, locked, blocked: locked.length > 0, viaContract, unresolvedConsumers: unresolved, externalConsumers: external };
 }
 
 /**
@@ -187,4 +204,4 @@ function whereToRecord(kind) {
   return { kind, match: r ? strip(r) : null, all: ROUTES.map(strip) };
 }
 
-module.exports = { upwardFetch, blastRadius, contractEdges, normEnforcement, concernUsage, roadmapWiring, whereToRecord, CONTEXT_DOMAINS, LOCKED, NORM_DOMAINS };
+module.exports = { upwardFetch, fetchOutcome, blastRadius, contractEdges, normEnforcement, concernUsage, roadmapWiring, whereToRecord, CONTEXT_DOMAINS, LOCKED, NORM_DOMAINS };

@@ -3,7 +3,7 @@
 // zero-dependency MCP stdio 서버 (JSON-RPC 2.0, newline-delimited). union-stack plane을
 // 에이전트가 *런타임에 질의*하는 표준 표면. 전부 read-only(쓰기 미노출 → 권한 우회 없음).
 // 등록 예: .mcp.json → { "mcpServers": { "union-stack": { "command":"node","args":["scripts/mcp-server.js"] } } }
-const { parseId } = require('./zfs_util');
+const { parseId, isUpstreamRef } = require('./zfs_util');
 const { buildIndex } = require('./zfs_index');
 const { upwardFetch, blastRadius, whereToRecord } = require('./query');
 const { lint } = require('./zfs-linter');
@@ -24,6 +24,10 @@ const TOOLS = [
 
 /** 도구 디스패치(순수). 전부 read-only. */
 function callTool(name, args = {}) {
+  // 상류 참조([PRO-27] ①) — 로컬 색인에서 해소하지 않는다. 오류가 아니라 외부 참조 INFO.
+  if ((name === 'upward_fetch' || name === 'blast_radius') && isUpstreamRef(args.id || '')) {
+    return { id: args.id, external: true, note: '상류 참조(up:) — 로컬 색인에서 해소하지 않는 외부 참조([PRO-27] ①). 상류 레포에서 읽어라.' };
+  }
   if (name === 'upward_fetch') { const id = parseId(args.id || ''); if (!id) throw new Error(`bad id: ${args.id}`); return upwardFetch(id, buildIndex()); }
   if (name === 'blast_radius') { const id = parseId(args.id || ''); if (!id) throw new Error(`bad id: ${args.id}`); return blastRadius(id, buildIndex()); }
   if (name === 'where_to_record') return whereToRecord(args.kind);

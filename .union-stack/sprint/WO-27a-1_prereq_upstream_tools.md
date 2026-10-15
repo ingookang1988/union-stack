@@ -2,9 +2,9 @@
 ---
 id: WO-27a-1
 title: 교차 레포 전제 — 상류 도구 몫 구현 ([PRO-27] ④ health --root · ⑤ ID 유일성 · ① up: 네임스페이스 인식)
-status: Active
+status: Verifying
 parent: PRO-27
-evidence: "none — 미착수(2026-10-15 발행). [ADR-40] 절차: 가드(테스트)를 먼저 물린다"
+evidence: "구현 완료(2026-10-15, 가드 먼저): 6 스위트에 회귀 고정(zfs-linter.test 신설 · ref-linter/query/health/adopter-arm/zfs_util 확장) → ④ health --root(루트 검증 · REJECT 측정 대상 아님) · ⑤ zfs-linter 중복 ID REJECT(상류 0) · ① [up:ID] 외부 참조(ref-linter·upward-fetch·blast-radius·MCP 가 INFO) + scripts/upstream-prefix.js(배포 접두) · 빈 upward-fetch CLARIFY(exit 3). 어답터 팔 형상 legacy·serial 추가 — 4 형상 성공 바 전부 충족. health --root . 출력 = 기본 출력. 카드 TOOL-01·02·03·04·26 갱신. 잔여: [WO-27a-2](②) · [WO-27a-3](③) 발행"
 closed_by: []
 version: 1.0
 ---
@@ -32,4 +32,11 @@ version: 1.0
 1. 테스트 먼저 → 2. ④ → 3. ⑤ → 4. ① + 배포 스크립트 접두 → 5. 어답터 팔 형상 2 → 6. 카드 갱신 → 7. [WO-27a-2](②) 발행.
 
 ## 증거
-- 테스트 파일 · 어답터 팔 실행 출력 · 커밋.
+- 테스트: `scripts/zfs-linter.test.js`(신설) · ref-linter/query/health/adopter-arm/zfs_util `.test.js` 확장 — 스위트 39 중 37 통과,
+  실패 2 = 미커밋 fdt spike 귀속(leakage·ref — 이전과 동일). lint 체인 13종 중 leakage 외 전부 exit 0. CON-00 카탈로그 블록 `--write` 재생성.
+- 어답터 팔: `node scripts/adopter-arm.js` 4 형상(env·data·legacy·serial) 성공 바 전부 충족 — legacy: 중복 ID REJECT · `[up:…]` strict 통과 ·
+  INFO 계수 +1 · `health --root` 가 사본 측정(PRO +2 · PLAN +1) / serial: 빈 upward-fetch CLARIFY(3) · 없는 경로 REJECT · 사본 크래시 0.
+- 도그푸딩: 상류 zfs-linter 중복 0 · `health --root .` 와 기본 출력 동일(diff 0) · 상류 WO(PRO 부모)의 upward-fetch 는 **CLARIFY** —
+  PRO 는 CONTEXT_DOMAINS 밖이라 산술 맥락이 0 인 것이 사실이고, 이것은 ③(frontmatter 계보, [WO-27a-3])이 닫는다. 훅은 query 직접 호출이라
+  종료코드 영향 없음.
+- 배포 접두는 `node scripts/upstream-prefix.js <file>` — 설문·키트 배포 스크립트(상류 밖)가 이걸 거친다.

@@ -118,5 +118,25 @@ check('test infra: 미수집이면 차원 없음(구버전 소비자 호환)',
   computeHealth({ index, domainsDefined: defined, guideCount: 5, namingViolations: 0, historyViolations: 0, leakageViolations: 0 })
     .dims.every(d => d.name !== 'test infra'));
 
+// --- [PRO-27] ④ --root: 측정 루트를 인자로 받고, .union-stack 이 없으면 REJECT ---
+const { resolveRoot, validateRoot } = require('./health');
+const fsR = require('fs'); const osR = require('os'); const pathR = require('path');
+const upstreamRoot = pathR.resolve(__dirname, '..');
+check('--root 없으면 상류 자신', resolveRoot([], upstreamRoot) === upstreamRoot);
+check('--root <dir> 절대경로화', pathR.isAbsolute(resolveRoot(['--root', 'x'], upstreamRoot)));
+check('--root 값 누락은 null(오용 표면화)', resolveRoot(['--root'], upstreamRoot) === null);
+check('상류 루트는 유효', validateRoot(upstreamRoot).ok === true);
+const emptyDir = fsR.mkdtempSync(pathR.join(osR.tmpdir(), 'health-root-'));
+try {
+  const bad = validateRoot(emptyDir);
+  check('.union-stack 없는 디렉터리는 측정 대상 아님', bad.ok === false && bad.reason.includes('.union-stack'));
+  check('존재하지 않는 경로도 측정 대상 아님', validateRoot(pathR.join(emptyDir, 'nope')).ok === false);
+  // CLI: 플래그를 무시하고 상류 자신을 측정하던 결함(0건 검사 = 통과 클래스)의 회귀 고정.
+  const { spawnSync } = require('child_process');
+  const r = spawnSync(process.execPath, ['scripts/health.js', '--root', emptyDir], { cwd: upstreamRoot, encoding: 'utf8' });
+  check('CLI --root <빈 디렉터리> → exit 1(REJECT)', r.status === 1);
+  check('CLI REJECT 문구 측정 대상 아님', /측정 대상 아님/.test(r.stderr + r.stdout));
+} finally { fsR.rmSync(emptyDir, { recursive: true, force: true }); }
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

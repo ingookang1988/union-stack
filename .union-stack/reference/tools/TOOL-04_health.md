@@ -24,4 +24,6 @@ version: 1.0
 ## 호출
 ```bash
 node scripts/health.js
+node scripts/health.js --root <어답터 레포 또는 팔 사본>
 ```
+- `--root <dir>` 는 **그 레포를** 측정한다([PRO-27] ④). `.union-stack` 이 없으면 REJECT "측정 대상 아님" — 플래그를 무시하고 상류 자신을 재던 결함(하류 실측, "0건 검사 = 통과" 클래스)의 수리. 어답터 로컬 설정은 INFO.

@@ -24,3 +24,4 @@ version: 1.0
 node scripts/zfs-linter.js
 ```
 - exit 0 = 통과, 비0 = 위반(Fail-close — 멈추고 이름을 고친다).
+- 같은 도메인·같은 ID 파일이 2개면 **중복 ID** 로 REJECT([PRO-27] ⑤) — 디렉터리가 달라도(archived 사본) 잡는다. 같은 번호·다른 도메인은 중복이 아니다.
