@@ -109,11 +109,18 @@ function arithmeticApplies(cfg, id) {
   return !!m && parseInt(m[0], 10) >= from;
 }
 
-/** 로컬 상태 → 상류 어휘(순수). 매핑에 없으면 그대로(강제 아님), null 은 null. */
+/**
+ * 로컬 상태 → 상류 어휘(순수). 정확 일치 → **첫 토큰** 일치(어답터 실측: `Done (2026-01-01)` 같은 산문 status 가 흔하다 — 센서스 1회차) → 그대로.
+ * 매핑에 없으면 강제하지 않는다. null 은 null.
+ */
 function mapStatus(cfg, raw) {
   if (raw == null) return null;
   const m = cfg && cfg.statusMap;
-  return m && Object.prototype.hasOwnProperty.call(m, raw) ? m[raw] : raw;
+  if (!m) return raw;
+  const has = k => Object.prototype.hasOwnProperty.call(m, k);
+  if (has(raw)) return m[raw];
+  const head = String(raw).trim().split(/\s+/)[0];
+  return head && has(head) ? m[head] : raw;
 }
 
 /** 상류 필드의 읽기 순서(순수): 상류 필드 → 로컬 별칭들. */

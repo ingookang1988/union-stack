@@ -1,0 +1,23 @@
+<!-- [Raw/집계] 어답터 센서스([PRO-24] ②) — `node scripts/adopter-census.js --write` 가 회차를 마커 아래에 append 한다. 손으로 고치지 마라.
+     익명 집계만: 레포 = 라벨(A·B·C — 입도는 인간 결정), 경로·제목·파일명 0, status 는 첫 토큰. 원자료(경로 포함)는 eval/private/(gitignore). -->
+# Adopter Census
+
+회수층([PRO-24] ②)의 기록. 상류가 이 머신의 형제 레포를 **읽기 전용**으로 재서(상류 도구를 `root` 인자로 — 어답터 스크립트 실행 0 ·
+문서 본문 읽기 0 · 어답터 파일 쓰기 0) 익명 행을 남긴다. 사람 왕복 0. 주기: 상류 릴리스마다 + 설문 회수 시([PRO-24] §7-1 잠정).
+
+열 읽는 법 — **버전/앵커**: CHANGELOG 헤딩 · `template-sync.json` ref 와 날짜(없음 = 손 이식·0회 동기화). **계측기**: 상류 도구 10종 중 존재 수.
+**WO·상태**: 첫 토큰 분포(어답터 `statusMap` 적용 후). **백필 대상**: `status:` 없는 WO·PRO([TOOL-29]). **상류 ID 충돌**: 상류 색인과 같은 `DOMAIN-ID`
+수([PRO-27] ① — `up:` 접두가 필요한 이유). **arithmeticFrom**: 현재 설정 → 제안(같은 번호에 PLAN·PRO 가 둘 다 있는 구간의 최댓값+1, [PRO-27] §7-3).
+**upward-fetch**: 활성 WO 중 계보 맥락 0건(CLARIFY). **upstream_candidate**: `upstream_candidate: true` PRO 의 ID·개수만([PRO-24] ③(a)).
+판정·점수 없음 — 다음 회차와의 Δ 가 신호다.
+
+<!-- census:rows -->
+
+### 2026-10-16 — 상류 6.0.0 @ 4bfaf4f · 레포 3
+
+| 레포 | 버전 / 앵커 | 계측기 | 문서 | WO · 상태(첫 토큰) | evidence | 백필 대상 | 중복 ID | 상류 ID 충돌 | arithmeticFrom | upward-fetch | upstream_candidate | adapter.json | health | ADR | 평면 KB |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| A | CHANGELOG 없음 / 앵커 없음 | 2/10 — 없음: health · work-close · template-update · ci · frontmatter-backfill · transcript-stats · session-friction · adopter-arm | 435 (WO 179 · ANL 98 · PRO 43 · MTG 34 · PLAN 32 · LSN 18) | 179 · frontmatter 없음 99 · Done 57 · Active 13 · Planned 6 · Verifying 3 · Review 1 | 값 0 · none 0 · 없음 80 · closed_by 0 | 101 (추정 가능 9) | 2 (네이밍 위반 2) | 21 | 0 → 제안 67 (PLAN·PRO 동번호 5구간) | 3/16 공백 | 0 | 없음 | FAIL 2 (naming gate · leakage gate) | 0 | 6052 |
+| B | 6.0.0 / 앵커 main @ 2026-08-20 | 8/10 — 없음: ci · frontmatter-backfill | 448 (WO 228 · PLAN 83 · ANL 41 · MTG 36 · TOOL 22 · PRO 17) | 228 · frontmatter 없음 0 · Closed 146 · Verifying 49 · Active 15 · Draft 13 · Done 5 | 값 214 · none 14 · 없음 0 · closed_by 157 | 17 (추정 가능 9) | 0 (네이밍 위반 0) | 45 | 0 → 제안 19 (PLAN·PRO 동번호 17구간) | 0/77 공백 | 0 | statusMap 0 · evidenceFields 없음 · private | FAIL 0 | 165 | 6964 |
+| C | CHANGELOG 없음 / 앵커 없음 | 3/10 — 없음: work-close · template-update · ci · frontmatter-backfill · transcript-stats · session-friction · adopter-arm | 642 (WO 438 · ANL 69 · PRO 47 · EVD 35 · PLAN 21 · MTG 15) | 438 · frontmatter 없음 0 · Complete 75 · Verified-local 59 · Verified 40 · Published 27 · Proposed 19 · Closed 19 · (없음) 18 · Implemented 17 · 외 48종 164건 | 값 0 · none 0 · 없음 438 · closed_by 0 | 18 (추정 가능 0) | 1 (네이밍 위반 0) | 26 | 0 → 제안 22 (PLAN·PRO 동번호 18구간) | 0/2 공백 | 0 | 없음 | FAIL 2 (naming gate · leakage gate) | 1 | 5301 |
+

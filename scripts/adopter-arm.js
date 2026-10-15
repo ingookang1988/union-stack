@@ -394,6 +394,19 @@ function vocabArm(ws) {
   try { p2 = JSON.parse(probe2.stdout.trim().split('\n').pop()); } catch { /* null */ }
   bars.push({ name: '--apply 뒤 대상 0 · 삽입값은 로컬 어휘(Review → Verifying 은 매핑이 한다)', ok: ap.code === 0 && after.code === 0 && !!p2 && p2.r === 'Review' && p2.s === 'Verifying',
     detail: `apply exit ${ap.code} · 재검사 exit ${after.code}${p2 ? ` · ${p2.r} → ${p2.s}` : ''}` });
+  // [PRO-24] ② 센서스 — 상류에서 사본을 "형제 레포"로 잰다. 익명성(경로·제목 0)과 읽기 전용(사본 변경 0)을 기계로 검사.
+  const listPath = path.join(ws, '..', `census-list-${path.basename(ws)}.json`);
+  fs.writeFileSync(listPath, JSON.stringify({ repos: [{ label: 'ARM', path: ws }] }));
+  const treeSnap = () => JSON.stringify(require('./fs_walk').collectFiles(ws, '.union-stack').map(r => [r, fs.statSync(path.join(ws, r)).size]));
+  const beforeCensus = treeSnap();
+  const census = run(ROOT, ['scripts/adopter-census.js', '--repos', listPath, '--json']);
+  try { fs.unlinkSync(listPath); } catch { /* 무시 */ }
+  let crow = null;
+  try { crow = JSON.parse(census.stdout).rows[0]; } catch { /* null */ }
+  const flat = crow ? JSON.stringify(crow) : '';
+  bars.push({ name: '센서스가 사본을 재고 행에 경로·제목·파일명 0', ok: census.code === 0 && !!crow && !crow.error && !flat.includes(path.basename(ws)) && !flat.includes('local_vocab') && !flat.includes('.md'),
+    detail: crow ? `exit ${census.code} · WO ${crow.wo}` : `exit ${census.code} · 측정 실패` });
+  bars.push({ name: '센서스 뒤 사본 변경 0(읽기 전용)', ok: treeSnap() === beforeCensus, detail: '' });
   return bars;
 }
 

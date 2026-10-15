@@ -12,6 +12,13 @@ design, see [`DESIGN_RATIONALE.md`](./DESIGN_RATIONALE.md). Entries marked **⚠
 action in already-adopted projects.
 
 ## [Unreleased]
+- **PRO-24 ② — adopter census: read-only measurement of sibling repos, anonymised rows.**
+  `scripts/adopter-census.js` (**TOOL-30**) runs the upstream tools with `--root` against a private list of
+  local adopter checkouts (never executing adopter scripts, never reading document bodies, never writing to
+  them) and appends one anonymised row per repo to `eval/CENSUS.md`: version/anchor, instruments present,
+  status distribution (first token, after `statusMap`), evidence rate, backfill targets, duplicate IDs,
+  collisions with upstream IDs, an `arithmeticFrom` suggestion, upward-fetch vacancy and
+  `upstream_candidate` PROs (IDs only). Raw per-repo JSON stays in gitignored `eval/private/`. No migration.
 - **PRO-27 — cross-repo prerequisites: upstream tools read the adopter's plane as it is.** Three adopters
   showed the upstream's assumptions do not hold downstream: upstream and local IDs share one space, status
   is a free vocabulary and often absent, lineage lives in frontmatter rather than ID arithmetic, and

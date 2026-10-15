@@ -89,6 +89,8 @@ check('evidenceFields 파싱', JSON.stringify(vocab.evidenceFields.evidence) ===
 check('mapStatus: 매핑 있으면 상류 어휘', mapStatus(vocab, 'Done') === 'Closed');
 check('mapStatus: 매핑 없으면 그대로(강제 아님)', mapStatus(vocab, 'Active') === 'Active');
 check('mapStatus: null 은 null', mapStatus(vocab, null) === null);
+check('mapStatus: 산문 status 는 첫 토큰으로 매핑(Done (2026-01-01) → Closed)', mapStatus(vocab, 'Done (2026-01-01)') === 'Closed');
+check('mapStatus: 첫 토큰도 없으면 그대로', mapStatus(vocab, 'Shipped v2') === 'Shipped v2');
 check('fieldAliases: 상류 필드가 먼저, 별칭이 뒤', JSON.stringify(fieldAliases(vocab, 'evidence')) === '["evidence","implementation_commit"]');
 check('fieldAliases: 설정 없으면 필드 하나', JSON.stringify(fieldAliases(parseConfig('{}'), 'closed_by')) === '["closed_by"]');
 const vocabBad = parseConfig('{"statusMap": ["Done"], "evidenceFields": {"evidence": "x", "foo": ["y"]}}');

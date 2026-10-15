@@ -4,6 +4,9 @@ node_modules/
 # real (PII) profiles — only *example* dummies are committed (AGENTS.local.md convention)
 .union-stack/profile/**/*.local.md
 
+# adopter census private inputs/raw data (TOOL-30) — paths and per-repo detail; only eval/CENSUS.md rows are public
+eval/private/
+
 # lineage-tree output (TOOL-24) — generated view, never committed
 lineage-tree.html
 dashboard.html

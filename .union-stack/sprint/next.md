@@ -8,6 +8,7 @@
 | [WO-01a-1] | (예시) 인증 게이트웨이 배선 | PLAN-01 | Draft | 해당없음 |
 | [WO-10a-1] | E6 시나리오 A/B 1사이클 (팔 2개 × 5런) | PRO-10 | Draft | 해당없음 |
 | [WO-22b-1] | 검사 선언 + 실행 영수증 — [PRO-22] §3 단계 1·2 구현 (0건 검사 = 실패 포함) | PRO-22 | Active | 해당없음 |
+| [WO-24b-1] | 어답터 연결 ② 회수층 — adopter-census(형제 레포 읽기 전용 계측 → eval/CENSUS.md 익명 행) 구현 + 1회차 실측 | PRO-24 | Verifying | 있음 |
 | [WO-27a-1] | 교차 레포 전제 — 상류 도구 몫 구현 ([PRO-27] ④ health --root · ⑤ ID 유일성 · ① up: 네임스페이스 인식) | PRO-27 | Verifying | 있음 |
 | [WO-27a-2] | 교차 레포 전제 — ② 상태 어휘 매핑(adapter.json statusMap·evidenceFields) + frontmatter 백필 스크립트(dry-run 기본) | PRO-27 | Verifying | 있음 |
 | [WO-27a-3] | 교차 레포 전제 — ③ frontmatter 계보 1급(plan:/parent: ∪ ID 산술 · lineage.arithmeticFrom · 우산 WO/중간 PLAN 루트) | PRO-27 | Verifying | 있음 |

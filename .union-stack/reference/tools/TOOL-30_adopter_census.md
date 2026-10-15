@@ -1,0 +1,33 @@
+<!-- 방법론 자산 카드(leakage-guard METHODOLOGY 등재) — 이 템플릿이 실제로 배송하는 도구. -->
+---
+id: TOOL-30
+title: adopter-census (형제 레포 읽기 전용 계측 → 익명 집계 행)
+kind: cli
+impl: scripts/adopter-census.js
+status: Active
+version: 1.0
+---
+
+# [TOOL-30] adopter-census
+
+## 용도
+이 머신의 형제 레포(어답터)를 **읽기 전용**으로 재서 `eval/CENSUS.md` 에 익명 행을 남긴다([PRO-24] ② 회수층). 상류 도구(health·work-close·
+frontmatter-backfill·zfs-linter·upward-fetch)를 `root` 인자로 돌린다 — 어답터 스크립트는 **실행하지 않고** 존재만 세며, 코드·문서 본문은 읽지 않고,
+어답터에 파일을 쓰지 않는다. 사람 왕복 0 · 어답터 변경 0 — 갱신 도구가 없는 어답터도 즉시 관측된다.
+
+## 언제 쓰나
+- 상류 릴리스마다 · 설문 회수 시([PRO-24] §7-1 잠정) → `--write`. 전 회차와의 Δ 가 신호다(판정·점수 없음).
+- [PRO-27] 전제 상태 확인: 상류 ID 충돌 수(`up:` 필요), 백필 대상, `arithmeticFrom` 제안, upward-fetch 공백률.
+
+## 언제 쓰지 않나
+- **어답터 변경** — 읽기만. 백필 적용·설정은 어답터 몫([PRO-27] §5).
+- **자동 승격** — `upstream_candidate` 는 ID·개수만 목록화, 검토는 사람([ADR-12]).
+- **원자료 커밋** — 경로·상세는 `eval/private/`(gitignore)에만. 익명 행에는 경로·제목·파일명이 없다([ADR-11]).
+
+## 호출
+```bash
+node scripts/adopter-census.js                 # dry-run: 표 출력 (목록 없음 → 3)
+node scripts/adopter-census.js --write         # eval/CENSUS.md 에 회차 append + eval/private/census/ 원자료
+node scripts/adopter-census.js --repos <json>  # 목록 파일 지정: { "repos": [{ "label": "A", "path": "…" }] }
+node scripts/adopter-census.js --json          # 기계 판독 (--contract 로 계약 출력)
+```
