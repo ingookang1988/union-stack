@@ -56,6 +56,9 @@ const METHODOLOGY = new Set([
   // 자기 도그푸딩 작업 오더 — 공개 방법론(eval/PROTOCOL §3-bis · eval/e6-suite)의 *실행* 지시다.
   // 위탁 데이터 0. 더미로 만들면 실행 불가한 지시가 되므로 마커 대신 등재로 닫는다.
   'WO-10a-1_e6_scenario_ab_cycle.md',
+  // [PRO-22] 승인 구현 오더(2026-10-15) — 같은 근거(공개 방법론의 실행 지시, 위탁 데이터 0). 어답터 설문 결과는
+  // eval/SURVEY-01_results.md 에 익명 집계로만 있고 이 WO 는 그 결론을 상류 자신에게 이행하는 지시다.
+  'WO-22b-1_check_declaration_receipts.md',
   // 이 템플릿 자신의 개발에서 얻은 교훈([LSN-17]). 위탁 데이터 0이고, 더미로 만들면 선주입되는
   // *경고*가 경고이기를 그만둔다 — WO-10a-1 과 같은 근거로 마커 대신 등재로 닫는다.
   'LSN-17_shape_blind_spot.md',
