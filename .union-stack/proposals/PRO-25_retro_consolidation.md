@@ -2,8 +2,10 @@
 ---
 id: PRO-25
 title: 회고·정리 — 정량 트리거가 회고를 제안하고, 회고가 WO 의 상위 축 누락을 일괄로 닫는다
-status: Proposed
-version: 0.2
+status: Approved
+decided_by: ingookang1988 (chat approval, 2026-10-15)
+reason: "하류 검토 반영본(§8) 승인 — 트리거는 정체 일수·가장 낡은 평면·증분, 회고 = PO 판정 묶음 + PLAN GC 일괄 승인, 기록 ID ANL-00<x>. [PRO-27] ②(statusMap) 선행. 자동 증류 아님([ADR-12] 경계 유지)."
+version: 1.0
 ---
 
 # [PRO-25] 회고·정리 (Retro & Consolidation)

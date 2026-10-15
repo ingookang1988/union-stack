@@ -2,8 +2,10 @@
 ---
 id: PRO-24
 title: 어답터 연결 — 배송·회수·판단 3층 (사람 왕복 0 인 통로를 먼저, A2A 는 그 위에)
-status: Proposed
-version: 0.2
+status: Approved
+decided_by: ingookang1988 (chat approval, 2026-10-15)
+reason: "하류 검토 4건(SURVEY-02) 반영본(§9) 승인. 전제 0단계는 [PRO-27]로 분리. 상시 서버 배포 기각은 blocks 표식으로 원장에([ADR-54]). 구현은 [PRO-27] ④ 뒤 ② census부터."
+version: 1.0
 ---
 
 # [PRO-24] 어답터 연결 — 배송 · 회수 · 판단

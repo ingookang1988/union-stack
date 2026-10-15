@@ -3,8 +3,10 @@
 ---
 id: PRO-27
 title: 교차 레포 전제 — 상류 도구가 어답터 평면을 올바로 읽기 위한 다섯 가지 (PRO-24·25·26 의 0단계)
-status: Proposed
-version: 0.1
+status: Approved
+decided_by: ingookang1988 (chat approval, 2026-10-15)
+reason: "세 PRO(24·25·26)와 [PRO-22] 구현의 공통 전제 다섯을 분리 승인. 순서 ④⑤ → ① → ② → ③. 상류 도구 변경은 [WO-27a-1]부터, 어답터 적용(②)은 어답터 소유. 미결 4건은 잠정값으로 진행."
+version: 1.0
 ---
 
 # [PRO-27] 교차 레포 전제 (0단계)

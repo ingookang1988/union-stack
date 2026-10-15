@@ -2,8 +2,10 @@
 ---
 id: PRO-26
 title: 계보 니모닉 — 파일명만 보고 의미를 알 수 있게 (ID 는 그대로, slug 와 생성 뷰에)
-status: Proposed
-version: 0.2
+status: Approved
+decided_by: ingookang1988 (chat approval, 2026-10-15)
+reason: "축소 개정본(§8) 승인 — slug 접두·니모닉 린터 삭제(하류 4/4·3/4), 파생 라벨 뷰 + 선택적 override + frontmatter 상속([PRO-27] ③). ARCH-00 개정 없음, ID 불변([ADR-25])."
+version: 1.0
 ---
 
 # [PRO-26] 계보 니모닉 (Lineage Mnemonic)
