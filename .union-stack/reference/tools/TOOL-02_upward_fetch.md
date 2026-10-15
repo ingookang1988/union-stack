@@ -24,5 +24,6 @@ version: 1.0
 node scripts/upward-fetch.js WO-01a1-2
 ```
 같은 로직: 슬래시 커맨드 `/upward-fetch`, MCP `upward_fetch`, UserPromptSubmit 훅(자동 주입).
-- 계보 맥락이 **0건이면 `(없음)` 통과가 아니라 CLARIFY(exit 3)** — 기획 없는 진입인지, 계보가 frontmatter(`plan:`)에만 있는지 묻는다([PRO-27] ③). 차단 아님.
+- 조상 = **ID 산술 ∪ frontmatter 부모**(`parent:`·`plan:`, 도메인 무관 — PRO·우산 WO·중간 PLAN 도 루트)([PRO-27] ③). 선언 부모는 `← frontmatter 부모` 로 표시되고 그 조상까지 폐포로 따라간다. `adapter.json lineage.arithmeticFrom` 아래 구간은 산술을 끄고 선언 부모만 본다.
+- 계보 맥락이 **0건이면 `(없음)` 통과가 아니라 CLARIFY(exit 3)** — 기획 없는 진입인지, 부모를 frontmatter 에 선언해야 하는지 묻는다. 차단 아님.
 - `up:` 접두 ID(상류 참조, `up:PRO-27`)는 로컬 색인에서 해소하지 않고 외부 참조 INFO 로 끝낸다([PRO-27] ①).

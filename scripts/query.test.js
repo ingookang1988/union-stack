@@ -154,5 +154,44 @@ check('CLI: 외부 참조 문구', /상류 참조/.test(ext.stdout + ext.stderr)
 const extBr = spawnSync(process.execPath, ['scripts/blast-radius.js', 'up:PRO-27'], { cwd: cliCwd, encoding: 'utf8' });
 check('blast-radius CLI: up: 인자 exit 0', extBr.status, 0);
 
+// --- [PRO-27] ③ 조상 = 산술 ∪ frontmatter 부모 ---
+const linIndex = [
+  { domain: 'PHASE', id: '01', file: 'PHASE-01.md' },
+  { domain: 'PLAN', id: '07', file: 'PLAN-07.md', parents: ['PHASE-01'] },
+  { domain: 'PLAN', id: '12', file: 'PLAN-12.md' },
+  { domain: 'PRO', id: '36', file: 'PRO-36.md' },
+  { domain: 'LSN', id: '07', file: 'LSN-07.md' },
+  { domain: 'WO', id: '345', status: 'Active', file: 'WO-345.md', parents: ['PLAN-07'] },
+  { domain: 'WO', id: '12a-1', status: 'Verifying', file: 'WO-12a-1.md', parents: ['PRO-36'], arithmetic: false },
+  { domain: 'WO', id: '12b-1', status: 'Active', file: 'WO-12b-1.md' },
+];
+const ufS = upwardFetch('345', linIndex);
+check('선언 부모(plan:)가 맥락에', ufS.context.map(c => `${c.domain}-${c.id}`), ['PHASE-01', 'PLAN-07']);
+check('선언 부모는 via:frontmatter', ufS.context.find(c => c.id === '07').via, 'frontmatter');
+check('선언 부모의 조상(PHASE)까지 폐포', ufS.context.some(c => c.domain === 'PHASE'), true);
+check('선언 목록 노출(폐포 순)', ufS.declared, ['PLAN-07', 'PHASE-01']);
+check('LSN 은 합산 조상 기준', ufS.lessons.map(l => l.id), ['07']);
+check('맥락 있으니 PASS', fetchOutcome(ufS).outcome, 'PASS');
+const ufL = upwardFetch('12a-1', linIndex);
+check('산술 차단(arithmetic:false): 무관한 PLAN-12 상속 안 함', ufL.context.some(c => c.domain === 'PLAN' && c.id === '12'), false);
+check('산술 차단이어도 선언 부모(PRO-36, 도메인 무관)는 싣는다', ufL.context.map(c => `${c.domain}-${c.id}`), ['PRO-36']);
+check('산술 차단 시 chain 은 자기 자신뿐', ufL.chain, ['12a-1']);
+check('산술 적용 WO 는 기존대로 PLAN-12 상속', upwardFetch('12b-1', linIndex).context.map(c => `${c.domain}-${c.id}`), ['PLAN-12']);
+check('순환 가드', upwardFetch('a1', [{ domain: 'WO', id: 'a1', file: 'a', parents: ['WO-b2'] }, { domain: 'WO', id: 'b2', file: 'b', parents: ['WO-a1'] }]).context.map(c => c.id), ['b2']);
+// blastRadius: 선언 부모로 이 계보를 가리키는 문서가 영향권(잠금 포함)
+const brS = blastRadius('07', linIndex);
+check('선언 자식이 영향권에(같은 ID 의 LSN 은 기존대로 산술 자손)', brS.affected.map(a => `${a.domain}-${a.id}`), ['PLAN-07', 'LSN-07', 'WO-345']);
+check('선언 자식은 viaParent 표식', brS.affected.find(a => a.id === '345').viaParent, 'PLAN-07');
+check('선언 자식의 잠금이 차단한다', blastRadius('36', linIndex).blocked, true);
+check('산술 차단 문서는 산술 자손으로 안 잡힌다', blastRadius('12', linIndex).affected.map(a => a.id), ['12', '12b-1']);
+// roadmapWiring: PHASE 도달에 선언 부모 사용
+const rwS = roadmapWiring(linIndex);
+check('plan: 으로 PHASE 에 닿은 WO 는 unanchored 아님', rwS.unanchored.includes('WO-345'), false);
+check('PHASE-01 은 stale 아님(선언 경로로 활성 계보가 내려온다)', rwS.stale, []);
+// CLI: 상류 PRO-부모 WO 가 더는 CLARIFY 가 아니다
+const realUf = cli(['WO-27a-2']);
+check('CLI: upward-fetch WO-27a-2 → exit 0', realUf.status, 0);
+check('CLI: PRO-27 이 frontmatter 부모로 실린다', /\[PRO-27\].*frontmatter/.test(realUf.stdout), true);
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

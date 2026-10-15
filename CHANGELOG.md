@@ -21,7 +21,10 @@ action in already-adopted projects.
   **②** `adapter.json` gains `statusMap` and `evidenceFields`; `zfs_index` and `work-close` map local vocabulary
   on read (`rawStatus` keeps the original). `scripts/frontmatter-backfill.js` (**TOOL-29**) lists documents
   without `status:` with an estimate and source, dry-run by default; `--apply` inserts one line in *your*
-  vocabulary. **④** `health --root <dir>` measures that repo and REJECTs a root without `.union-stack`.
+  vocabulary. **③** lineage is first-class in frontmatter: `parent:` / `plan:` are read by the index and
+  followed by `upward-fetch`, `blast-radius` and roadmap wiring (ancestors = ID arithmetic ∪ declared
+  parents); `adapter.json lineage.arithmeticFrom` switches arithmetic off below a legacy range.
+  **④** `health --root <dir>` measures that repo and REJECTs a root without `.union-stack`.
   **⑤** `zfs-linter` REJECTs duplicate IDs within a domain. An empty `upward-fetch` is now CLARIFY (exit 3),
   not a silent pass. Adopter arm gains `legacy`, `serial` and `vocab` shapes. No migration required —
   the keys are optional and absent means the previous behaviour.

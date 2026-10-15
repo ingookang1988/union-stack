@@ -63,7 +63,8 @@ This file is adopter-owned — upstream never touches it.
   "private": true,
   "zfsIgnored": ["mechanism.md"],
   "statusMap": { "Done": "Closed", "Review": "Verifying" },
-  "evidenceFields": { "evidence": ["implementation_commit"], "closed_by": ["surfaces"] }
+  "evidenceFields": { "evidence": ["implementation_commit"], "closed_by": ["surfaces"] },
+  "lineage": { "arithmeticFrom": 36 }
 }
 ```
 
@@ -79,6 +80,14 @@ This file is adopter-owned — upstream never touches it.
   `rawStatus`. (PRO-27 ②)
 - `evidenceFields: { evidence: [...], closed_by: [...] }` — local aliases for the two closure fields.
   The upstream field wins when present; aliases are tried in order.
+- `lineage.arithmeticFrom: N` — ID arithmetic (`WO-01a1-2` → `01a1` → `01a` → `01`) is applied only to IDs
+  whose leading number is ≥ N; below it, only frontmatter `parent:` / `plan:` counts. Declare this when a
+  legacy range numbers each domain independently (`PLAN-12` and `PRO-12` unrelated), otherwise
+  `upward-fetch` inherits unrelated documents. Default 0 = arithmetic everywhere. Frontmatter parents are
+  **always** read in addition to arithmetic (PRO-27 ③): `parent:` and `plan:` accept a scalar, an inline
+  list or a block list, may point at any domain (an umbrella WO or a mid-level PLAN is a valid root), and are
+  followed transitively by `upward-fetch`, `blast-radius` (declared children are in the blast set, locks
+  included) and the roadmap-wiring observation.
 - Documents without a `status:` line are counted as *nothing* by every tool. List them with
   `node scripts/frontmatter-backfill.js` (dry-run: estimate from a body marker such as `Status: Done`,
   then from an `archived/` directory, else left blank and reported) and apply with `--apply` — it inserts

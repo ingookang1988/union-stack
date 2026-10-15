@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const { parse } = require('./zfs_util');
 const { walkFiles } = require('./fs_walk');
-const { load: loadAdapter, mapStatus } = require('./adapter');
+const { load: loadAdapter, mapStatus, arithmeticApplies } = require('./adapter');
 
 // ZFS ID를 갖는 원자적 문서가 사는 디렉터리(.union-stack/ 격리 구조, 린터와 동일 집합).
 const BASE = '.union-stack';
@@ -30,9 +30,10 @@ function readFront(full) {
     return {
       status: g('status'), tier: tier ? tier.toLowerCase() : null,
       consumers: parseConsumers(fm[1]), concerns: parseList(fm[1], 'concern'),
+      parents: parseParents(fm[1]),
     };
   } catch {
-    return { status: null, tier: null, consumers: [], concerns: [] };
+    return { status: null, tier: null, consumers: [], concerns: [], parents: [] };
   }
 }
 
@@ -62,6 +63,25 @@ function parseList(fm, key) {
   return out;
 }
 
+/**
+ * 참조 목록 필드(순수) — 스칼라(`parent: PRO-27`) · 인라인(`[A, B]`) · 블록(`- A`) 전부. 끝 주석(`# …`)·따옴표·브래킷은 벗긴다.
+ * `DOMAIN-ID` 꼴만 남긴다 — `up:` 상류 참조([PRO-27] ①)는 로컬 부모가 아니므로 빠진다.
+ */
+function parseRefList(fm, key) {
+  const s = String(fm || '');
+  const m = s.match(new RegExp('^[ \\t]*' + key + ':[ \\t]*(.*)$', 'm'));
+  if (!m) return [];
+  const v = m[1].replace(/\s+#.*$/, '').trim();
+  let items;
+  if (!v) items = parseList(fm, key);
+  else if (/^\[.*\]$/.test(v)) items = v.slice(1, -1).split(',');
+  else items = [v];
+  return items.map(x => x.trim().replace(/^["'[]+|["'\]]+$/g, '').trim()).filter(x => /^[A-Z]{2,6}-[0-9][0-9a-z-]*$/.test(x));
+}
+
+/** frontmatter 부모(순수) — `parent:` ∪ `plan:`([PRO-27] ③). 우산 WO·중간 PLAN 도 부모가 될 수 있다(도메인 무관). */
+function parseParents(fm) { return [...new Set([...parseRefList(fm, 'parent'), ...parseRefList(fm, 'plan')])]; }
+
 function readStatus(full) { return readFront(full).status; }
 
 function collect(dir, root, out, cfg = null) {
@@ -73,7 +93,9 @@ function collect(dir, root, out, cfg = null) {
     const front = readFront(path.join(root, rel));
     // status 는 어답터 statusMap 으로 매핑한 값([PRO-27] ② — 로컬 어휘를 강제하지 않고 읽는다), 원문은 rawStatus.
     out.push({ file: rel, ...parsed, status: mapStatus(cfg, front.status), rawStatus: front.status, tier: front.tier,
-      consumers: front.consumers || [], concerns: front.concerns || [] });
+      consumers: front.consumers || [], concerns: front.concerns || [],
+      // 계보([PRO-27] ③): 선언 부모 + 이 ID 에 산술 상속이 적용되는가(레거시 독립 채번 구간은 false).
+      parents: front.parents || [], arithmetic: arithmeticApplies(cfg, parsed.id) });
   });
 }
 
@@ -85,4 +107,4 @@ function buildIndex(root = path.resolve(__dirname, '..')) {
   return out;
 }
 
-module.exports = { buildIndex, readStatus, readFront, parseConsumers, parseList, SCAN_DIRS };
+module.exports = { buildIndex, readStatus, readFront, parseConsumers, parseList, parseParents, parseRefList, SCAN_DIRS };

@@ -19,6 +19,8 @@
 //   · `statusMap`   → 로컬 상태 어휘 → 상류 어휘 매핑([PRO-27] ②). zfs_index·work-close 가 읽기 시 적용하고 원문은 rawStatus 로
 //                     남긴다. 어휘를 **강제하지 않는다** — 매핑에 없는 값은 그대로 산다(어답터 실측: `Done`·`Review`·status 38종).
 //   · `evidenceFields` → 상류 필드(evidence·closed_by) 의 로컬 별칭 배열. 상류 필드가 있으면 그것이 우선, 없으면 별칭 순서대로.
+//   · `lineage.arithmeticFrom` → 그 번호부터만 ID 산술 상속([PRO-27] ③). 레거시 독립 채번 구간(같은 번호가 도메인마다 다른 문서)은
+//                     frontmatter 부모만 본다. 기본 0 = 전부 산술(상류 자신의 형상).
 //
 // 설정은 **선언이고 검증 대상**이다: 알 수 없는 키·형식 오류는 조용히 삼키지 않고 `warnings` 로
 // 낸다(설정 오타가 "적용된 줄 알았는데 아니었다"로 끝나는 것이 이 부류 도구의 표준 사고).
@@ -26,11 +28,12 @@ const fs = require('fs');
 const path = require('path');
 
 const CONFIG_PATH = '.union-stack/adapter.json';
-const DEFAULTS = { private: false, zfsIgnored: [], statusMap: {}, evidenceFields: {} };
-const KNOWN_KEYS = new Set(['private', 'zfsIgnored', 'statusMap', 'evidenceFields', '$schema']);
+const DEFAULTS = { private: false, zfsIgnored: [], statusMap: {}, evidenceFields: {}, lineage: { arithmeticFrom: 0 } };
+const KNOWN_KEYS = new Set(['private', 'zfsIgnored', 'statusMap', 'evidenceFields', 'lineage', '$schema']);
+const LINEAGE_KEYS = new Set(['arithmeticFrom']);
 // evidenceFields 가 별칭을 달 수 있는 상류 필드 — work-close 의 닫힘 계약이 읽는 둘뿐이다.
 const ALIASABLE_FIELDS = new Set(['evidence', 'closed_by']);
-const fresh = present => ({ ...DEFAULTS, zfsIgnored: [], statusMap: {}, evidenceFields: {}, warnings: [], present });
+const fresh = present => ({ ...DEFAULTS, zfsIgnored: [], statusMap: {}, evidenceFields: {}, lineage: { arithmeticFrom: 0 }, warnings: [], present });
 
 /**
  * JSON 텍스트 → 정규화된 설정(순수 — FS 비의존).
@@ -85,7 +88,25 @@ function parseConfig(txt) {
       }
     } else out.warnings.push(`${CONFIG_PATH}: 'evidenceFields' 는 {상류필드: [별칭]} 객체여야 함 — 무시됨`);
   }
+  if ('lineage' in j) {
+    const l = j.lineage;
+    if (l && typeof l === 'object' && !Array.isArray(l)) {
+      for (const k of Object.keys(l)) if (!LINEAGE_KEYS.has(k)) out.warnings.push(`${CONFIG_PATH}: 'lineage.${k}' 알 수 없는 키 — 무시됨`);
+      if ('arithmeticFrom' in l) {
+        if (Number.isInteger(l.arithmeticFrom) && l.arithmeticFrom >= 0) out.lineage.arithmeticFrom = l.arithmeticFrom;
+        else out.warnings.push(`${CONFIG_PATH}: 'lineage.arithmeticFrom' 은 음 아닌 정수여야 함 — 기본값(0) 사용`);
+      }
+    } else out.warnings.push(`${CONFIG_PATH}: 'lineage' 는 객체여야 함 — 무시됨`);
+  }
   return out;
+}
+
+/** 이 ID 에 ID 산술 상속이 적용되는가(순수) — 숫자 머리가 arithmeticFrom 이상이면 산술, 아래면 frontmatter 만([PRO-27] ③). */
+function arithmeticApplies(cfg, id) {
+  const from = cfg && cfg.lineage && Number.isInteger(cfg.lineage.arithmeticFrom) ? cfg.lineage.arithmeticFrom : 0;
+  if (!from) return true;
+  const m = String(id || '').match(/^\d+/);
+  return !!m && parseInt(m[0], 10) >= from;
 }
 
 /** 로컬 상태 → 상류 어휘(순수). 매핑에 없으면 그대로(강제 아님), null 은 null. */
@@ -124,4 +145,4 @@ function isTemplateRepo(root = path.resolve(__dirname, '..')) {
   } catch { return false; }
 }
 
-module.exports = { CONFIG_PATH, DEFAULTS, ALIASABLE_FIELDS, parseConfig, load, isTemplateRepo, mapStatus, fieldAliases };
+module.exports = { CONFIG_PATH, DEFAULTS, ALIASABLE_FIELDS, parseConfig, load, isTemplateRepo, mapStatus, fieldAliases, arithmeticApplies };

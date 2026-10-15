@@ -70,5 +70,26 @@ try {
   check('원문은 rawStatus 에 보존', mapped.rawStatus === 'Done');
 } finally { fs.rmSync(tmp2, { recursive: true, force: true }); }
 
+// --- [PRO-27] ③ frontmatter 부모(parent:·plan:)가 색인 레코드 parents 로, 산술 플래그는 adapter lineage 로 ---
+const { parseParents } = require('./zfs_index');
+check('parent 스칼라', JSON.stringify(parseParents('parent: PRO-27')) === '["PRO-27"]');
+check('끝 주석 제거', JSON.stringify(parseParents('parent: PLAN-01a         # ID에서 역산 가능')) === '["PLAN-01a"]');
+check('plan 인라인 목록 + 브래킷', JSON.stringify(parseParents('plan: [PLAN-07, [PLAN-08]]')) === '["PLAN-07","PLAN-08"]');
+check('블록 목록 + parent·plan 합집합(중복 제거)', JSON.stringify(parseParents('parent: PLAN-07\nplan:\n  - PLAN-07\n  - WO-12')) === '["PLAN-07","WO-12"]');
+check('up: 외부 참조는 부모 아님', JSON.stringify(parseParents('parent: up:PRO-27')) === '[]');
+check('ID 꼴 아니면 버린다', JSON.stringify(parseParents('parent: 없음')) === '[]');
+const tmp3 = fs.mkdtempSync(path.join(os.tmpdir(), 'zfsidx-lineage-'));
+try {
+  const w3 = (rel, s) => { const p = path.join(tmp3, rel); fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, s); };
+  w3('.union-stack/sprint/WO-12a-1_x.md', '---\nstatus: Active\nparent: PRO-36\n---\n# (예시)\n');
+  w3('.union-stack/sprint/WO-36a-1_y.md', '---\nstatus: Active\n---\n# (예시)\n');
+  const noCfg = buildIndex(tmp3);
+  check('레코드에 parents', JSON.stringify(noCfg.find(d => d.id === '12a-1').parents) === '["PRO-36"]');
+  check('설정 없으면 전부 arithmetic', noCfg.every(d => d.arithmetic === true));
+  w3('.union-stack/adapter.json', '{"lineage": {"arithmeticFrom": 36}}');
+  const cfgIdx = buildIndex(tmp3);
+  check('arithmeticFrom 아래는 arithmetic:false', cfgIdx.find(d => d.id === '12a-1').arithmetic === false && cfgIdx.find(d => d.id === '36a-1').arithmetic === true);
+} finally { fs.rmSync(tmp3, { recursive: true, force: true }); }
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

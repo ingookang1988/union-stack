@@ -8,18 +8,50 @@ const { ancestorChain, isDescendant, parseId, isUpstreamRef } = require('./zfs_u
 const CONTEXT_DOMAINS = new Set(['PLAN', 'FLOW', 'CON', 'ARCH', 'MTG', 'PHASE']);
 const LOCKED = new Set(['Verifying']);
 
-/** Upward Fetching: 부모 계보 맥락(PHASE/PLAN/FLOW/CON/ARCH/MTG) + 같은 계보 LSN. */
-function upwardFetch(id, index) {
-  const chain = ancestorChain(id);
-  const ancestors = new Set(chain);
+const keyOf = d => `${d.domain}-${d.id}`;
+
+/**
+ * 조상 합산(순수) — [PRO-27] ③: 조상 = ID 산술 부모(레코드 `arithmetic` 가 false 가 아닐 때) ∪ frontmatter 부모 폐포(`parents`, 순환 가드).
+ * 하류 실측: 한 어답터는 ID 산술 루트 0/438(계보는 `plan:` 74%), 다른 어답터는 레거시 번호대가 도메인별 독립 채번 — 산술만 보면 전자는
+ * 조상이 없고 후자는 무관한 문서를 상속한다. 선언 부모는 도메인 무관(우산 WO·중간 PLAN·PRO 도 루트가 된다).
+ * 반환: { chain(산술 체인), declared(선언 부모 문서들, 발견 순), ids(조상 ID 집합 — 산술 체인 ∪ 선언 부모들의 산술 체인) }
+ */
+function lineageAncestors(id, index, domain = null) {
+  const selfDocs = index.filter(d => d.id === id && (!domain || d.domain === domain));
+  const arithmetic = selfDocs.length ? selfDocs.some(d => d.arithmetic !== false) : true;
+  const chain = arithmetic ? ancestorChain(id) : [id];
+  const byKey = new Map(index.map(d => [keyOf(d), d]));
+  const seen = new Set(selfDocs.map(keyOf));
+  const declared = [];
+  const queue = [...selfDocs];
+  while (queue.length) {
+    const d = queue.shift();
+    for (const p of d.parents || []) {
+      if (seen.has(p)) continue;
+      seen.add(p);
+      const pd = byKey.get(p);
+      if (!pd) continue; // 색인 밖(오타·미작성) — 미해소는 work-close 의 parent-missing 이 묻는다
+      declared.push(pd);
+      queue.push(pd);
+    }
+  }
+  const ids = new Set(chain);
+  for (const p of declared) (p.arithmetic !== false ? ancestorChain(p.id) : [p.id]).forEach(x => ids.add(x));
+  return { chain, declared, ids };
+}
+
+/** Upward Fetching: 부모 계보 맥락(PHASE/PLAN/FLOW/CON/ARCH/MTG + 선언 부모는 도메인 무관) + 같은 계보 LSN. */
+function upwardFetch(id, index, domain = null) {
+  const { chain, declared, ids } = lineageAncestors(id, index, domain);
+  const declaredKeys = new Set(declared.map(keyOf));
   const context = index
-    .filter(d => CONTEXT_DOMAINS.has(d.domain) && ancestors.has(d.id))
-    .sort((a, b) => a.domain.localeCompare(b.domain))
-    .map(d => ({ domain: d.domain, id: d.id, file: d.file }));
+    .filter(d => declaredKeys.has(keyOf(d)) || (CONTEXT_DOMAINS.has(d.domain) && ids.has(d.id)))
+    .sort((a, b) => a.domain.localeCompare(b.domain) || a.id.localeCompare(b.id))
+    .map(d => ({ domain: d.domain, id: d.id, file: d.file, tier: d.tier || null, via: declaredKeys.has(keyOf(d)) ? 'frontmatter' : 'arithmetic' }));
   const lessons = index
-    .filter(d => d.domain === 'LSN' && isDescendant(d.id, id))
-    .map(d => ({ domain: d.domain, id: d.id, file: d.file }));
-  return { id, chain, context, lessons };
+    .filter(d => d.domain === 'LSN' && ids.has(d.id))
+    .map(d => ({ domain: d.domain, id: d.id, file: d.file, tier: d.tier || null }));
+  return { id, chain, declared: declared.map(keyOf), context, lessons };
 }
 
 /**
@@ -32,8 +64,9 @@ function fetchOutcome(r) {
   const parents = r.chain.slice(1);
   return {
     outcome: 'CLARIFY',
-    question: `계보 맥락 0건 — ${r.id} 의 산술 조상(${parents.length ? parents.join(' → ') : '없음'})에 PHASE/PLAN/FLOW/CON/ARCH/MTG 문서가 없다. `
-      + '기획 없는 구현 진입인가, 아니면 계보가 frontmatter(plan:/parent:)에만 있는가([PRO-27] ③)?',
+    question: `계보 맥락 0건 — ${r.id} 의 산술 조상(${parents.length ? parents.join(' → ') : '없음'})에 PHASE/PLAN/FLOW/CON/ARCH/MTG 문서가 없고 `
+      + `frontmatter 부모(plan:/parent:)도 ${(r.declared || []).length ? '색인에서 해소되지 않는다' : '선언돼 있지 않다'}. `
+      + '기획 없는 구현 진입인가? 부모가 있다면 frontmatter 에 parent:/plan: 으로 선언하라([PRO-27] ③).',
   };
 }
 
@@ -47,8 +80,19 @@ function fetchOutcome(r) {
  * 간선은 **계약 → 소비자 한 방향만** 선언한다(양방향은 정본이 둘이 되어 드리프트).
  */
 function blastRadius(id, index) {
-  const row = d => ({ domain: d.domain, id: d.id, status: d.status || null, file: d.file });
-  const lineage = index.filter(d => isDescendant(id, d.id));
+  const row = d => ({ domain: d.domain, id: d.id, status: d.status || null, file: d.file, ...(d.viaParent ? { viaParent: d.viaParent } : {}) });
+  // 산술 자손(산술이 적용되는 문서만 — 레거시 독립 채번 구간은 같은 번호여도 자손이 아니다) + 자기 자신.
+  const lineage = index.filter(d => d.id === id || (d.arithmetic !== false && isDescendant(id, d.id)));
+  // 선언 자식 폐포([PRO-27] ③): parents 로 이 계보의 문서를 가리키는 문서는 영향권이다(잠금 검사 포함).
+  const inLineage = new Set(lineage.map(keyOf));
+  for (let grew = true; grew;) {
+    grew = false;
+    for (const d of index) {
+      if (inLineage.has(keyOf(d))) continue;
+      const via = (d.parents || []).find(p => inLineage.has(p));
+      if (via) { inLineage.add(keyOf(d)); lineage.push({ ...d, viaParent: via }); grew = true; }
+    }
+  }
   const seen = new Set(lineage.map(d => d.file));
   const viaContract = [];
   const unresolved = [];
@@ -167,8 +211,11 @@ function roadmapWiring(index) {
   const phases = index.filter(d => d.domain === 'PHASE');
   const active = index.filter(d => ['PLAN', 'WO', 'WF'].includes(d.domain) && !TERMINAL.has(d.status));
   const key = d => `${d.domain}-${d.id}`;
-  const unanchored = active.filter(w => !phases.some(p => isDescendant(p.id, w.id))).map(key);
-  const stale = phases.filter(p => !active.some(w => isDescendant(p.id, w.id))).map(key);
+  // PHASE 도달 = 합산 조상([PRO-27] ③) — 산술로도, plan:/parent: 선언으로도 닿으면 배선된 것이다.
+  const reach = w => lineageAncestors(w.id, index, w.domain).ids;
+  const reached = new Map(active.map(w => [key(w), reach(w)]));
+  const unanchored = active.filter(w => !phases.some(p => reached.get(key(w)).has(p.id))).map(key);
+  const stale = phases.filter(p => !active.some(w => reached.get(key(w)).has(p.id))).map(key);
   return { phases: phases.length, active: active.length, unanchored, stale };
 }
 
@@ -204,4 +251,4 @@ function whereToRecord(kind) {
   return { kind, match: r ? strip(r) : null, all: ROUTES.map(strip) };
 }
 
-module.exports = { upwardFetch, fetchOutcome, blastRadius, contractEdges, normEnforcement, concernUsage, roadmapWiring, whereToRecord, CONTEXT_DOMAINS, LOCKED, NORM_DOMAINS };
+module.exports = { upwardFetch, lineageAncestors, fetchOutcome, blastRadius, contractEdges, normEnforcement, concernUsage, roadmapWiring, whereToRecord, CONTEXT_DOMAINS, LOCKED, NORM_DOMAINS };

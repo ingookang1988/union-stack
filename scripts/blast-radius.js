@@ -25,7 +25,7 @@ if (json) { console.log(JSON.stringify(r, null, 2)); process.exit(r.blocked ? 1 
 console.log(`# Blast Radius: ${r.id}`);
 console.log(`영향권 노드 ${r.affected.length}개${r.viaContract.length ? ` (계약 소비자 ${r.viaContract.length}개 포함)` : ''}:`);
 r.affected.forEach(d =>
-  console.log(`  [${d.domain}-${d.id}] ${d.status || '?'}  ${d.file}${d.via ? `  ← 계약 ${d.via} 소비자` : ''}`));
+  console.log(`  [${d.domain}-${d.id}] ${d.status || '?'}  ${d.file}${d.via ? `  ← 계약 ${d.via} 소비자` : ''}${d.viaParent ? `  ← frontmatter 부모 ${d.viaParent}` : ''}`));
 if (r.externalConsumers && r.externalConsumers.length) {
   console.log(`\nINFO: 상류 참조(up:) 소비자 ${r.externalConsumers.length}건 — 로컬 해소 대상 아님([PRO-27] ①):`);
   r.externalConsumers.forEach(u => console.log(`  · ${u.ref}  ← ${u.from}`));

@@ -31,9 +31,9 @@ if (json) { console.log(JSON.stringify({ ...r, outcome: o.outcome, question: o.q
 const banner = d => (d.tier === 'draft' ? '  ⚠ tier:draft — 비규범(구속력 없음)' : '');
 
 console.log(`# Upward Fetching: ${r.id}`);
-console.log(`계보(조상 역산): ${r.chain.join(' → ')}\n`);
-console.log('## 공간 맥락 (부모 PHASE/PLAN/FLOW/CON/ARCH/MTG)');
-if (r.context.length) r.context.forEach(d => console.log(`  [${d.domain}-${d.id}] ${d.file}${banner(d)}`));
+console.log(`계보(조상 역산): ${r.chain.join(' → ')}${r.declared && r.declared.length ? `  · 선언 부모(frontmatter): ${r.declared.join(', ')}` : ''}\n`);
+console.log('## 공간 맥락 (부모 PHASE/PLAN/FLOW/CON/ARCH/MTG · 선언 부모는 도메인 무관)');
+if (r.context.length) r.context.forEach(d => console.log(`  [${d.domain}-${d.id}] ${d.file}${d.via === 'frontmatter' ? '  ← frontmatter 부모' : ''}${banner(d)}`));
 else console.log('  (없음)');
 console.log('\n## 시간축 경고 (같은 계보의 LSN — 과거 반복 실패)');
 if (r.lessons.length) r.lessons.forEach(d => console.log(`  ⚠ [${d.domain}-${d.id}] ${d.file}${banner(d)}`));

@@ -81,5 +81,12 @@ check('vocab: adapter.json 에 statusMap·evidenceFields', /statusMap/.test(vs.f
 check('vocab: 로컬 어휘 WO(status: Done) + 별칭 증거', Object.values(vs.files).some(t => /^status: Done$/m.test(t) && /implementation_commit/.test(t)));
 check('vocab: frontmatter 없는 WO·PRO + 종결 디렉터리 문서(백필 대상 3)', vs.truth.backfillRows === 3 && Object.keys(vs.files).some(k => /archived\//.test(k)));
 
+// --- [PRO-27] ③ 팔 형상 상향: serial 은 plan: 부모 + 고아 WO, legacy 는 arithmeticFrom 아래 WO ---
+const sr3 = serialShape();
+check('serial: 부모 없는 고아 WO 도 있다(CLARIFY 과녁)', Object.keys(sr3.files).some(k => /WO-346_/.test(k)) && sr3.truth.orphan === '346');
+const lg3 = legacyShape();
+check('legacy: adapter.json lineage.arithmeticFrom', /arithmeticFrom/.test(lg3.files['.union-stack/adapter.json'] || ''));
+check('legacy: arithmeticFrom 아래 WO(parent PRO-36) + 무관한 PLAN-12', Object.keys(lg3.files).some(k => /WO-12a-1_/.test(k)) && Object.keys(lg3.files).some(k => /PLAN-12_/.test(k)));
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -21,6 +21,8 @@
 //   serial : **전역 일련번호 WO** — 산술 조상이 0 인 WO(계보는 frontmatter `plan:` 에만). 빈 upward-fetch 가 조용히
 //            exit 0 하던 것과, `health --root` 가 플래그를 무시하던 것. 근거 [PRO-27] ③④ (SURVEY-02).
 //
+//            ③ 뒤: plan: 부모가 맥락으로 실리고(exit 0) 부모 없는 고아 WO 만 CLARIFY. legacy 는 arithmeticFrom 아래 도메인 횡단 상속 차단.
+//
 //   vocab  : **로컬 상태 어휘** — `status: Done`·`Review`, 별칭 증거 필드, frontmatter 없는 WO·PRO(본문 산문 상태), 종결 디렉터리 문서.
 //            statusMap·evidenceFields 로 읽히는가, 백필 dry-run 이 쓰지 않는가, --apply 뒤 대상 0 인가. 근거 [PRO-27] ② (SURVEY-02:
 //            WO 99/179 frontmatter 없음 · PRO 17/17 YAML 없음 · status 38종 자유 문자열).
@@ -248,11 +250,18 @@ function legacyShape() {
   files['.union-stack/proposals/PRO-36_independent_numbering_dup.md'] = doc('<!-- [Proposal] 중복 사본(example). -->', 'PRO-36', 'Proposed', '독립 채번(중복 사본)');
   // 상류 참조를 담은 **실콘텐츠**(더미 마커 없음 → strict 게이팅 대상). [up:…] 을 로컬 미해소로 잡으면 상류 문서가
   // 어답터에서 통째로 걸리는 결함(SURVEY-02: 설문 파일 자체가 Fail-close)의 재현이다.
+  // [PRO-27] ③ — 레거시 구간(36 미만)은 산술 상속을 끈다: WO-12a-1 은 무관한 PLAN-12 를 상속하지 않고 선언 부모 PRO-36 만 싣는다.
+  files['.union-stack/adapter.json'] = JSON.stringify({ lineage: { arithmeticFrom: 36 } }, null, 2) + '\n';
+  files['.union-stack/plan/PLAN-12_unrelated_legacy.md'] = doc('<!-- [Wiki] 무관한 레거시 PLAN(example). -->', 'PLAN-12', 'Active', '무관한 레거시 기획');
+  files['.union-stack/sprint/WO-12a-1_legacy_task.md'] = [
+    '<!-- (example) 레거시 구간 WO -->', '---', 'id: WO-12a-1', 'title: 레거시 구간 작업(example)', 'status: Active', 'parent: PRO-36',
+    'evidence: "none — 형상 픽스처"', 'closed_by: []', '---', '', '# [WO-12a-1] 레거시 구간 작업', '## 목표', '- 예시', '## 수용 기준', '- 예시', '## 증거', '- 예시', '',
+  ].join('\n');
   files['.union-stack/sprint/WO-36a-1_adopter_note.md'] = [
     '---', 'id: WO-36a-1', 'title: 어답터 메모', 'status: Active', 'evidence: "none — 형상 픽스처"', 'closed_by: []', '---', '',
     '# [WO-36a-1] 어답터 메모', '- 상류 [up:PRO-27] ① 을 따른다. 로컬 [PLAN-36] 아래 작업이다.', '',
   ].join('\n');
-  return { files, truth: { duplicateKey: 'PRO-36', upstreamRefs: 1 } };
+  return { files, truth: { duplicateKey: 'PRO-36', upstreamRefs: 1, legacyWo: '12a-1', legacyParent: 'PRO-36', unrelated: 'PLAN-12' } };
 }
 
 /** 전역 일련번호 WO 형상(순수). 계보는 frontmatter `plan:` 에만 있고 산술 조상은 0. */
@@ -263,7 +272,12 @@ function serialShape() {
     '---', 'id: WO-345', 'title: 전역 일련번호 작업(example)', 'status: Active', 'plan: PLAN-07', 'evidence: "none — 형상 픽스처"', 'closed_by: []', '---', '',
     '# [WO-345] 전역 일련번호 작업', '- 계보는 plan: 에만 있다(예시).', '',
   ].join('\n');
-  return { files, truth: { arithmeticAncestors: 0, frontmatterParent: 'PLAN-07' } };
+  // 부모 선언이 없는 고아 WO — 빈 맥락은 여전히 CLARIFY 여야 한다(③ 이 "0건 = 통과"를 되살리면 안 된다).
+  files['.union-stack/sprint/WO-346_serial_orphan.md'] = [
+    '---', 'id: WO-346', 'title: 고아 작업(example)', 'status: Active', 'evidence: "none — 형상 픽스처"', 'closed_by: []', '---', '',
+    '# [WO-346] 고아 작업', '- 부모 선언 없음(예시).', '',
+  ].join('\n');
+  return { files, truth: { arithmeticAncestors: 0, frontmatterParent: 'PLAN-07', orphan: '346' } };
 }
 
 function writeShape(ws, files) {
@@ -298,21 +312,31 @@ function legacyArm(ws) {
   let ok = false, detail = '측정 실패';
   try {
     const a = JSON.parse(here.stdout), b = JSON.parse(there.stdout);
-    ok = path.resolve(b.root) === path.resolve(ws) && b.byDomain.PRO === a.byDomain.PRO + 2 && b.byDomain.PLAN === a.byDomain.PLAN + 1;
+    ok = path.resolve(b.root) === path.resolve(ws) && b.byDomain.PRO === a.byDomain.PRO + 2 && b.byDomain.PLAN === a.byDomain.PLAN + 2;
     detail = `PRO ${a.byDomain.PRO}→${b.byDomain.PRO} · PLAN ${a.byDomain.PLAN}→${b.byDomain.PLAN}`;
   } catch (e) { detail = e.message; }
   bars.push({ name: 'health --root 가 사본을 측정(상류 자신 아님)', ok, detail });
+  // [PRO-27] ③ — 독립 채번 구간의 도메인 횡단 상속 차단 + 선언 부모 수집.
+  const lf = run(ws, ['scripts/upward-fetch.js', `WO-${truth.legacyWo}`]);
+  const hasUnrelated = lf.stdout.includes(`[${truth.unrelated}]`);
+  const hasParent = lf.stdout.includes(`[${truth.legacyParent}]`);
+  bars.push({ name: `arithmeticFrom 아래 WO: 무관한 ${truth.unrelated} 상속 안 함 · 선언 부모 ${truth.legacyParent} 수집 · exit 0`,
+    ok: lf.code === 0 && !crashed(lf) && !hasUnrelated && hasParent, detail: `exit ${lf.code} · ${truth.unrelated} ${hasUnrelated ? '포함(!)' : '제외'} · ${truth.legacyParent} ${hasParent ? '포함' : '누락(!)'}` });
   return bars;
 }
 
 function serialArm(ws) {
-  const { files } = serialShape();
+  const { files, truth } = serialShape();
   writeShape(ws, files);
   const bars = [];
-  // 빈 맥락은 (없음)+exit 0 이 아니라 CLARIFY(3) — "0건 검사 = 통과" 클래스([PRO-22] 2-bis)의 회귀 고정.
+  // [PRO-27] ③ — 산술 조상 0 이어도 plan: 부모가 맥락으로 실리고 exit 0.
   const uf = run(ws, ['scripts/upward-fetch.js', 'WO-345']);
-  bars.push({ name: '산술 조상 0 인 WO 의 upward-fetch → CLARIFY(exit 3)', ok: uf.code === 3 && !crashed(uf) && (uf.stdout + uf.stderr).includes('CLARIFY'),
-    detail: `exit ${uf.code}` });
+  bars.push({ name: `산술 조상 0 인 WO 의 upward-fetch → plan: 부모 ${truth.frontmatterParent} 수집 · exit 0`,
+    ok: uf.code === 0 && !crashed(uf) && uf.stdout.includes(`[${truth.frontmatterParent}]`) && uf.stdout.includes('frontmatter'), detail: `exit ${uf.code}` });
+  // 빈 맥락은 (없음)+exit 0 이 아니라 CLARIFY(3) — "0건 검사 = 통과" 클래스([PRO-22] 2-bis)의 회귀 고정. ③ 이 이것을 되살리면 안 된다.
+  const orphan = run(ws, ['scripts/upward-fetch.js', `WO-${truth.orphan}`]);
+  bars.push({ name: '부모 선언 없는 고아 WO 의 upward-fetch → CLARIFY(exit 3)', ok: orphan.code === 3 && !crashed(orphan) && (orphan.stdout + orphan.stderr).includes('CLARIFY'),
+    detail: `exit ${orphan.code}` });
   const bad = run(ROOT, ['scripts/health.js', '--root', path.join(ws, 'no-such-dir')]);
   bars.push({ name: 'health --root <없는 경로> → REJECT "측정 대상 아님"', ok: bad.code === 1 && !crashed(bad) && (bad.stderr + bad.stdout).includes('측정 대상 아님'),
     detail: `exit ${bad.code}` });

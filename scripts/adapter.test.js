@@ -97,5 +97,17 @@ check('evidenceFields 값이 배열 아님 → 경고', vocabBad.warnings.some(w
 check('evidenceFields 알 수 없는 상류 필드 → 경고', vocabBad.warnings.some(w => w.includes('foo')));
 check('load 기본값에 statusMap·evidenceFields', (() => { const d = load(require('os').tmpdir()); return d.present === false && typeof d.statusMap === 'object' && typeof d.evidenceFields === 'object'; })());
 
+// --- [PRO-27] ③ lineage.arithmeticFrom — 레거시 독립 채번 구간은 산술 상속을 끈다 ---
+const { arithmeticApplies } = require('./adapter');
+const lin = parseConfig('{"lineage": {"arithmeticFrom": 36}}');
+check('lineage 파싱', lin.lineage.arithmeticFrom === 36 && lin.warnings.length === 0);
+check('arithmeticApplies: 경계 포함(36 이상)', arithmeticApplies(lin, '36a-1') === true && arithmeticApplies(lin, '40') === true);
+check('arithmeticApplies: 아래 번호는 산술 아님', arithmeticApplies(lin, '12a-1') === false && arithmeticApplies(lin, '01') === false);
+check('기본값 0 = 전부 산술', arithmeticApplies(parseConfig('{}'), '01') === true && arithmeticApplies(null, '01') === true);
+const linBad = parseConfig('{"lineage": {"arithmeticFrom": "36", "foo": 1}}');
+check('정수 아닌 arithmeticFrom → 경고 + 기본값', linBad.lineage.arithmeticFrom === 0 && linBad.warnings.some(w => w.includes('arithmeticFrom')));
+check('알 수 없는 lineage 하위 키 → 경고', linBad.warnings.some(w => w.includes('foo')));
+check('lineage 객체 아님 → 경고', parseConfig('{"lineage": 36}').warnings.some(w => w.includes('lineage')));
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

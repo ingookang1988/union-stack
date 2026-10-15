@@ -136,5 +136,11 @@ check('매핑 없이 읽으면 로컬 어휘·별칭 미인식(상류 기본)', 
 check('상류 필드가 있으면 상류 필드 우선', parseWo('.union-stack/sprint/WO-40_x.md', LOCAL_WO.replace('parent: PLAN-01', 'parent: PLAN-01\nevidence: "real"'), vocabCfg).evidence === 'real');
 check('Closed 로 매핑된 WO 는 작업대에서 빠진다', !buildTable([lw]).includes('WO-40'));
 
+// --- [PRO-27] ③ 산술이 적용되지 않는 구간에선 lineage-break 를 묻지 않는다(frontmatter 계보가 정본) ---
+const serialWo = parseWo('.union-stack/sprint/WO-345_x.md', ['---', 'id: WO-345', 'status: Active', 'parent: PLAN-07', 'evidence: "x"', 'closed_by: []', '---', '## 목표', '## 수용 기준', '## 증거'].join('\n'));
+const serialIdx = [{ domain: 'PLAN', id: '07', file: 'p' }, { domain: 'WO', id: '345', file: 'w', arithmetic: false }];
+check('arithmetic:false → lineage-break 없음', !checkIssuance(serialWo, serialIdx).some(i => i.code === 'lineage-break'));
+check('arithmetic 적용이면 여전히 lineage-break', checkIssuance(serialWo, [{ domain: 'PLAN', id: '07', file: 'p' }, { domain: 'WO', id: '345', file: 'w', arithmetic: true }]).some(i => i.code === 'lineage-break'));
+
 console.log(`work-close.test: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

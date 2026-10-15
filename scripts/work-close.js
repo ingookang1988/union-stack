@@ -137,8 +137,11 @@ function checkIssuance(wo, index = []) {
     if (!m || !pid || !index.some(d => d.domain === m[1] && d.id === pid)) {
       issues.push({ code: 'parent-missing', outcome: 'CLARIFY', msg: `parent(${wo.parent})가 색인에 없다 — 오타이거나 상위 문서 미작성(죽은 부모).` });
     }
-    if (pid && !isDescendant(pid, wo.id)) {
-      issues.push({ code: 'lineage-break', outcome: 'CLARIFY', msg: `parent(${wo.parent})와 이 WO(${wo.id})의 계보가 이어지지 않는다 — 플릿 파티션([PRO-05])이 오분할된다.` });
+    // 산술 상속이 적용되는 구간에서만 묻는다([PRO-27] ③) — 레거시 독립 채번·전역 일련번호 구간은 frontmatter 부모가 정본이다.
+    const rec = index.find(d => d.domain === 'WO' && d.id === wo.id);
+    const arithmetic = !rec || rec.arithmetic !== false;
+    if (pid && arithmetic && !isDescendant(pid, wo.id)) {
+      issues.push({ code: 'lineage-break', outcome: 'CLARIFY', msg: `parent(${wo.parent})와 이 WO(${wo.id})의 계보가 산술로 이어지지 않는다 — 플릿 파티션([PRO-05])이 오분할된다. 독립 채번 구간이면 adapter.json lineage.arithmeticFrom 으로 선언하라([PRO-27] ③).` });
     }
   }
   return issues;

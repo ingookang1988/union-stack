@@ -24,4 +24,5 @@ version: 1.0
 node scripts/blast-radius.js PLAN-01a
 ```
 - exit 1 = 잠금 자손 존재 — 멈추고 인간 확인. 같은 로직: `/blast-radius`, MCP `blast_radius`, PreToolUse 훅.
+- 영향권 = 산술 자손 ∪ **선언 자식**(`parent:`/`plan:` 으로 이 계보를 가리키는 문서, 폐포 · `← frontmatter 부모 X` 표시) — 잠금 검사도 포함한다([PRO-27] ③). `lineage.arithmeticFrom` 아래 구간은 같은 번호여도 산술 자손이 아니다.
 - `consumers:` 의 `up:` 참조(상류 계약 소비)는 미해소가 아니라 **외부 소비자**(INFO)로 분류한다. `up:` 인자는 외부 참조 INFO · exit 0([PRO-27] ①).
