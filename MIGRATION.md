@@ -95,6 +95,11 @@ This file is adopter-owned — upstream never touches it.
   NOOP_PASS, `expected_zero_unless: env` a CLARIFY. `node scripts/ci.js --scan` drafts the declarations from
   `package.json` scripts, hooks and workflows; you confirm `blocking` and `cost`. `health` shows the latest
   receipt age per blocking check; `work-close` asks WO evidence to cite `rcpt:<name>@<sha>` (new WOs only).
+  `checks[].known_failures: [{ id, reason, owner, until }]` registers a tolerated exception with an owner and an
+  expiry: `scripts/weakening-guard.js` (in the CI chain) lets the exception list grow only by entries whose `id`
+  appears in the added lines, and turns **red** when an entry expires. Weakening signals (deleted test files,
+  added skips, fewer assertions, snapshot field changes, runner-config edits, changed numeric literals in tests)
+  are only ever *questions* (CLARIFY); put `weakening: <reason>` in the WO's evidence to answer them.
 - Documents without a `status:` line are counted as *nothing* by every tool. List them with
   `node scripts/frontmatter-backfill.js` (dry-run: estimate from a body marker such as `Status: Done`,
   then from an `archived/` directory, else left blank and reported) and apply with `--apply` — it inserts

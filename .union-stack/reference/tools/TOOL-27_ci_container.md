@@ -27,6 +27,7 @@ YAML 을 손으로 번역해야 하고, 번역본은 곧 원본과 어긋난다.
 |---|---|---|
 | `zfs-linter` · `history-linter` | ✔ | 싸고 결정적 |
 | `permission-guard` | — | 범위(`--range`)는 래퍼가 준다 |
+| `weakening-guard` | ✔ | [TOOL-31] — 약화 신호는 CLARIFY, **예외 목록 증가·known_failures 만료만 REJECT**([PRO-22] §3-4 ⓑ) |
 | `handoff-linter` | — | REJECT 자체가 없다([PRO-13] §5) |
 | `tests` · `health` · `adopter-arm` | ✔ | `adopter-arm` 은 [TOOL-26] |
 | **선언 검사**(`adapter.json checks[]`) | 선언별 | 하네스 뒤에 어답터의 제품 검사([PRO-22] §3-1). **0건 검사 = 실패**(2-bis, 3분할: 차단 전수 → REJECT · 메타/diff 조건부 → NOOP_PASS · env 조건부 → CLARIFY). 선언 부재는 무기입 |

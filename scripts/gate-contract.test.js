@@ -41,7 +41,7 @@ check('플래그 없으면 본 run 실행', wrapped([]), 7);
 // 템플릿 전용 게이트는 `init --drop-template-bits` 가 삭제한다 — 어답터에선 **파일 부재**가 정상이다.
 // 부재만 건너뛴다(존재하는데 require 가 던지면 그대로 터진다 — 고장을 조용히 넘기지 않는다).
 const TEMPLATE_ONLY = new Set(['./leakage-guard']);
-for (const mod of ['./zfs-linter', './history-linter', './permission-guard', './leakage-guard', './health', './handoff-linter']) {
+for (const mod of ['./zfs-linter', './history-linter', './permission-guard', './leakage-guard', './health', './handoff-linter', './weakening-guard', './frontmatter-backfill', './adopter-census']) {
   if (TEMPLATE_ONLY.has(mod) && !fs.existsSync(path.join(__dirname, mod.slice(2) + '.js'))) {
     console.log(`(${mod} 없음: 템플릿 전용 게이트 — 계약 검사 건너뜀)`); continue;
   }

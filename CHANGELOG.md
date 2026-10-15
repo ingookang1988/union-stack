@@ -22,6 +22,13 @@ action in already-adopted projects.
   env-conditional. `ci.js --scan` drafts declarations from package scripts, hooks and workflows. `health` gains a
   `receipts` row (latest receipt age per blocking check), `work-close` asks evidence to cite `rcpt:<name>@<sha>`
   (new WOs only). Adopter arm gains the `nonjs` shape. ⚠ `init` now resets `receipts.md` like `evidence.md`.
+- **PRO-22 §3 3·4 — weakening is a question, a growing exception list is red.** `scripts/weakening-guard.js`
+  (**TOOL-31**, in the CI chain after `permission-guard`) reads the range diff and asks one line per weakening
+  signal — deleted test files, added `skip`/`only`, fewer assertions, snapshot updates (by changed *field*, not by
+  line count), runner-config edits, changed numeric literals in tests — never blocking; a `weakening: <reason>` in
+  the WO evidence answers them. Baseline expiry took form ⓑ: the exception list (skip/only, `eslint-disable`,
+  `@ts-ignore`, `noqa`, `nolint`, allowlist/holdout/baseline entries) may grow only under
+  `checks[].known_failures` entries with an owner and an expiry, and an expired entry is REJECT.
 - **PRO-24 ② — adopter census: read-only measurement of sibling repos, anonymised rows.**
   `scripts/adopter-census.js` (**TOOL-30**) runs the upstream tools with `--root` against a private list of
   local adopter checkouts (never executing adopter scripts, never reading document bodies, never writing to

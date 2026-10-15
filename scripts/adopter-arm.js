@@ -452,6 +452,30 @@ function nonjsArm(ws) {
   const d1 = dimOf(h1);
   bars.push({ name: '영수증 뒤 health: 차단 검사별 최신 포인터·나이 · 크래시 0', ok: !crashed(h1) && !!d1 && /zero 0d\(REJECT/.test(d1.value) && /ok 0d\(PASS/.test(d1.value),
     detail: d1 ? d1.value : `exit ${h1.code} · 측정 실패` });
+  // [PRO-22] 단계 3·4 — 합성 diff(비-JS 제품: pytest 파일 삭제 · skip · noqa)로 약화 가드를 사본에서 돌린다.
+  const diffPath = path.join(ws, 'weak.diff');
+  fs.writeFileSync(diffPath, [
+    'diff --git a/tests/test_api.py b/tests/test_api.py', 'deleted file mode 100644', 'index 1..0', '--- a/tests/test_api.py', '+++ /dev/null', '@@ -1,2 +0,0 @@',
+    '-def test_a():', '-    assert api() == 1',
+    'diff --git a/tests/test_b.py b/tests/test_b.py', 'index 1..2', '--- a/x', '+++ b/x', '@@ -1,2 +1,3 @@',
+    '-def test_b():', '+@pytest.mark.skip', '+def test_b():  # KF-ARM-1',
+    'diff --git a/app/svc.py b/app/svc.py', 'index 1..2', '--- a/x', '+++ b/x', '@@ -1 +1 @@', '-x = 1', '+x = 1  # noqa KF-ARM-1', '',
+  ].join('\n'));
+  const wg = run(ws, ['scripts/weakening-guard.js', '--diff', diffPath, '--json']);
+  let wj = null;
+  try { wj = JSON.parse(wg.stdout); } catch { /* null */ }
+  bars.push({ name: '약화 가드: 테스트 삭제·skip 질문 + 예외 +2 는 known_failures 없이 REJECT', ok: wg.code === 1 && !crashed(wg) && !!wj && wj.outcome === 'REJECT' && wj.analysis.signals.some(s => s.kind === 'test-deleted') && wj.analysis.exceptions.net === 2,
+    detail: wj ? `${wj.outcome} · 신호 ${wj.analysis.signals.length} · 예외 +${wj.analysis.exceptions.net}` : `exit ${wg.code} · 측정 실패` });
+  // known_failures 로 덮으면(소유자·만료) red 가 내려오고 약화 질문만 남는다.
+  const adapterPath = path.join(ws, '.union-stack/adapter.json');
+  const cfg = JSON.parse(fs.readFileSync(adapterPath, 'utf8'));
+  cfg.checks[0].known_failures = [{ id: 'KF-ARM-1', reason: 'example — 팔 픽스처', owner: 'arm', until: '2099-12-31' }];
+  fs.writeFileSync(adapterPath, JSON.stringify(cfg, null, 2) + '\n');
+  const wg2 = run(ws, ['scripts/weakening-guard.js', '--diff', diffPath, '--json']);
+  let wj2 = null;
+  try { wj2 = JSON.parse(wg2.stdout); } catch { /* null */ }
+  bars.push({ name: 'known_failures(소유자·만료)가 덮으면 REJECT → CLARIFY(질문만)', ok: wg2.code === 3 && !!wj2 && wj2.outcome === 'CLARIFY' && wj2.knownFailures.covering === 2,
+    detail: wj2 ? `${wj2.outcome} · 덮인 예외 ${wj2.knownFailures.covering}` : `exit ${wg2.code} · 측정 실패` });
   return bars;
 }
 

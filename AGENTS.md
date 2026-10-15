@@ -176,4 +176,5 @@ this file only pins the deterministic core. The detail lives in the structure.
 - **[TOOL-28]** test-catalog (테스트 호출 자산 카탈로그의 생성 뷰) — `scripts/*.js` 의 `@test-asset` 정의 지점 태그를 모아 `[CON-00]` 마커 블록에 컴파일한다 — 수기 카탈로그의 부패(§5.6 "낡은 카탈로그는 중복을 유발한다")를 추출=동기화로 막는다([PRO-21] 2단계). (`scripts/test-catalog.js`)
 - **[TOOL-29]** frontmatter-backfill (status: 없는 WO·PRO 백필 — dry-run 기본, 적용은 어답터) — `status:` frontmatter 가 없는 WO·PRO 문서를 나열하고 추정값(본문 표식 → 종결 디렉터리 → 비움)과 출처를 병기한다([PRO-27] ②). (`scripts/frontmatter-backfill.js`)
 - **[TOOL-30]** adopter-census (형제 레포 읽기 전용 계측 → 익명 집계 행) — 이 머신의 형제 레포(어답터)를 **읽기 전용**으로 재서 `eval/CENSUS.md` 에 익명 행을 남긴다([PRO-24] ② 회수층). 상류 도구(health·work-close· (`scripts/adopter-census.js`)
+- **[TOOL-31]** weakening-guard (약화 표면화 질문 + 예외 목록 증가 red) — 범위 diff 에서 **검사를 약하게 만드는 변경**을 찾아 질문 한 줄씩 낸다([PRO-22] §3 단계 3 — CLARIFY, 차단 아님): 테스트 파일 삭제 · skip/only 추가 · (`scripts/weakening-guard.js`)
 <!-- tools-index:end -->

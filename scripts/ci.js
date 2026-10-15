@@ -76,6 +76,8 @@ function chain({ range = null } = {}) {
     { name: 'history-linter', args: ['scripts/history-linter.js'] },
     // permission-guard: 범위가 없으면 자기 기본값(작업트리)을 쓴다. CI 는 --range 를 준다.
     { name: 'permission-guard', args: ['scripts/permission-guard.js', ...(range ? ['--range', range] : [])], blocking: false },
+    // 약화 표면화 + 예외 증가 red([PRO-22] §3 단계 3·4, [TOOL-31]) — REJECT 는 예외 증가·만료뿐, 약화 신호는 CLARIFY.
+    { name: 'weakening-guard', args: ['scripts/weakening-guard.js', ...(range ? ['--range', range] : [])] },
     { name: 'handoff-linter', args: ['scripts/handoff-linter.js'], blocking: false },
     // 생성 뷰 드리프트([PRO-21] 2단계) — CLARIFY 만 내는 비차단 게이트([TOOL-28]).
     { name: 'test-catalog', args: ['scripts/test-catalog.js'], blocking: false },
