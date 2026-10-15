@@ -2,10 +2,10 @@
 ---
 id: WO-22a-1
 title: 하류 통합 설문 회수(어답터 3곳 × 도구 3종) → [PRO-22] H1~H5 · [PRO-23] 전제 · 제거/제안 후보
-status: Active
+status: Closed
 parent: PRO-22
-evidence: "답변 9/9 회수(2026-10-15) → eval/SURVEY-01_results.md(익명 집계·사실 재검증 3건) · [PRO-22] v1.0 승인(§8 판정 반영) → [WO-22b-1] 발행 · [PRO-23] v0.3 §2-bis 전제 표(비용 판단 대기). 잔여: 어답터 쪽 spike 폐기(인간 지시 후)"
-closed_by: []
+evidence: "답변 9/9 회수(2026-10-15) → eval/SURVEY-01_results.md(익명 집계·사실 재검증 3건) · [PRO-22] v1.0 승인(§8 판정 반영) → [WO-22b-1] 발행 · [PRO-23] v0.3 §2-bis 전제 표(비용 판단 대기). 종결(2026-10-15): 어답터 쪽 spike 13건 폐기(미추적 파일, 인간 지시) · [PRO-23] 비용 판단은 PRO-23 소관으로 이관"
+closed_by: [eval/SURVEY-01_results.md, .union-stack/proposals/PRO-22_test_verification_receipts.md]
 version: 2.1
 ---
 # [WO-22a-1] 하류 통합 설문 회수 (v2.1)

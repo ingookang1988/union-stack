@@ -2,10 +2,10 @@
 ---
 id: WO-24a-1
 title: 초안 검토 회수(어답터 3곳 · claude 3 + antigravity 1) → [PRO-24]·[PRO-25]·[PRO-26] 미결 판정 입력 + 판단층 비용 실측
-status: Verifying
+status: Closed
 parent: PRO-24
-evidence: "답변 4/4 회수(2026-10-15, claude×3 + antigravity×1) → eval/SURVEY-02_results.md(익명 집계 · 상류 재검증 5건) · [PRO-24]·[PRO-25]·[PRO-26] v0.2 §8/§9 반영 · 전제 0단계 [PRO-27] 분리 · [WO-22b-1] 0건 3분할 반영 · 비용 실측(세션 4 · 에이전트 90분 · 당일 회수). 절차 3 완료: 네 PRO 일괄 승인([ADR-54], 2026-10-15) + [WO-27a-1] 발행. 잔여: 하류 spike 처분(인간 지시)"
-closed_by: []
+evidence: "답변 4/4 회수(2026-10-15, claude×3 + antigravity×1) → eval/SURVEY-02_results.md(익명 집계 · 상류 재검증 5건) · [PRO-24]·[PRO-25]·[PRO-26] v0.2 §8/§9 반영 · 전제 0단계 [PRO-27] 분리 · [WO-22b-1] 0건 3분할 반영 · 비용 실측(세션 4 · 에이전트 90분 · 당일 회수). 절차 3 완료: 네 PRO 일괄 승인([ADR-54], 2026-10-15) + [WO-27a-1] 발행. 종결(2026-10-15): 어답터 쪽 spike 6건 폐기(미추적 파일, 인간 지시)"
+closed_by: [eval/SURVEY-02_results.md]
 version: 1.0
 ---
 # [WO-24a-1] 초안 검토 회수
