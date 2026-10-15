@@ -4,7 +4,7 @@ id: WO-24a-1
 title: 초안 검토 회수(어답터 3곳 · claude 3 + antigravity 1) → [PRO-24]·[PRO-25]·[PRO-26] 미결 판정 입력 + 판단층 비용 실측
 status: Active
 parent: PRO-24
-evidence: "none — 검토 설문 v1 배포(2026-10-15, 어답터 3곳 spike). 미회수 0/4. 답변은 인간이 각 레포에서 세션을 열어 받아야 한다"
+evidence: "답변 4/4 회수(2026-10-15, claude×3 + antigravity×1) → eval/SURVEY-02_results.md(익명 집계 · 상류 재검증 5건) · [PRO-24]·[PRO-25]·[PRO-26] v0.2 §8/§9 반영 · [WO-22b-1] 0건 3분할 반영 · 비용 실측(세션 4 · 에이전트 90분 · 당일 회수). 인간 승인(절차 3) 대기 — 미커밋"
 closed_by: []
 version: 1.0
 ---

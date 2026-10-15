@@ -20,7 +20,12 @@ version: 1.0
    **env**(환경 전제) · **cost**(push / nightly / manual-paid). 선언 초안 생성기 `ci.js --scan`(package.json·훅·워크플로에서).
 2. `ci.js` 가 하네스 체인 뒤 선언 검사를 돌고 검사마다 영수증 1줄을 `verification/raw/` 에 append — 커밋 · dirty · 검사명 ·
    명령 · exit · 소요 · N/M · **검사 대상 수** · env 태그 · 생성자 · `harness:`/`product:`. 수기 경로 없음.
-3. **0건 검사 = 실패** — 검사 대상 수(파일·테스트·커밋)가 0 이면 REJECT.
+3. **0건 검사 = 실패 — 3분할**(하류 검토 4/4, `eval/SURVEY-02_results.md` §5): `targets=0` → REJECT 는 **`blocking: true` 전수 검사**에만 ·
+   diff 조건부(권한 가드·lockfile·마이그레이션 동반, `kind: 메타`) → NOOP_PASS/INFO · env 조건부(DB·플래그 프로브·엔진 레인·`--passWithNoTests`)
+   → CLARIFY + `skipped: N / reason: env`. 집계 단위 = **선언 행**(파일 단위 금지). 다중 레인은 부모-자식 영수증. 선언에 `expected_zero_unless`.
+   추가 필드(2곳 이상 요구): 선언 `scope`(패키지·대상 목록) · `runner` · `prebuild` · `runs_on` 에 post-deploy/lane · 승인·권한 식별 — 영수증 `skipped` ·
+   `range` · 러너 설정 해시. 못 채울 것은 비움 허용: `dirty`(컨테이너) · N/M(tsc·빌드·린터 → 파일 수) · `harness:/product:`(한 명령이 둘을 돌리면 러너가
+   쪼갠다) · `kind: 수용` 영수증(사람 — 수기 허용 예외). **소급 없음** — 신규 WO 부터.
 4. `health` — 차단 검사별 최신 영수증 포인터·나이 INFO. 선언 부재는 무기입(INFO), 크래시 0.
 5. `work-close` — `evidence:` 가 영수증(커밋·검사명)을 인용하는지 CLARIFY.
 

@@ -9,5 +9,5 @@
 | [WO-10a-1] | E6 시나리오 A/B 1사이클 (팔 2개 × 5런) | PRO-10 | Draft | 해당없음 |
 | [WO-22a-1] | 하류 통합 설문 회수(어답터 3곳 × 도구 3종) → [PRO-22] H1~H5 · [PRO-23] 전제 · 제거/제안 후보 | PRO-22 | Active | 있음 |
 | [WO-22b-1] | 검사 선언 + 실행 영수증 — [PRO-22] §3 단계 1·2 구현 (0건 검사 = 실패 포함) | PRO-22 | Active | 해당없음 |
-| [WO-24a-1] | 초안 검토 회수(어답터 3곳 · claude 3 + antigravity 1) → [PRO-24]·[PRO-25]·[PRO-26] 미결 판정 입력 + 판단층 비용 실측 | PRO-24 | Active | 해당없음 |
+| [WO-24a-1] | 초안 검토 회수(어답터 3곳 · claude 3 + antigravity 1) → [PRO-24]·[PRO-25]·[PRO-26] 미결 판정 입력 + 판단층 비용 실측 | PRO-24 | Active | 있음 |
 <!-- worktable:end -->
