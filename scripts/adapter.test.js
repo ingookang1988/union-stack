@@ -145,5 +145,20 @@ check('upstreamIgnored 파싱 + 정규화', JSON.stringify(ui.upstreamIgnored) =
 check('upstreamIgnored 배열 아님 → 경고', parseConfig('{"upstreamIgnored": "x"}').warnings.some(w => w.includes('upstreamIgnored')));
 check('load 기본값에 budgets {} · upstreamIgnored []', (() => { const l = load(require('os').tmpdir()); return l.budgets && Object.keys(l.budgets).length === 0 && Array.isArray(l.upstreamIgnored); })());
 
+// --- [PRO-28] ① sections 별칭 맵(1:N + 접두) — 센서스 3회차: 한 의미에 표기 3~5종, `## 증거` 0건 ---
+const { normalizeHeading, resolveSection, missingSections, SECTION_KEYS } = require('./adapter');
+check('SECTION_KEYS = 발행 계약 3절', JSON.stringify([...SECTION_KEYS]) === JSON.stringify(['목표', '수용 기준', '증거']));
+const sc = parseConfig('{"sections": {"목표": ["목적", " 목적·진입 조건 "], "수용 기준": ["수용 게이트", "완료 기준"], "증거": ["검증"], "배경": ["x"], "진행": 3}}');
+check('sections: 알려진 키만 + 값 정규화 + 경고 2(알 수 없는 키 · 배열 아님)', JSON.stringify(sc.sections) === JSON.stringify({ '목표': ['목적', '목적·진입 조건'], '수용 기준': ['수용 게이트', '완료 기준'], '증거': ['검증'] }) && sc.warnings.filter(w => w.includes('sections')).length === 2);
+check('sections 객체 아님 → 경고 + 빈 맵', parseConfig('{"sections": []}').warnings.some(w => w.includes('sections')) && Object.keys(parseConfig('{"sections": []}').sections).length === 0);
+check('normalizeHeading: 선두 번호·공백·꼬리 콜론', normalizeHeading(' 1.  목적·진입   조건 : ') === '목적·진입 조건' && normalizeHeading('2) 수용  기준') === '수용 기준');
+check('resolveSection: 맵 없음 = 상류 표기 정확·접두(현행)', resolveSection(null, '목표') === '목표' && resolveSection(null, '목표 및 범위') === '목표' && resolveSection(null, '목적') === null);
+check('resolveSection: 별칭 정확 일치', resolveSection(sc, '목적') === '목표' && resolveSection(sc, '완료 기준') === '수용 기준' && resolveSection(sc, '검증') === '증거');
+check('resolveSection: 별칭 접두 일치 + 번호 정규화', resolveSection(sc, '1. 목적·진입 조건') === '목표' && resolveSection(sc, '수용 게이트 (v2)') === '수용 기준');
+check('resolveSection: 서사 절은 해소 안 됨(진행 기록은 증거가 아니다)', resolveSection(sc, '진행 기록') === null && resolveSection(sc, '배경') === null);
+check('missingSections: 맵으로 3절 충족', JSON.stringify(missingSections(sc, '## 1. 목적\n본문\n## 완료 기준\n## 검증\n')) === '[]');
+check('missingSections: 맵 없으면 상류 표기만', JSON.stringify(missingSections(null, '## 목적\n## 수용 기준\n')) === JSON.stringify(['목표', '증거']));
+check('missingSections: H3 는 안 센다', JSON.stringify(missingSections(sc, '### 목표\n## 수용 기준\n## 증거\n')) === JSON.stringify(['목표']));
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -23,6 +23,8 @@
 //                     env · cost(push·nightly·manual-paid) · expected_zero_unless(diff·env) · scope · runner · known_failures. ci.js 가 돌리고 영수증을 쓴다.
 //   · `localOwned`  → 어답터 고유 파일 글롭([PRO-24] ①(b)). template-update 가 이 파일들을 템플릿 소유로 보지 않는다("상류에서 사라진 파일" 오보 0,
 //                     `--apply` 가 건드리지 않음). 상류 매니페스트가 열거한 파일과 글롭이 겹치면 sync 가 우선이다(경고).
+//   · `sections`    → 발행 계약 3절의 어답터 표기 별칭 맵([PRO-28] ①) {"목표":["목적","목적·진입 조건"], "수용 기준":[…], "증거":[…]}. 정규화(선두 번호·공백) 뒤
+//                     정확 → 접두 일치. 매칭 실패는 CLARIFY. 문서는 안 고친다(센서스 3회차: 한 의미에 표기 3~5종, `## 증거` 0건 — 증거는 frontmatter evidence 로 충족).
 //   · `budgets`     → 부트스트랩 예산 재캘리브레이션 {project·profile·handoff·total}(양수 토큰). context-budget·handoff-linter·health·dashboard 가
 //                     기본값 대신 쓴다 — 어답터 실측: 예산을 스크립트 포크로 박아 두면 갱신마다 소실 위험.
 //   · `upstreamIgnored` → 상류 파일 **거부** 글롭. template-update 가 배송·보고에서 뺀다(localOwned 와 달리 매니페스트 배송보다 우선) —
@@ -37,8 +39,10 @@ const fs = require('fs');
 const path = require('path');
 
 const CONFIG_PATH = '.union-stack/adapter.json';
-const DEFAULTS = { private: false, zfsIgnored: [], statusMap: {}, evidenceFields: {}, lineage: { arithmeticFrom: 0 }, checks: [], retro: {}, localOwned: [], budgets: {}, upstreamIgnored: [] };
-const KNOWN_KEYS = new Set(['private', 'zfsIgnored', 'statusMap', 'evidenceFields', 'lineage', 'checks', 'retro', 'localOwned', 'budgets', 'upstreamIgnored', '$schema']);
+const DEFAULTS = { private: false, zfsIgnored: [], statusMap: {}, evidenceFields: {}, lineage: { arithmeticFrom: 0 }, checks: [], retro: {}, localOwned: [], budgets: {}, upstreamIgnored: [], sections: {} };
+const KNOWN_KEYS = new Set(['private', 'zfsIgnored', 'statusMap', 'evidenceFields', 'lineage', 'checks', 'retro', 'localOwned', 'budgets', 'upstreamIgnored', 'sections', '$schema']);
+// 발행 계약의 필수 3절([PRO-19] — sprint/_GUIDE §Anatomy). [PRO-28] ①: 키는 이 상류 *의미*, 값은 어답터 표기 별칭(1:N).
+const SECTION_KEYS = new Set(['목표', '수용 기준', '증거']);
 // 부트스트랩 예산 재캘리브레이션 키(어답터 실측: 포크로 handoff 2200 을 박아 두면 매 갱신이 소실 위험) — context-budget BUDGETS + total.
 const BUDGET_KEYS = new Set(['project', 'profile', 'handoff', 'total']);
 const RETRO_KEYS = new Set(['issuance', 'archiveDebt', 'staleDays', 'staleCount', 'gcPlans', 'planeLagDays', 'distill', 'ledgerKb', 'off']);
@@ -49,7 +53,7 @@ const ZERO_CONDS = new Set(['diff', 'env']);
 const LINEAGE_KEYS = new Set(['arithmeticFrom']);
 // evidenceFields 가 별칭을 달 수 있는 상류 필드 — work-close 의 닫힘 계약이 읽는 둘뿐이다.
 const ALIASABLE_FIELDS = new Set(['evidence', 'closed_by']);
-const fresh = present => ({ ...DEFAULTS, zfsIgnored: [], statusMap: {}, evidenceFields: {}, lineage: { arithmeticFrom: 0 }, checks: [], retro: {}, localOwned: [], budgets: {}, upstreamIgnored: [], warnings: [], present });
+const fresh = present => ({ ...DEFAULTS, zfsIgnored: [], statusMap: {}, evidenceFields: {}, lineage: { arithmeticFrom: 0 }, checks: [], retro: {}, localOwned: [], budgets: {}, upstreamIgnored: [], sections: {}, warnings: [], present });
 
 /**
  * JSON 텍스트 → 정규화된 설정(순수 — FS 비의존).
@@ -139,6 +143,16 @@ function parseConfig(txt) {
       }
     } else out.warnings.push(`${CONFIG_PATH}: 'budgets' 는 객체여야 함 — 무시됨`);
   }
+  if ('sections' in j) {
+    const sec = j.sections;
+    if (sec && typeof sec === 'object' && !Array.isArray(sec)) {
+      for (const [k, v] of Object.entries(sec)) {
+        if (!SECTION_KEYS.has(k)) { out.warnings.push(`${CONFIG_PATH}: 'sections.${k}' 는 발행 계약 절(${[...SECTION_KEYS].join('·')})이 아니다 — 무시됨`); continue; }
+        if (Array.isArray(v) && v.every(x => typeof x === 'string' && x.trim())) out.sections[k] = v.map(normalizeHeading);
+        else out.warnings.push(`${CONFIG_PATH}: 'sections.${k}' 는 별칭 문자열 배열 — 무시됨`);
+      }
+    } else out.warnings.push(`${CONFIG_PATH}: 'sections' 는 객체여야 함 — 무시됨`);
+  }
   if ('upstreamIgnored' in j) {
     if (Array.isArray(j.upstreamIgnored) && j.upstreamIgnored.every(x => typeof x === 'string' && x.trim())) {
       out.upstreamIgnored = j.upstreamIgnored.map(x => x.trim().replace(/\\/g, '/').replace(/^\.\//, ''));
@@ -165,6 +179,33 @@ function parseConfig(txt) {
     } else out.warnings.push(`${CONFIG_PATH}: 'lineage' 는 객체여야 함 — 무시됨`);
   }
   return out;
+}
+
+/** 헤딩 정규화(순수): 선두 번호('1. '·'2) ')·꼬리 콜론·공백 — 센서스 headingDist 와 같은 규약. */
+function normalizeHeading(h) {
+  return String(h == null ? '' : h).trim().replace(/^\d+[.)]\s*/, '').replace(/\s*:\s*$/, '').replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * 헤딩 → 발행 계약 절 의미(순수) | null. 맵 없음 = 상류 표기의 정확·접두 일치(현행 `^##\s*목표` 와 같은 뜻).
+ * 맵 있음 = 거기에 별칭의 정확·접두 일치를 더한다([PRO-28] §7 잠정: 로컬 표기가 의미/별칭의 접두를 *가질* 때만 — 역방향 없음).
+ */
+function resolveSection(cfg, heading) {
+  const h = normalizeHeading(heading);
+  if (!h) return null;
+  const map = (cfg && cfg.sections) || {};
+  for (const key of SECTION_KEYS) {
+    const names = [key, ...(Array.isArray(map[key]) ? map[key] : [])];
+    if (names.some(n => h === n || h.startsWith(n))) return key;
+  }
+  return null;
+}
+
+/** 문서 텍스트의 H2 헤딩으로 해소되지 않은 필수 절(순수). 증거의 frontmatter 충족은 호출부(work-close)가 더한다. */
+function missingSections(cfg, txt) {
+  const found = new Set();
+  for (const m of String(txt || '').matchAll(/^##\s+(.+?)\s*$/gm)) { const k = resolveSection(cfg, m[1]); if (k) found.add(k); }
+  return [...SECTION_KEYS].filter(k => !found.has(k));
 }
 
 /** 이 ID 에 ID 산술 상속이 적용되는가(순수) — 숫자 머리가 arithmeticFrom 이상이면 산술, 아래면 frontmatter 만([PRO-27] ③). */
@@ -218,4 +259,4 @@ function isTemplateRepo(root = path.resolve(__dirname, '..')) {
   } catch { return false; }
 }
 
-module.exports = { CONFIG_PATH, DEFAULTS, ALIASABLE_FIELDS, CHECK_KINDS, CHECK_COSTS, parseConfig, load, isTemplateRepo, mapStatus, fieldAliases, arithmeticApplies };
+module.exports = { CONFIG_PATH, DEFAULTS, ALIASABLE_FIELDS, CHECK_KINDS, CHECK_COSTS, SECTION_KEYS, parseConfig, load, isTemplateRepo, mapStatus, fieldAliases, arithmeticApplies, normalizeHeading, resolveSection, missingSections };

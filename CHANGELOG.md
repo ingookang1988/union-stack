@@ -12,6 +12,11 @@ design, see [`DESIGN_RATIONALE.md`](./DESIGN_RATIONALE.md). Entries marked **⚠
 action in already-adopted projects.
 
 ## [Unreleased]
+- **PRO-28 ①② — the section contract becomes a read-time mapping.** `adapter.json sections` maps the three required WO
+  sections (목표 · 수용 기준 · 증거) to an adopter's own headings (1:N, normalised, exact-then-prefix). `work-close` resolves the
+  issuance lint through the map, accepts frontmatter `evidence:` in place of a `## 증거` section, and reports an unmatched
+  document as CLARIFY naming the map. Without a map the behaviour is unchanged. Dashboard sprint and norm card titles now render
+  inline code and bold instead of leaking the raw markers. No migration.
 - **Canary fixes from a third adopter: budgets and refusals become configuration (ADR-29).** `adapter.json budgets`
   (`project · profile · handoff · total`) recalibrates the bootstrap token budgets for `context-budget`, `handoff-linter`
   (`analyze(text, budget)`), `health` and the dashboard — the adopter had forked `context-budget.js` for a 2,200-token HANDOFF

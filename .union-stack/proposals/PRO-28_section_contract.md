@@ -1,10 +1,12 @@
 <!-- [Proposal] 절 계약 + 부분 인출 — 문서의 필수 절을 설정(별칭 맵)으로 선언하고, 도구는 절 단위로 읽고 쓴다(scaffold). PRO-β(상시 주입 위생) 흡수.
-     근거 = 어답터 3곳 센서스 3회차(eval/CENSUS.md, WO H2 헤딩 분포) + PRO-28 질문 3개 회신 2곳(원문 비공개 — 익명 집계만). 인간 판단 대기. -->
+     근거 = 어답터 3곳 센서스 3회차(eval/CENSUS.md, WO H2 헤딩 분포) + PRO-28 질문 3개 회신 2곳(원문 비공개 — 익명 집계만). 승인 2026-10-17([ADR-55]). -->
 ---
 id: PRO-28
 title: 절 계약 + 부분 인출 — 필수 절은 설정으로 선언하고, 도구는 절 단위로 읽고 뼈대로 쓴다 (PRO-β 흡수)
-status: Proposed
-version: 0.1
+status: Approved
+decided_by: ingookang1988 (chat approval, 2026-10-17)
+reason: "절 계약 + 부분 인출 v0.1 승인. 순서 ①② → ④ → ③ → 센서스 4회차 → ⑤ 별도 승인. §7 미결 4건은 잠정값으로 진행(접두는 전방만 · 증거는 frontmatter 충족 · ⑤ AGENTS.md 수록은 [PRO-13] §4-4 와 함께 · scaffold 표기는 첫 별칭). 첫 WO = [WO-28a-1]."
+version: 1.0
 ---
 
 # [PRO-28] 절 계약 + 부분 인출

@@ -18,7 +18,7 @@ const { walkFiles } = require('./fs_walk');
 const { parse, parseId, isDescendant, ancestorChain } = require('./zfs_util');
 const { buildIndex } = require('./zfs_index');
 const { withContract, OUTCOME, toShellExit } = require('./gate-contract');
-const { load: loadAdapter, mapStatus, fieldAliases } = require('./adapter');
+const { load: loadAdapter, mapStatus, fieldAliases, missingSections: sectionsMissing } = require('./adapter');
 const receipts = require('./receipts');
 const { labelMap, renderId } = require('./label');
 
@@ -94,12 +94,15 @@ function parseWo(relFile, txt, cfg = null) {
   const base = relFile.split('/').pop();
   const p = parse(base);
   if (!p || p.domain !== 'WO') return null;
-  const missingSections = REQUIRED_SECTIONS.filter(s => !new RegExp('^##\\s*' + s, 'm').test(String(txt || '')));
+  // [PRO-28] ①②: 절은 adapter.json sections 별칭 맵으로 해소(맵 없음 = 상류 표기 정확·접두 — 현행과 동일).
+  let missingSections = sectionsMissing(cfg, txt);
   const fm = frontmatter(txt);
   if (!fm) return { id: p.id, file: relFile, status: null, parent: null, evidence: null, closed_by: [], missingSections, malformed: true };
   const raw = field(fm, 'status');
   const pick = key => { for (const k of fieldAliases(cfg, key)) { const v = field(fm, k); if (v) return v; } return null; };
   const pickList = key => { for (const k of fieldAliases(cfg, key)) { const v = listField(fm, k); if (v.length) return v; } return []; };
+  // 증거는 절이 없어도 frontmatter evidence: 로 충족([PRO-28] ① — 어답터 실측: `## 증거` 0건, 증거는 frontmatter).
+  if (pick('evidence')) missingSections = missingSections.filter(s => s !== '증거');
   return {
     id: p.id,
     file: relFile,
@@ -128,7 +131,7 @@ function checkIssuance(wo, index = []) {
   if (wo.missingSections && wo.missingSections.length) {
     issues.push({
       code: 'anatomy-missing', outcome: 'CLARIFY',
-      msg: `필수 절 누락: ${wo.missingSections.map(s => '## ' + s).join(' · ')} (sprint/_GUIDE §Anatomy).`,
+      msg: `필수 절 누락: ${wo.missingSections.map(s => '## ' + s).join(' · ')} (sprint/_GUIDE §Anatomy). 다른 표기를 쓴다면 adapter.json sections 별칭 맵으로 읽힌다([PRO-28] — 문서는 안 고친다).`,
     });
   }
   if (!wo.parent) {

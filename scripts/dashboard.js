@@ -306,7 +306,7 @@ function sprintView(sprint, today) {
       ? w.closed_by.map(t => `<code>${esc(t.split('/').pop())}</code>`).join('')
       : '<span class="note">없음</span>';
     return `<section class="card norm">
-    <h2>[WO-${esc(w.id)}] <span class="ntitle">${esc(w.title || '')}</span></h2>
+    <h2>[WO-${esc(w.id)}] <span class="ntitle">${proseInline(esc(w.title || ''))}</span></h2>
     <div class="meta"><span class="pill ${w.status === 'Verifying' ? 'aging' : 'fresh'}">status<b>${esc(w.status || '없음')}</b></span>
       <span class="pill">부모<b>${esc(w.parent || '미기입')}</b></span>${evPill(w)}</div>
     <div class="frow"><span class="flabel">상위 흔적</span><span class="fvals">${traces}</span></div>
@@ -706,7 +706,7 @@ function normView(norms, sync, concerns) {
   const card = n => {
     const g = GRADE[n.grade] || GRADE.isolated;
     return `<section class="card norm">
-    <h2>${esc(n.key)} <span class="ntitle">${esc(n.title || '')}</span></h2>
+    <h2>${esc(n.key)} <span class="ntitle">${proseInline(esc(n.title || ''))}</span></h2>
     <div class="meta"><span class="pill ${g.cls}"><b>${g.label}</b></span>
       <span class="note">${esc(g.why)}</span></div>
     <div class="meta"><span class="note">${esc(n.file)} · ${n.kb}KB · status ${esc(statusHead(n.status) || '없음')} · tier ${esc(n.tier || '미기입')}</span></div>

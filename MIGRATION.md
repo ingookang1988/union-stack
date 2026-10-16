@@ -132,6 +132,11 @@ This file is adopter-owned — upstream never touches it.
   forks, pass paths: `node scripts/template-update.js --apply --force scripts/dashboard.js`. Scripts not listed in the manifest are local by default, so most adopters need
   no `localOwned` at all; upstream-only scripts (eval, adopter-arm, census, …) are no longer delivered and leftover copies
   are listed as removable.
+- `sections: { "목표": [...], "수용 기준": [...], "증거": [...] }` — your own headings for the three required WO sections
+  ([PRO-28] ①). Keys are the upstream meanings; values are local spellings (`"목적"`, `"목적·진입 조건"`, `"수용 게이트"`, `"검증"`, …).
+  Headings are normalised (leading numbers, trailing colons, whitespace) and matched exactly, then by prefix. `work-close --table`
+  resolves the issuance contract through the map; an unmatched document is a CLARIFY that names the map, never a REJECT, and
+  existing documents are not rewritten. A `## 증거` section is not required when frontmatter `evidence:` is present.
 - `budgets: { project, profile, handoff, total }` — recalibrated bootstrap token budgets (positive integers; defaults 2000 · 800 ·
   1500 · 4000). `context-budget`, `handoff-linter`, `health` and the dashboard read them, so a repo whose HANDOFF legitimately
   needs 2,200 tokens declares it here instead of forking `context-budget.js` (a fork is overwritten or preserved stale on every

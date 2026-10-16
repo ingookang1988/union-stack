@@ -84,10 +84,10 @@ check('PHASE 없으면 info 없음', checkClosure(wo, traces, [], []).info.lengt
 
 // --- 발행 점검 ([PRO-19] ① — 종료 의례의 상류 대칭) ---
 const IDX = [{ domain: 'PLAN', id: '01a', file: 'p.md' }, { domain: 'PRO', id: '10', file: 'q.md' }];
-// 픽스처 WO 는 `## 목표`만 있다 → 나머지 두 절이 걸린다(sprint/_GUIDE §Anatomy 이행).
-check('필수 절 누락 검출', (() => {
+// 픽스처 WO 는 `## 목표`만 있다 → '수용 기준'이 걸린다. '증거'는 frontmatter evidence: 가 있어 충족([PRO-28] ① — 절 불요).
+check('필수 절 누락 검출(증거는 frontmatter 로 충족)', (() => {
   const i = checkIssuance(wo, IDX).find(x => x.code === 'anatomy-missing');
-  return i && i.msg.includes('수용 기준') && i.msg.includes('증거');
+  return i && i.msg.includes('수용 기준') && !i.msg.includes('## 증거');
 })());
 const FULL_WO = parseWo('.union-stack/sprint/WO-01a-1_x.md', WO + '\n## 수용 기준\n- x\n## 증거\n- y');
 check('3절 완비 + 실존 parent → 이슈 0', checkIssuance(FULL_WO, IDX).length === 0);
@@ -156,6 +156,19 @@ check('선언 없는 레포는 묻지 않는다', !checkClosure(evWo('테스트 
 // --- [PRO-26] ④ 작업대 행의 파생 라벨 — label 있으면 `[WO-id · label]`, 없으면 기존 꼴 ---
 check('라벨 있는 레코드', buildTable([{ ...FULL_WO, status: 'Active', label: 'auth_wiring' }]).includes('| [WO-01a-1 · auth_wiring] |'));
 check('라벨 없는 레코드는 기존 꼴', buildTable([{ ...FULL_WO, status: 'Active' }]).includes('| [WO-01a-1] |'));
+
+// --- [PRO-28] ② 발행 린트가 sections 별칭 맵을 읽는다 — 매칭 실패는 CLARIFY(현행 anatomy-missing), REJECT 아님 ---
+const { parseConfig: parseCfgS } = require('./adapter');
+const cfgS = parseCfgS('{"sections": {"목표": ["목적·진입 조건"], "수용 기준": ["완료 기준"], "증거": ["검증"]}}');
+const ALIAS_WO = ['---', 'id: WO-50', 'status: Active', 'parent: PLAN-01a', 'closed_by: []', '---', '## 1. 목적·진입 조건', '## 완료 기준', '## 검증'].join('\n');
+check('별칭 맵: 어답터 표기 3절 → 누락 0', parseWo('.union-stack/sprint/WO-50_x.md', ALIAS_WO, cfgS).missingSections.length === 0);
+check('맵 없음: 같은 문서는 3절 누락(현행 유지)', parseWo('.union-stack/sprint/WO-50_x.md', ALIAS_WO, null).missingSections.length === 3);
+// 증거는 절이 없어도 frontmatter evidence: 로 충족([PRO-28] ① — 회신 2곳 일치: `## 증거` 0건, 증거는 frontmatter)
+const EV_WO = ['---', 'id: WO-51', 'status: Active', 'parent: PLAN-01a', 'evidence: "npm test 3/3"', 'closed_by: []', '---', '## 목표', '## 수용 기준'].join('\n');
+check('frontmatter evidence 가 있으면 증거 절 누락 아님', JSON.stringify(parseWo('.union-stack/sprint/WO-51_x.md', EV_WO, null).missingSections) === '[]');
+check('evidence 도 절도 없으면 증거 누락', JSON.stringify(parseWo('.union-stack/sprint/WO-51_x.md', EV_WO.replace('evidence: "npm test 3/3"\n', ''), null).missingSections) === '["증거"]');
+check('발행 점검: 별칭 맵 WO 는 anatomy 이슈 0', !checkIssuance(parseWo('.union-stack/sprint/WO-50_x.md', ALIAS_WO, cfgS), [{ domain: 'PLAN', id: '01a', file: 'p.md' }]).some(i => i.code === 'anatomy-missing'));
+check('발행 점검: 맵 없는 어답터 표기는 anatomy-missing(CLARIFY) + 맵 안내', (() => { const i = checkIssuance(parseWo('.union-stack/sprint/WO-50_x.md', ALIAS_WO, null), [{ domain: 'PLAN', id: '01a', file: 'p.md' }]).find(x => x.code === 'anatomy-missing'); return i && /sections/.test(i.msg); })());
 
 console.log(`work-close.test: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

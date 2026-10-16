@@ -191,6 +191,11 @@ const spFix = {
   archived: 3,
 };
 const sp = sprintView(spFix, '2026-08-19');
+// 제목도 평면 산문이다 — 코드 스팬·볼드가 원문 마커로 새면 안 된다(실측: WO 제목의 `sections` 가 대시보드 본문에 백틱으로 남음).
+const spTitle = sprintView({ ...spFix, wos: [{ ...spFix.wos[0], title: 'adapter.json `sections` **별칭** 맵' }] }, '2026-08-19');
+check('sprint: 제목의 코드 스팬·볼드가 렌더된다', spTitle.includes('<code>sections</code>') && spTitle.includes('<b>별칭</b>'));
+check('sprint: 제목에 원문 마커가 남지 않는다', !/`|\*\*/.test(spTitle.replace(/title="[^"]*"/g, '').replace(/<[^>]*>/g, '')));
+check('sprint: 제목 HTML 은 여전히 이스케이프', sprintView(spFix, '2026-08-19').includes('열린 것&lt;b&gt;x&lt;/b&gt;'));
 check('sprint: 타일 — 충족/활성 비율', sp.includes('1/2') && sp.includes('종료 의례 통과 가능'));
 check('sprint: 잠금 타일', sp.includes('Verifying 🔒'));
 check('sprint: 아카이브 계수', sp.includes('>3<'));
