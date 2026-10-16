@@ -22,7 +22,12 @@ version: 1.0
 ## 호출
 ```bash
 node scripts/upward-fetch.js WO-01a1-2
+node scripts/upward-fetch.js WO-01a1-2 --sections                 # + 부모 문서의 계약 절 발췌([PRO-28] ③)
+node scripts/upward-fetch.js WO-01a1-2 --sections "채택안,성공 바"  # + 지정 절(정규화 뒤 접두 일치)
 ```
+- **부분 인출 `--sections`**([PRO-28] ③, `scripts/section-fetch.js`): 맥락·LSN 문서를 H2 로 갈라 **계약 절**(adapter.json `sections` 로 해소되는 목표·수용 기준·증거)
+  과 지정 이름만 본문으로 주입하고, 나머지는 `(생략 N절 · ~M tok: 헤딩(~tok) …)` 한 줄 — 다음 인출의 좌표(목차)다. 절 경계 없는 문서는 머리 1,500 tok 까지. 문장은
+  만들지 않는다([ADR-12]). 플래그 없으면 출력 불변. MCP `upward_fetch(id, sections=true, extra="…")` 는 `excerpts` 로 같은 것을 낸다.
 같은 로직: 슬래시 커맨드 `/upward-fetch`, MCP `upward_fetch`, UserPromptSubmit 훅(자동 주입).
 - 조상 = **ID 산술 ∪ frontmatter 부모**(`parent:`·`plan:`, 도메인 무관 — PRO·우산 WO·중간 PLAN 도 루트)([PRO-27] ③). 선언 부모는 `← frontmatter 부모` 로 표시되고 그 조상까지 폐포로 따라간다. `adapter.json lineage.arithmeticFrom` 아래 구간은 산술을 끄고 선언 부모만 본다.
 - 계보 맥락이 **0건이면 `(없음)` 통과가 아니라 CLARIFY(exit 3)** — 기획 없는 진입인지, 부모를 frontmatter 에 선언해야 하는지 묻는다. 차단 아님.

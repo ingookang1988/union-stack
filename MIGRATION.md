@@ -140,6 +140,9 @@ This file is adopter-owned — upstream never touches it.
   New WOs: `node scripts/scaffold.js WO --parent <DOMAIN-ID> --title "…" --write` (PRO-28 ④) proposes the next number under the
   parent (or domain max + 1 below `lineage.arithmeticFrom`), refuses a dead parent or an existing file, and writes the three
   required sections using the **first alias** of each key in your `sections` map — so new documents follow your own spelling.
+  Reading: `node scripts/upward-fetch.js <ID> --sections [names]` ([PRO-28] ③) injects only the contract sections of each parent
+  document (resolved through the same map, plus any names you pass) and lists the omitted sections with their token size, so a
+  session no longer opens a 40–80 KB plan whole. The default output is unchanged.
 - `budgets: { project, profile, handoff, total }` — recalibrated bootstrap token budgets (positive integers; defaults 2000 · 800 ·
   1500 · 4000). `context-budget`, `handoff-linter`, `health` and the dashboard read them, so a repo whose HANDOFF legitimately
   needs 2,200 tokens declares it here instead of forking `context-budget.js` (a fork is overwritten or preserved stale on every

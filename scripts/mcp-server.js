@@ -10,8 +10,8 @@ const { lint } = require('./zfs-linter');
 const { version: VERSION } = require('../package.json'); // 단일 출처 — 버전 드리프트 방지
 
 const TOOLS = [
-  { name: 'upward_fetch', description: '작업 진입 맥락: ID의 부모 PLAN/FLOW/CON/ARCH/MTG + 같은 계보 LSN.',
-    inputSchema: { type: 'object', properties: { id: { type: 'string', description: 'ZFS ID·파일명·브래킷 ID' } }, required: ['id'] } },
+  { name: 'upward_fetch', description: '작업 진입 맥락: ID의 부모 PLAN/FLOW/CON/ARCH/MTG + 같은 계보 LSN. sections=true 면 부모 문서의 계약 절만 발췌(excerpts)로 함께 낸다([PRO-28] ③).',
+    inputSchema: { type: 'object', properties: { id: { type: 'string', description: 'ZFS ID·파일명·브래킷 ID' }, sections: { type: 'boolean', description: '계약 절 발췌 포함' }, extra: { type: 'string', description: '추가로 인출할 절 이름(쉼표 목록, 접두 일치)' } }, required: ['id'] } },
   { name: 'blast_radius', description: '수정·삭제 영향권: 대상의 모든 자손 + 잠금(Verifying) 여부.',
     inputSchema: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] } },
   { name: 'where_to_record', description: '과거/결정 기록 라우팅: kind→목적지(HANDOFF/사적메모리/lessons/proposals/ledger/HISTORY).',
@@ -28,7 +28,15 @@ function callTool(name, args = {}) {
   if ((name === 'upward_fetch' || name === 'blast_radius') && isUpstreamRef(args.id || '')) {
     return { id: args.id, external: true, note: '상류 참조(up:) — 로컬 색인에서 해소하지 않는 외부 참조([PRO-27] ①). 상류 레포에서 읽어라.' };
   }
-  if (name === 'upward_fetch') { const id = parseId(args.id || ''); if (!id) throw new Error(`bad id: ${args.id}`); return upwardFetch(id, buildIndex()); }
+  if (name === 'upward_fetch') {
+    const id = parseId(args.id || ''); if (!id) throw new Error(`bad id: ${args.id}`);
+    const r = upwardFetch(id, buildIndex());
+    if (!args.sections) return r;
+    const { fetchExcerpts } = require('./section-fetch');
+    const root = require('path').resolve(__dirname, '..');
+    const extra = String(args.extra || '').split(',').map(x => x.trim()).filter(Boolean);
+    return { ...r, excerpts: fetchExcerpts(root, [...r.context, ...r.lessons], { cfg: require('./adapter').load(root), extra }) };
+  }
   if (name === 'blast_radius') { const id = parseId(args.id || ''); if (!id) throw new Error(`bad id: ${args.id}`); return blastRadius(id, buildIndex()); }
   if (name === 'where_to_record') return whereToRecord(args.kind);
   if (name === 'zfs_lint') return { violations: lint() };

@@ -12,6 +12,11 @@ design, see [`DESIGN_RATIONALE.md`](./DESIGN_RATIONALE.md). Entries marked **⚠
 action in already-adopted projects.
 
 ## [Unreleased]
+- **PRO-28 ③ — `upward-fetch --sections [names]` injects parent documents by section.** New `scripts/section-fetch.js` splits a
+  document at H2, keeps the contract sections (resolved through `adapter.json sections`) plus any names given (prefix match), and
+  replaces the rest with one line — `(생략 N절 · ~M tok: heading(~tok) …)` — a table of contents for the next fetch. Documents
+  without sections are clipped to a 1,500-token head. The MCP `upward_fetch` tool takes `sections`/`extra` and returns
+  `excerpts`. Default output is unchanged. No migration.
 - **PRO-28 ④ — `scripts/scaffold.js` (TOOL-36) issues a WO skeleton in one line.** `node scripts/scaffold.js WO --parent PLAN-01a
   --title "…" [--slug …] [--lineage b] [--write]` proposes the next ID under the parent (letter-ending parent → `01a-N`, digit-ending →
   `28a-N`; below `lineage.arithmeticFrom` the domain max + 1), verifies the parent exists in the ZFS index, refuses an existing file,
