@@ -12,6 +12,13 @@ design, see [`DESIGN_RATIONALE.md`](./DESIGN_RATIONALE.md). Entries marked **⚠
 action in already-adopted projects.
 
 ## [Unreleased]
+- **Fixes from the third adopter's apply report (PRO-24 ① follow-up).** `work-close --table` no longer crashes when
+  `sprint/next.md` is absent (hand-ported repos): the check is a CLARIFY and `--write` creates the view with its marker block.
+  A prose `status:` that starts with an upstream word (`Active — core production green…`) is read as that word even without a
+  `statusMap` (exact match counted 2 of 440 WOs as active); local words (`Done`, `Complete`) still need the map.
+  `adapter.json sectionsExclude` pushes headings out of the alias match (`진행 기록`, `비목표`). `template-update --apply` now
+  **holds** an update that would require a symbol the preserved file does not export (it would crash on load) until the preserved file
+  is updated with `--force <path>`. The shipped `gate-contract.test` no longer requires the upstream-only `adopter-census`. No migration.
 - **Fixes from the first adopter's full apply report (PRO-24 ① follow-up).** `union-stack-kit` now anchors a file that matches
   the guessed clone tag with *that tag's* sha (it wrote the `main` sha, so byte-identical files were later reported as localForked
   and needed `--force`). `template-update` walks `ci/` and `docker-compose.harness.yml` locally (they re-appeared as "new" on

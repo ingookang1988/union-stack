@@ -137,7 +137,9 @@ This file is adopter-owned — upstream never touches it.
   Headings are normalised (leading numbers, trailing colons, whitespace) and matched exactly, then by prefix at a token boundary,
   then by a contiguous token run (`5. G5 완료 기준` → 수용 기준; `비목표` is not 목표; particles such as 와/과/은/는 are ignored
   on tokens). A heading resolves to **one** meaning — the longest matching alias wins — so a combined heading like `검증·완료 기준`
-  counts as 수용 기준 and the evidence is read from frontmatter `evidence:`. `work-close --table`
+  counts as 수용 기준 and the evidence is read from frontmatter `evidence:`. `sectionsExclude: [...]` lists headings that must
+  never match (`진행 기록`, `비목표`) even when an alias token overlaps. A `status:` that *starts* with an upstream word
+  (`Active — …`) is read as that word without a map; your own words still go through `statusMap`. `work-close --table`
   resolves the issuance contract through the map; an unmatched document is a CLARIFY that names the map, never a REJECT, and
   existing documents are not rewritten. A `## 증거` section is not required when frontmatter `evidence:` is present.
   New WOs: `node scripts/scaffold.js WO --parent <DOMAIN-ID> --title "…" --write` (PRO-28 ④) proposes the next number under the

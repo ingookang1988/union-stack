@@ -25,6 +25,7 @@
 //                     `--apply` 가 건드리지 않음). 상류 매니페스트가 열거한 파일과 글롭이 겹치면 sync 가 우선이다(경고).
 //   · `sections`    → 발행 계약 3절의 어답터 표기 별칭 맵([PRO-28] ①) {"목표":["목적","목적·진입 조건"], "수용 기준":[…], "증거":[…]}. 정규화(선두 번호·공백) 뒤
 //                     정확 → 접두 일치. 매칭 실패는 CLARIFY. 문서는 안 고친다(센서스 3회차: 한 의미에 표기 3~5종, `## 증거` 0건 — 증거는 frontmatter evidence 로 충족).
+//   · `sectionsExclude` → 별칭에 걸려도 밀어낼 헤딩(정규화 뒤 정확·토큰 경계 접두) — "진행 기록"·"비목표" 처럼 토큰이 겹치지만 의미가 다른 절.
 //   · `budgets`     → 부트스트랩 예산 재캘리브레이션 {project·profile·handoff·total}(양수 토큰). context-budget·handoff-linter·health·dashboard 가
 //                     기본값 대신 쓴다 — 어답터 실측: 예산을 스크립트 포크로 박아 두면 갱신마다 소실 위험.
 //   · `upstreamIgnored` → 상류 파일 **거부** 글롭. template-update 가 배송·보고에서 뺀다(localOwned 와 달리 매니페스트 배송보다 우선) —
@@ -39,8 +40,8 @@ const fs = require('fs');
 const path = require('path');
 
 const CONFIG_PATH = '.union-stack/adapter.json';
-const DEFAULTS = { private: false, zfsIgnored: [], statusMap: {}, evidenceFields: {}, lineage: { arithmeticFrom: 0 }, checks: [], retro: {}, localOwned: [], budgets: {}, upstreamIgnored: [], sections: {} };
-const KNOWN_KEYS = new Set(['private', 'zfsIgnored', 'statusMap', 'evidenceFields', 'lineage', 'checks', 'retro', 'localOwned', 'budgets', 'upstreamIgnored', 'sections', '$schema']);
+const DEFAULTS = { private: false, zfsIgnored: [], statusMap: {}, evidenceFields: {}, lineage: { arithmeticFrom: 0 }, checks: [], retro: {}, localOwned: [], budgets: {}, upstreamIgnored: [], sections: {}, sectionsExclude: [] };
+const KNOWN_KEYS = new Set(['private', 'zfsIgnored', 'statusMap', 'evidenceFields', 'lineage', 'checks', 'retro', 'localOwned', 'budgets', 'upstreamIgnored', 'sections', 'sectionsExclude', '$schema']);
 // 발행 계약의 필수 3절([PRO-19] — sprint/_GUIDE §Anatomy). [PRO-28] ①: 키는 이 상류 *의미*, 값은 어답터 표기 별칭(1:N).
 const SECTION_KEYS = new Set(['목표', '수용 기준', '증거']);
 // 부트스트랩 예산 재캘리브레이션 키(어답터 실측: 포크로 handoff 2200 을 박아 두면 매 갱신이 소실 위험) — context-budget BUDGETS + total.
@@ -53,7 +54,7 @@ const ZERO_CONDS = new Set(['diff', 'env']);
 const LINEAGE_KEYS = new Set(['arithmeticFrom']);
 // evidenceFields 가 별칭을 달 수 있는 상류 필드 — work-close 의 닫힘 계약이 읽는 둘뿐이다.
 const ALIASABLE_FIELDS = new Set(['evidence', 'closed_by']);
-const fresh = present => ({ ...DEFAULTS, zfsIgnored: [], statusMap: {}, evidenceFields: {}, lineage: { arithmeticFrom: 0 }, checks: [], retro: {}, localOwned: [], budgets: {}, upstreamIgnored: [], sections: {}, warnings: [], present });
+const fresh = present => ({ ...DEFAULTS, zfsIgnored: [], statusMap: {}, evidenceFields: {}, lineage: { arithmeticFrom: 0 }, checks: [], retro: {}, localOwned: [], budgets: {}, upstreamIgnored: [], sections: {}, sectionsExclude: [], warnings: [], present });
 
 /**
  * JSON 텍스트 → 정규화된 설정(순수 — FS 비의존).
@@ -143,6 +144,10 @@ function parseConfig(txt) {
       }
     } else out.warnings.push(`${CONFIG_PATH}: 'budgets' 는 객체여야 함 — 무시됨`);
   }
+  if ('sectionsExclude' in j) {
+    if (Array.isArray(j.sectionsExclude) && j.sectionsExclude.every(x => typeof x === 'string' && x.trim())) out.sectionsExclude = j.sectionsExclude.map(normalizeHeading).filter(Boolean);
+    else out.warnings.push(`${CONFIG_PATH}: 'sectionsExclude' 는 헤딩 문자열 배열 — 무시됨`);
+  }
   if ('sections' in j) {
     const sec = j.sections;
     if (sec && typeof sec === 'object' && !Array.isArray(sec)) {
@@ -193,6 +198,9 @@ function normalizeHeading(h) {
 function resolveSection(cfg, heading) {
   const h = normalizeHeading(heading);
   if (!h) return null;
+  // 명시 제외(어답터 C 제안): 토큰이 겹치지만 의미가 다른 헤딩(진행 기록 · 비목표) — 정확 또는 토큰 경계 접두.
+  const excl = (cfg && cfg.sectionsExclude) || [];
+  if (excl.some(x => h === x || (h.startsWith(x) && /^[\s·/,(:：—-]/.test(h.slice(x.length))))) return null;
   const map = (cfg && cfg.sections) || {};
   const tokens = h.split(/[\s·/,()]+/).filter(Boolean);
   // 토큰 연속 일치(어답터 A 2차 실측: "5. G5 완료 기준"·"검증·완료 기준"·"2. 목표와 공통 완료 기준" 은 접두로 0건) — 토큰 경계라 "비목표"·"목표와" 는 목표가 아니다.
@@ -234,14 +242,16 @@ function arithmeticApplies(cfg, id) {
  * 로컬 상태 → 상류 어휘(순수). 정확 일치 → **첫 토큰** 일치(어답터 실측: `Done (2026-01-01)` 같은 산문 status 가 흔하다 — 센서스 1회차) → 그대로.
  * 매핑에 없으면 강제하지 않는다. null 은 null.
  */
+const UPSTREAM_STATUS = new Set(['Draft', 'Active', 'Verifying', 'Closed']);
 function mapStatus(cfg, raw) {
   if (raw == null) return null;
-  const m = cfg && cfg.statusMap;
-  if (!m) return raw;
+  const m = (cfg && cfg.statusMap) || {};
   const has = k => Object.prototype.hasOwnProperty.call(m, k);
   if (has(raw)) return m[raw];
   const head = String(raw).trim().split(/\s+/)[0];
-  return head && has(head) ? m[head] : raw;
+  if (head && has(head)) return m[head];
+  // 상류 어휘로 시작하는 산문 status("Active — core production green…")는 첫 토큰(어답터 C 실측: 정확 일치로는 440 중 2). 로컬 어휘는 맵 없이 원문.
+  return head && UPSTREAM_STATUS.has(head) ? head : raw;
 }
 
 /** 상류 필드의 읽기 순서(순수): 상류 필드 → 로컬 별칭들. */

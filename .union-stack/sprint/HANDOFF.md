@@ -18,6 +18,9 @@ version: 1.0
 - A 재적용 회신: ①②④⑧ 확인 · 절 해소 수용 기준 0→50% · anatomy-missing 16→13 · `statusMap` 선언으로 retro due 3지표가 깨어남([PRO-25] 실측). 추가 수리 2: 의존 불일치 검사에
   **이미 동기화된 파일** 포함 · 토큰 매칭에 조사 제거("목표와"). 3차: 경고가 41쌍(실제 1) 소음 → **심볼 수준** 대조로 좁힘. A 최종 절 해소(별칭 9 추가): 목표 14/16 · 수용 기준 14/16 ·
   증거 12/16 · anatomy-missing 16→6 — 성공 바 90% 에 각 1건 부족, 잔여는 규칙 밖(헤딩 겸용 1 · 절 부재 1 · H2 없음 1 · evidence 소급 4). ⑥ 보류.
+- **어답터 C 2차 회신** → 확인 4(앵커·의존 블록·sections·lineage-tree) + 수리 5: `work-close --table` next.md 부재 ENOENT → CLARIFY/--write 생성 · 상류 어휘 머리 산문 status 첫 토큰
+  (정확 일치로 440 중 2 활성) · `sectionsExclude` · --apply **HOLD**(없는 심볼 require 갱신 보류) · gate-contract.test 의 adopter-census require. ④ ci/compose "영구 신규"는 현재
+  코드로 C 트리 재현 0(갱신 전 측정). C 절 해소(440 전체): 목표 44% · 수용 기준 23% · 증거 60% — 레거시 `진행`만 있는 60여 건은 닫히지 않는다 → 센서스 4회차 매칭률은 **활성 WO 기준**.
 
 ## 2. 변경 위치 (ID 목록 — Upward Fetching 진입점)
 - 승인·원장: [PRO-28] v1.0 · [ADR-55] · 이전 [ADR-53] [ADR-54]. 오더(archived): [WO-28a-1]~[WO-28a-3] · [WO-27a-1]~[WO-24c-2] 10건.

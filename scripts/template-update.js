@@ -241,6 +241,18 @@ function staleDeps(readFn, targets, pending) {
   return out;
 }
 
+/**
+ * --apply 보류(순수, 어답터 C 제안): 심볼 불일치(missing.length>0)가 있는 갱신 대상은 받으면 로드 크래시다 — 보존 파일을 --force 로 함께 갱신할 때만 간다.
+ * 반환 {targets, held:[stale 항목]}. force === true 면 보류 없음.
+ */
+function holdTargets(targets, stale, force = false) {
+  if (force === true) return { targets: [...targets], held: [] };
+  const forced = new Set(Array.isArray(force) ? force : []);
+  const held = (stale || []).filter(s => targets.includes(s.file) && s.missing && s.missing.length && !forced.has(s.dep));
+  const heldFiles = new Set(held.map(h => h.file));
+  return { targets: targets.filter(t => !heldFiles.has(t)), held };
+}
+
 function migrationActions(changelogTxt, fromVer, toVer) {
   const out = [];
   let inRange = false;
@@ -436,7 +448,13 @@ async function main(argv = process.argv.slice(2)) {
 
   if (!drift) { console.log('\n최신 상태 — 드리프트 없음.'); return OUTCOME.PASS; }
   if (apply) {
-    const { targets, skipped, unmatched } = ft;
+    const { skipped, unmatched } = ft;
+    const hold = holdTargets(ft.targets, stale, force);
+    const targets = hold.targets;
+    if (hold.held.length) {
+      console.log('\n  ⏸ 보류(HOLD) — 보존 파일에 없는 심볼을 require 하는 갱신은 받으면 로드 크래시다. 보존 파일을 `--force <경로>` 로 함께 갱신하거나 포크를 상류 인터페이스에 맞춰라:');
+      hold.held.forEach(h => console.log(`    ⏸ ${h.file} → ${h.dep} (없는 심볼: ${h.missing.join(', ')})`));
+    }
     console.log(`\n적용(sync만 — review·.union-stack 콘텐츠는 건드리지 않음)${force === true ? ' [--force: 개조 보호 전부 해제]' : Array.isArray(force) ? ` [--force: ${force.length}건만 보호 해제]` : ''}:`);
     if (unmatched.length) console.log(`  (--force 대상이 아님 — 개조·판별불가 목록에 없음: ${unmatched.join(' ')})`);
     if (!targets.length) console.log('  (갱신 대상 없음)');
@@ -449,6 +467,6 @@ async function main(argv = process.argv.slice(2)) {
   return OUTCOME.CLARIFY;
 }
 
-module.exports = { classifyPath, matchGlob, ownedConflicts, localCtx, forceTargets, parseChangelogVersion, cmpVersions, gitBlobSha, gitBlobShas, buildPlan, classifySyncTargets, staleDeps, syncedPaths, readAnchor, writeAnchor, seedAnchor, localTemplateFiles, migrationActions, UPSTREAM, ANCHOR_PATH, SHIP_MANIFEST };
+module.exports = { classifyPath, matchGlob, ownedConflicts, localCtx, forceTargets, parseChangelogVersion, cmpVersions, gitBlobSha, gitBlobShas, buildPlan, classifySyncTargets, staleDeps, syncedPaths, holdTargets, readAnchor, writeAnchor, seedAnchor, localTemplateFiles, migrationActions, UPSTREAM, ANCHOR_PATH, SHIP_MANIFEST };
 
 if (require.main === module) main().then(c => process.exit(c), e => { console.error(e); process.exit(OUTCOME.REJECT); });

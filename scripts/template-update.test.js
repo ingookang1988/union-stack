@@ -231,5 +231,13 @@ const { syncedPaths } = require('./template-update');
 check('syncedPaths: 로컬 sha(후보 배열 포함)가 상류와 같은 파일만', syncedPaths({ 'a.js': ['A', 'A2'], 'b.js': ['B'], 'c.js': 'C' }, { 'a.js': 'A2', 'b.js': 'B9', 'c.js': 'C', 'd.js': 'D' }), ['a.js', 'c.js']);
 check('동기화된 dashboard 가 보류된 handoff-linter 를 require → 매 런 경고', staleDeps(readSrc, [...syncedPaths({ 'scripts/dashboard.js': ['X'] }, { 'scripts/dashboard.js': 'X' })], ['scripts/handoff-linter.js']), [{ file: 'scripts/dashboard.js', dep: 'scripts/handoff-linter.js', missing: ['partBody'] }]);
 
+// --- 어답터 C 제안 ⑤: 심볼 불일치가 있는 갱신 대상은 --apply 에서 보류(HOLD) — 받으면 로드 크래시다. --force <보존 파일> 로 함께 갱신할 때만 간다. ---
+const { holdTargets } = require('./template-update');
+const stale3 = [{ file: 'scripts/dashboard.js', dep: 'scripts/handoff-linter.js', missing: ['partBody'] }, { file: 'scripts/health.js', dep: 'scripts/zfs-linter.js', missing: [] }, { file: 'scripts/ci.js', dep: 'scripts/gate-contract.js', missing: null }];
+check('불일치 대상만 보류(빈·null 은 통과)', holdTargets(['scripts/dashboard.js', 'scripts/health.js', 'scripts/ci.js'], stale3, false), { targets: ['scripts/health.js', 'scripts/ci.js'], held: [{ file: 'scripts/dashboard.js', dep: 'scripts/handoff-linter.js', missing: ['partBody'] }] });
+check('--force 에 보존 파일이 있으면(함께 갱신) 보류 해제', holdTargets(['scripts/dashboard.js'], stale3, ['scripts/handoff-linter.js']).targets, ['scripts/dashboard.js']);
+check('--force 전부면 보류 없음', holdTargets(['scripts/dashboard.js'], stale3, true).held, []);
+check('이미 동기화된 파일(대상 아님)의 불일치는 보류 대상이 아니다', holdTargets(['scripts/health.js'], stale3, false).held, []);
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

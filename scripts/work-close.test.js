@@ -2,6 +2,7 @@
 // 순수 로직 테스트. 실행: node scripts/work-close.test.js
 const {
   field, listField, parseWo, mentionsLineage, checkClosure, checkIssuance, buildTable, inject, CONTRACT,
+  run,
 } = require('./work-close');
 const { validateContract } = require('./gate-contract');
 
@@ -169,6 +170,24 @@ check('frontmatter evidence 가 있으면 증거 절 누락 아님', JSON.string
 check('evidence 도 절도 없으면 증거 누락', JSON.stringify(parseWo('.union-stack/sprint/WO-51_x.md', EV_WO.replace('evidence: "npm test 3/3"\n', ''), null).missingSections) === '["증거"]');
 check('발행 점검: 별칭 맵 WO 는 anatomy 이슈 0', !checkIssuance(parseWo('.union-stack/sprint/WO-50_x.md', ALIAS_WO, cfgS), [{ domain: 'PLAN', id: '01a', file: 'p.md' }]).some(i => i.code === 'anatomy-missing'));
 check('발행 점검: 맵 없는 어답터 표기는 anatomy-missing(CLARIFY) + 맵 안내', (() => { const i = checkIssuance(parseWo('.union-stack/sprint/WO-50_x.md', ALIAS_WO, null), [{ domain: 'PLAN', id: '01a', file: 'p.md' }]).find(x => x.code === 'anatomy-missing'); return i && /sections/.test(i.msg); })());
+
+// --- 어답터 C 실측 ①: 손 이식 어답터엔 next.md 가 없다 — --table 이 ENOENT 로 죽었다. 검사는 CLARIFY, --write 는 마커 블록을 가진 뷰를 만든다. ---
+const fsN = require('fs'), osN = require('os'), pathN = require('path');
+const nTmp = fsN.mkdtempSync(pathN.join(osN.tmpdir(), 'wc-next-'));
+try {
+  fsN.mkdirSync(pathN.join(nTmp, '.union-stack/sprint'), { recursive: true });
+  fsN.writeFileSync(pathN.join(nTmp, '.union-stack/sprint/WO-01a-1_x.md'), '---\nid: WO-01a-1\nstatus: Active\nparent: PLAN-01a\nevidence: "x"\nclosed_by: []\n---\n## 목표\n## 수용 기준\n## 증거\n');
+  const hush = fn => { const c = console.log, e = console.error; console.log = () => {}; console.error = () => {}; try { return fn(); } finally { console.log = c; console.error = e; } };
+  check('next.md 없음: --table 은 CLARIFY(3), 크래시 아님', hush(() => run(['--table'], nTmp)), 3);
+  check('next.md 없음: --table --write 는 뷰를 만든다(PASS)', hush(() => run(['--table', '--write'], nTmp)), 0);
+  const made = fsN.readFileSync(pathN.join(nTmp, '.union-stack/sprint/next.md'), 'utf8');
+  check('만든 뷰: 마커 블록 + 표 + WO 행', made.includes('<!-- worktable:begin') && made.includes('<!-- worktable:end -->') && made.includes('[WO-01a-1'), true);
+  check('만든 뒤 재검사 PASS', hush(() => run(['--table'], nTmp)), 0);
+} finally { fsN.rmSync(nTmp, { recursive: true, force: true }); }
+
+// --- 어답터 C 실측 ③: 상류 어휘 머리의 산문 status("Active — core production green…")는 첫 토큰으로 읽는다 — ACTIVE 정확 일치가 440 중 2 로 집계됐다. ---
+check('산문 status 의 첫 토큰이 상류 어휘면 그 토큰', parseWo('.union-stack/sprint/WO-60_x.md', ['---', 'id: WO-60', 'status: Active — core production green (2026-10)', 'parent: PLAN-01a', '---', '## 목표'].join('\n')).status, 'Active');
+check('rawStatus 는 원문 보존', parseWo('.union-stack/sprint/WO-60_x.md', ['---', 'id: WO-60', 'status: Active — core production green (2026-10)', 'parent: PLAN-01a', '---', '## 목표'].join('\n')).rawStatus, 'Active — core production green (2026-10)');
 
 console.log(`work-close.test: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

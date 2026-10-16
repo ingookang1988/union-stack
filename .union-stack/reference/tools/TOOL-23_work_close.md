@@ -13,7 +13,8 @@ version: 1.0
 ## 용도
 WO를 닫을 때 상위 축 흔적(`closed_by`)과 증거(`evidence`)를 검사해 미충족을 CLARIFY로 표면화하고, `sprint/next.md` 작업대 뷰를 WO 문서에서 재생성한다([PRO-15]). `--table`은 활성 WO의 **발행 계약**(필수 3절 + 실존·계보 일치 `parent:`)도 함께 표면화한다([PRO-19] — 종료 의례의 상류 대칭).
 필수 3절은 `adapter.json sections` 별칭 맵으로 해소한다([PRO-28] ①② — 정규화 뒤 정확·접두 일치, 맵 없음 = 상류 표기). `## 증거` 절이 없어도 frontmatter
-`evidence:` 가 있으면 충족. 매칭 실패는 CLARIFY 에 맵 안내 한 줄 — 문서를 고치라고 하지 않는다.
+`evidence:` 가 있으면 충족. 매칭 실패는 CLARIFY 에 맵 안내 한 줄 — 문서를 고치라고 하지 않는다. `next.md` 가 없으면(손 이식 어답터) 검사는 CLARIFY, `--table --write` 가
+마커 블록을 가진 뷰를 만든다. 상류 어휘로 시작하는 산문 status(`Active — …`)는 첫 토큰으로 읽는다(어답터 실측: 정확 일치로는 440 중 2건만 활성).
 
 ## 언제 쓰나
 - WO 작업을 마쳤을 때 → `node scripts/work-close.js <WO-ID>`로 닫힘 조건 점검.

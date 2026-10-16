@@ -174,5 +174,16 @@ check('조사 제거: 목표와 범위 → 목표', resolveSection(null, '목표
 check('조사 제거 + 최장 별칭: 목표와 공통 완료 기준 → 수용 기준', resolveSection(scT, '2. 목표와 공통 완료 기준') === '수용 기준');
 check('조사 제거: 증거는 → 증거 · 비목표는 → null(어간이 다름)', resolveSection(null, '증거는 여기') === '증거' && resolveSection(null, '비목표는') === null);
 
+// --- 어답터 C 실측 ③: statusMap 없이도 상류 어휘로 시작하는 산문 status 는 첫 토큰으로 — 로컬 어휘(Done·Complete)는 맵 없이는 그대로 ---
+check('mapStatus: 상류 어휘 머리 → 첫 토큰', mapStatus(null, 'Active — core production green') === 'Active' && mapStatus(null, 'Closed (2026-01-01)') === 'Closed');
+check('mapStatus: 로컬 어휘는 맵 없이 원문', mapStatus(null, 'Done (2026-01-01)') === 'Done (2026-01-01)' && mapStatus(null, 'Complete') === 'Complete');
+check('mapStatus: 맵이 있으면 맵 우선', mapStatus({ statusMap: { Active: 'Verifying' } }, 'Active — x') === 'Verifying');
+// --- 어답터 C 제안 ⑥: sectionsExclude — 토큰이 겹치지만 의미가 다른 헤딩(진행 기록·비목표)을 명시적으로 밀어낸다 ---
+const ex = parseConfig('{"sections": {"증거": ["진행"]}, "sectionsExclude": ["진행 기록", " 2. 비목표 "]}');
+check('sectionsExclude 파싱·정규화', JSON.stringify(ex.sectionsExclude) === JSON.stringify(['진행 기록', '비목표']) && ex.warnings.length === 0);
+check('제외 헤딩은 별칭에 걸려도 null(정확·접두)', resolveSection(ex, '진행 기록') === null && resolveSection(ex, '3. 진행 기록 (append-only)') === null && resolveSection(ex, '비목표') === null);
+check('제외되지 않은 별칭은 그대로', resolveSection(ex, '진행') === '증거');
+check('sectionsExclude 배열 아님 → 경고', parseConfig('{"sectionsExclude": "x"}').warnings.some(w => w.includes('sectionsExclude')));
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
