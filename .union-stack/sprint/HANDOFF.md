@@ -1,8 +1,8 @@
 <!-- [Wiki] 세션 이어달리기. 세션을 마치는 에이전트가 덮어쓴다. 최신 하나만 유효.
      다음 세션 부트스트랩 시 가장 먼저 읽힘. -->
 ---
-session_id: wo28a3-2026-10-17
-date: 2026-10-19T03:00:00Z
+session_id: close-wo28a3-2026-10-17
+date: 2026-10-19T04:00:00Z
 author: agent
 verification: "스위트 50 중 48 통과(실패 2 = leakage·ref 테스트, 미커밋 fdt spike 귀속 — 이전과 동일) · section-fetch 27(신설) · scaffold 39 · adapter 77 · work-close 63 · dashboard 186 · 어답터 팔 7 형상 충족 · weakening-guard PASS · work-close --table 동기화 · lint 체인 leakage 외 exit 0 · handoff-linter 통과"
 version: 1.0
@@ -16,19 +16,20 @@ version: 1.0
   frontmatter `evidence:` 가 있으면 `## 증거` 불요 · 매칭 실패 CLARIFY 에 맵 안내. 상류 자신은 맵 없음 = 현행(회귀 0).
 - **[WO-28a-2] Closed**(인간 승인 2026-10-17, archived · 가드 먼저): `scripts/scaffold.js`([TOOL-36]) — `WO --parent <ID>` 한 줄로 뼈대. 다음 번호 제안(산술: 부모 아래 다음 자식 · 레거시: 도메인 최대+1) ·
   parent 실존 확인 · 필수 3절은 `sections` 맵 첫 별칭 · ≤400 tok · dry-run 기본, `--write` 만 생성.
-- **[WO-28a-3] Verifying**(가드 먼저, scaffold 로 발행): `upward-fetch --sections [이름,…]` — 부모 문서를 H2 로 갈라 계약 절(맵 해소)+지정 절만 본문, 나머지는
+- **[WO-28a-3] Closed**(인간 승인 2026-10-17, archived · 가드 먼저, scaffold 로 발행): `upward-fetch --sections [이름,…]` — 부모 문서를 H2 로 갈라 계약 절(맵 해소)+지정 절만 본문, 나머지는
   "생략 N절 · ~M tok: 헤딩(~tok)" 목차 한 줄, 절 없는 문서는 머리 1,500 tok. MCP `upward_fetch(sections, extra)` → excerpts. 기본값 불변. 실측: PRO-28 발췌 ~9/2017 tok.
 
 ## 2. 변경 위치 (ID 목록 — Upward Fetching 진입점)
-- 승인·원장: [PRO-28] v1.0 · [ADR-55]. 오더: **[WO-28a-3]**(Verifying) · archived [WO-28a-2] [WO-28a-1] · [WO-27a-1]~[WO-24c-2] 10건. 이전 승인 [ADR-53] [ADR-54].
+- 승인·원장: [PRO-28] v1.0 · [ADR-55]. 오더(archived): **[WO-28a-3]** [WO-28a-2] [WO-28a-1] · [WO-27a-1]~[WO-24c-2] 10건. [PRO-28] ①②③④ 전부 Closed, ⑤ 는 별도 승인. 이전 승인 [ADR-53] [ADR-54].
 - 스크립트: adapter(`sections`·`normalizeHeading`·`resolveSection`·`missingSections`·`SECTION_KEYS`) · work-close(`parseWo` 맵 해소 · evidence 충족 · 안내) · dashboard(카드 제목 proseInline).
   scaffold(신설) · **section-fetch**(신설: `splitSections`·`selectSections`·`excerpt`·`renderExcerpt`·`fetchExcerpts`) · upward-fetch(`--sections`) · mcp-server(`sections`·`extra`). 카드 [TOOL-02] [TOOL-23] [TOOL-36] · `sprint/_GUIDE` §Anatomy · MIGRATION · CHANGELOG ·
   ship-manifest(배송 85) · AGENTS.md tools-index 블록 · `sprint/next.md` 재생성.
 
 ## 3. 다음 작업 (단일 진입점)
-→ **사람 몫**: ① push ② **[WO-28a-3] 닫기 승인**(Verifying → Closed, archived) ③ 어답터에 `sections` 맵 선언 + `scaffold`·`--sections` 사용 안내(A: 목적·진입 조건/완료 기준/검증 ·
-  C: 목적/수용 게이트·완료 기준/검증 — 각자 선언, 상류는 안 쓴다). 그 뒤 에이전트 몫([PRO-28] 순서, [WO-28a-3] 후속): **센서스 4회차**(어답터가 맵을 선언한 뒤 — 필수 절 매칭률 열 추가 ·
-  A·C 매칭률 ≥90% 가 성공 바) → [PRO-28] ⑤(ΔC 신고 · 압축 보존)는 별도 승인 — AGENTS.md 예산 이월과 함께 [PRO-13] §4-4 판정.
+→ **사람 몫**: ① push ② **어답터 접촉**: 세 레포에 `template-update --apply`(da9cf67~이번 커밋 수신) + `adapter.json sections` 맵 선언 + `scaffold`·`--sections` 사용 안내
+  (A: 목적·진입 조건/완료 기준/검증 · C: 목적/수용 게이트·완료 기준/검증 — 각자 선언, 상류는 안 쓴다) ③ [PRO-28] ⑤(ΔC 신고 · 압축 보존) 와 AGENTS.md 예산 이월을 함께 [PRO-13] §4-4 판정.
+  그 뒤 에이전트 몫([WO-28a-3] 후속): **센서스 4회차 WO**(발행 ID WO-28a-4 예정 — 센서스에 "필수 절 매칭률" 열(맵 적용 뒤, 읽기 전용) 추가 → 회차 기록 · A·C ≥90% 가 성공 바 ·
+  미달이면 맵 보강 안내, 가드 먼저).
 
 ## 4. 미해결 / 주의
 - **AGENTS.md 예산 계측 이월 9회+** — 미착수. [PRO-13] §4-4 인간 판정 — [PRO-28] ⑤ 압축 보존 문단(Schema)과 함께.

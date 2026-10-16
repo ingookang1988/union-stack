@@ -2,9 +2,9 @@
 ---
 id: WO-28a-3
 title: 절 계약 ③ — upward-fetch --sections 부분 인출(부모 문서의 계약 절만 주입, 기본값 불변) — [PRO-28] ③
-status: Verifying
+status: Closed
 parent: PRO-28
-evidence: "구현 완료(2026-10-17, 가드 먼저 · 이 WO 자체가 scaffold 로 발행됐다): scripts/section-fetch.js(순수 — stripFrontmatter · splitSections(H2, ### 은 본문) · selectSections(계약 절 = sections 맵 해소 + 지정 이름 접두) · clipHead(절 없는 문서 머리 1,500 tok) · excerpt · renderExcerpt(생략 N절 · ~M tok: 헤딩(~tok) 최대 8) · fetchExcerpts) · upward-fetch --sections [이름,…](텍스트 '## 계약 절 발췌' + 주입/전문 비율 · --json excerpts · 플래그 없으면 불변) · MCP upward_fetch(sections, extra) → excerpts. rcpt:n/a — 하네스 스위트(section-fetch.test 27 · query 73 · mcp-server 13) · 스위트 50 중 48(실패 2 = fdt spike 귀속) · 팔 7 형상 충족 · 성공 바: 부모 PRO-28 기본 발췌 ~9/2017 tok(≤1/3)"
+evidence: "구현 완료(2026-10-17, 가드 먼저 · 이 WO 자체가 scaffold 로 발행됐다): scripts/section-fetch.js(순수 — stripFrontmatter · splitSections(H2, ### 은 본문) · selectSections(계약 절 = sections 맵 해소 + 지정 이름 접두) · clipHead(절 없는 문서 머리 1,500 tok) · excerpt · renderExcerpt(생략 N절 · ~M tok: 헤딩(~tok) 최대 8) · fetchExcerpts) · upward-fetch --sections [이름,…](텍스트 '## 계약 절 발췌' + 주입/전문 비율 · --json excerpts · 플래그 없으면 불변) · MCP upward_fetch(sections, extra) → excerpts. rcpt:n/a — 하네스 스위트(section-fetch.test 27 · query 73 · mcp-server 13) · 스위트 50 중 48(실패 2 = fdt spike 귀속) · 팔 7 형상 충족 · 성공 바: 부모 PRO-28 기본 발췌 ~9/2017 tok(≤1/3) · Closed 판정 2026-10-17(인간 승인)"
 closed_by: [.union-stack/reference/tools/TOOL-02_upward_fetch.md, MIGRATION.md]
 version: 1.0
 ---
