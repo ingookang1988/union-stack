@@ -2,10 +2,10 @@
 ---
 id: WO-24c-2
 title: 어답터 연결 ① 배송층 — 부트스트랩 키트(손 이식 어답터의 사후 입장권, 의존 0 단일 파일) — [PRO-24] ①(a)
-status: Verifying
+status: Closed
 parent: PRO-24
-evidence: "구현 완료(2026-10-17, 가드 먼저): scripts/union-stack-kit.js([TOOL-35], 의존 0 단일 파일 — 매니페스트 읽기 · 키트 8 파일 중 없는 것만 · 앵커 clone@<버전>(추정) 는 상류(--guess 태그·main)와 바이트 동일한 파일만 · 첫 실행 dry-run · --from-dir 오프라인) · template-update --seed [ref](명시적 전 파일 단언, 경고) · 팔 kit 형상 3 바 · 하위 디렉터리 옵션은 미지원 명시 · 드롭 목록 JSON 분리는 불필요(키트는 init 을 require 하지 않음). rcpt:n/a — 하네스 스위트"
-closed_by: []
+evidence: "구현 완료(2026-10-17, 가드 먼저): scripts/union-stack-kit.js([TOOL-35], 의존 0 단일 파일 — 매니페스트 읽기 · 키트 8 파일 중 없는 것만 · 앵커 clone@<버전>(추정) 는 상류(--guess 태그·main)와 바이트 동일한 파일만 · 첫 실행 dry-run · --from-dir 오프라인) · template-update --seed [ref](명시적 전 파일 단언, 경고) · 팔 kit 형상 3 바 · 하위 디렉터리 옵션은 미지원 명시 · 드롭 목록 JSON 분리는 불필요(키트는 init 을 require 하지 않음). rcpt:n/a — 하네스 스위트 · Closed 판정 2026-10-17(인간 승인)"
+closed_by: [.union-stack/reference/tools/TOOL-35_union_stack_kit.md, .union-stack/reference/tools/TOOL-21_template_update.md]
 version: 1.0
 ---
 # [WO-24c-2] 부트스트랩 키트
