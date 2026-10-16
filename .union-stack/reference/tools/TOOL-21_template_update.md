@@ -25,6 +25,8 @@ version: 1.2
 > 상류 전용(eval·eval-arm·fetch-eval·scenario-rubric·token-accounting·hook-replay·check-prereqs·adopter-arm·e6-workspace·adopter-census)은 배송·보고에서
 > 빠지고, 남은 로컬 사본은 INFO 로만 알린다. 매니페스트 밖의 로컬 스크립트는 **기본 로컬**(오보 0). 어답터 고유 파일은 `adapter.json localOwned`(글롭)로
 > 선언한다 — 상류가 열거한 파일과 겹치면 **sync 우선**(경고). 3-way 의 `modified` 는 **localForked**(동명 파일의 로컬 분기)로 안내한다.
+> **upstreamIgnored**(adapter.json 글롭): 상류 파일 **거부** — localOwned 와 달리 매니페스트 배송보다 우선해 배송·재배송·보고 전부에서 뺀다
+> (어답터 실측: Actions 를 폐기한 레포에 harness.yml 이 매 `--apply` 마다 돌아옴). scripts/ 거부는 게이트 약화일 수 있어 보고서가 경고.
 > **의존 불일치 경고**: 갱신될 파일이 require 하는 파일이 보존(갱신 보류)되면 인터페이스가 어긋날 수 있다(어답터 실측: 갱신된 dashboard 가
 > 보존된 handoff-linter 의 새 export 를 못 찾음) — 보고서가 `! 파일 → 의존` 으로 알리고 `--force <의존>` 을 제안한다. 로컬 본문의 require 기준.
 

@@ -79,6 +79,8 @@ function matchGlob(glob, p) {
  *   localOwned — 어답터 고유 파일 글롭 → null. 단 매니페스트가 열거한 파일과 겹치면 **sync 우선**(상류 파일을 글롭으로 끊어 버리는 사고 방지 — 경고는 호출부).
  */
 function classifyPath(p, ctx = null) {
+  // upstreamIgnored(어답터 실측: Actions 폐기 레포의 harness.yml) — 거부는 배송보다 우선. 배송·보고 어디에도 안 뜬다.
+  if (ctx && Array.isArray(ctx.upstreamIgnored) && ctx.upstreamIgnored.some(g => matchGlob(g, p))) return null;
   const m = ctx && ctx.manifest;
   const owned = !!(ctx && Array.isArray(ctx.localOwned) && ctx.localOwned.some(g => matchGlob(g, p)));
   if (m && /^scripts\/[^/]+\.(js|json)$/.test(p)) {
@@ -118,7 +120,7 @@ function localCtx(root) {
   const manifest = readManifest(root);
   // 상류 전용 스크립트의 **남은 로컬 사본**은 분류 맵(null 이라 빠짐)이 아니라 파일시스템에서 센다.
   const presentUpstreamOnly = manifest ? manifest.upstreamOnly.filter(p => fs.existsSync(path.join(root, p))) : [];
-  return { manifest, localOwned: cfg.localOwned || [], presentUpstreamOnly };
+  return { manifest, localOwned: cfg.localOwned || [], upstreamIgnored: cfg.upstreamIgnored || [], presentUpstreamOnly };
 }
 
 /** CHANGELOG 본문 → 최신 릴리스 버전("## [x.y.z]" 첫 매칭, Unreleased 제외). 순수. */
@@ -350,7 +352,7 @@ async function main(argv = process.argv.slice(2)) {
   if (upstreamMap[SHIP_MANIFEST]) { try { upManifest = parseManifest(await fetchText(`${RAW}/${encodeURIComponent(ref)}/${SHIP_MANIFEST}`)); } catch { upManifest = null; } }
   // 상류에 매니페스트가 없으면(구버전 상류) 로컬 매니페스트의 상류 전용 목록만 보강해 "상류 신규"로 둔갑하는 것을 막는다(실측: 로컬이 앞선 상류 개발 레포).
   const upCtxManifest = upManifest || (lo.manifest ? { shipped: null, upstreamOnly: lo.manifest.upstreamOnly, optional: [] } : null);
-  const ctx = { local: lo, upstream: { manifest: upCtxManifest, localOwned: lo.localOwned } };
+  const ctx = { local: lo, upstream: { manifest: upCtxManifest, localOwned: lo.localOwned, upstreamIgnored: lo.upstreamIgnored } };
   const conflicts = ownedConflicts(upManifest || lo.manifest, lo.localOwned);
   const localFiles = localTemplateFiles(root, lo);
   const plan = buildPlan(localFiles, upstreamMap, ctx);
@@ -361,7 +363,7 @@ async function main(argv = process.argv.slice(2)) {
   const stale = staleDeps(p => { try { return fs.readFileSync(path.join(root, p), 'utf8'); } catch { return null; } }, ft.targets, ft.skipped);
 
   if (json) {
-    console.log(JSON.stringify({ ref, localVer, upstreamVer, plan, guard, staleDeps: stale, migrations, localOwned: lo.localOwned, ownedConflicts: conflicts, shipManifest: !!upManifest, applied: false }, null, 2));
+    console.log(JSON.stringify({ ref, localVer, upstreamVer, plan, guard, staleDeps: stale, migrations, localOwned: lo.localOwned, upstreamIgnored: lo.upstreamIgnored, ownedConflicts: conflicts, shipManifest: !!upManifest, applied: false }, null, 2));
     return drift ? OUTCOME.CLARIFY : OUTCOME.PASS;
   }
 
@@ -380,6 +382,10 @@ async function main(argv = process.argv.slice(2)) {
   list('상류에서 사라진 파일(수동 정리 검토)', plan.removedUpstream);
   list('상류 전용 스크립트의 로컬 사본(배송 제외 — 지워도 된다, [TOOL-34])', plan.upstreamOnlyLocal);
   if (lo.localOwned.length) console.log(`\n  localOwned 글롭 ${lo.localOwned.length}건 적용(어답터 고유 파일 — 보고·갱신 제외)${upManifest ? '' : ' · 상류 매니페스트 없음(규칙 폴백)'}`);
+  if (lo.upstreamIgnored.length) {
+    const ignoredScripts = Object.keys(upstreamMap).filter(p => /^scripts\//.test(p) && lo.upstreamIgnored.some(g => matchGlob(g, p)));
+    console.log(`\n  upstreamIgnored 글롭 ${lo.upstreamIgnored.length}건 적용(상류 파일 거부 — 배송·보고 제외)${ignoredScripts.length ? ` · ⚠ 스크립트 ${ignoredScripts.length}건 거부 — 게이트 약화일 수 있다(ci 체인은 없는 단계를 건너뛴다): ${ignoredScripts.join(' ')}` : ''}`);
+  }
   if (conflicts.length) {
     console.log('\n  ⚠ localOwned 글롭이 상류 배송 파일과 겹친다 — sync 가 우선한다(글롭을 좁혀라):');
     conflicts.forEach(p => console.log(`    ! ${p}`));

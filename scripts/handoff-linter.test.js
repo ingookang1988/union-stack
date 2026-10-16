@@ -85,5 +85,9 @@ const code = run([]);
 check('현재 레포: PASS 또는 CLARIFY', [OUTCOME.PASS, OUTCOME.CLARIFY].includes(code), true);
 check('REJECT 불가 게이트', code === OUTCOME.REJECT, false);
 
+// --- 예산 인자: analyze(text, budget) — 어답터가 adapter.json budgets.handoff 로 재캘리브레이션하면 같은 본문이 통과한다(어답터 C 실측) ---
+check('예산 인자 주입: 넉넉하면 budget 소견 없음', analyze(bloated, 100000).findings.some(f => f.rule === 'budget'), false);
+check('예산 인자 주입: 보고되는 budget 값', analyze(bloated, 100000).budget, 100000);
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

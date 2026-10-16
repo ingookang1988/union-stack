@@ -3,7 +3,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { statusHead, estimateArithmeticFrom, isUpstreamCandidate, measure, anonymize, render, appendSection, CONTRACT, COLS } = require('./adopter-census');
+const { statusHead, estimateArithmeticFrom, isUpstreamCandidate, measure, anonymize, render, appendSection, CONTRACT, COLS, INSTRUMENTS } = require('./adopter-census');
 const { validateContract } = require('./gate-contract');
 
 let pass = 0, fail = 0;
@@ -47,6 +47,11 @@ try {
   const raw = measure(tmp, 'T', new Set(['PLAN-07']));
   check('측정: 레포 파일 쓰기 0(읽기 전용)', snapshot() === before);
   check('측정: 어답터 스크립트를 실행하지 않는다(계측기 존재만)', raw.instruments.present.includes('health.js') && raw.health && !raw.health.error === (raw.health.fails != null));
+  // 3회차 실측: 상류 전용 adopter-arm 이 계측기 목록에 남아 사본 없는 A·C 가 9/10 으로 오보 — 계측기는 배송 도구만.
+  check('계측기 목록에 상류 전용·키트 없음(배송 계측기 9)', !INSTRUMENTS.includes('adopter-arm.js') && !INSTRUMENTS.includes('union-stack-kit.js') && INSTRUMENTS.length === 9);
+  check('headingDist: 선두 번호는 표기 변형(합산) · 공백 정규화', JSON.stringify(require('./adopter-census').headingDist(['## 1. 목표\n## 목표  \n## 2) 수용  기준'])) === JSON.stringify({ '목표': 2, '수용 기준': 1 }));
+  // WO H2 헤딩 분포([PRO-28] 재료 — 어답터 답변: 한 의미에 표기 3~5종). 본문은 헤딩 줄만 센다.
+  check('WO H2 헤딩 분포', raw.headings && raw.headings['목표'] === 2 && raw.headings['수용 기준'] === 2 && raw.headings['증거'] === 2 && Object.keys(raw.headings).length === 3);
   check('WO 상태 첫 토큰 + statusMap 매핑(Done → Closed)', raw.wo.statusDist.Closed === 1 && raw.wo.statusDist.Active === 1 && raw.wo.malformed === 1);
   check('evidence 별칭 읽힘 + none 구별', raw.wo.evidence.value === 1 && raw.wo.evidence.none === 1 && raw.wo.evidence.missing === 0);
   check('백필 대상 1(추정 가능)', raw.backfill.targets === 1 && raw.backfill.estimable === 1);
@@ -60,6 +65,7 @@ try {
   check('익명 행: 경로 없음', !flat.includes(tmp) && !flat.includes(path.basename(tmp)));
   check('익명 행: 제목·파일명 없음', !flat.includes('secret_product_name') && !flat.includes('비밀 제품명') && !flat.includes('.md'));
   check('익명 행: 라벨·집계만', row.label === 'T' && /Closed 1/.test(row.wo) && row.collisions === '1' && /제안 13/.test(row.arithmeticFrom));
+  check('익명 행: 헤딩 분포(빈도순 · 상위 캡)', /목표 2 · 수용 기준 2 · 증거 2/.test(row.headings) || /^(목표|수용 기준|증거) 2 · (목표|수용 기준|증거) 2 · (목표|수용 기준|증거) 2$/.test(row.headings));
   const md = render([row, { label: 'X', measured: '2026-10-16', error: '.union-stack 없음' }], { date: '2026-10-16', upstreamVersion: '6.0.0', sha: 'abc1234' });
   check('렌더: 헤딩 + 표 + 측정 실패 행', md.startsWith('### 2026-10-16 — 상류 6.0.0 @ abc1234 · 레포 2') && md.includes('| T |') && md.includes('측정 실패'));
   check('렌더: 열 수 일치', md.split('\n').filter(l => l.startsWith('| T |'))[0].split('|').length - 2 === COLS.length);

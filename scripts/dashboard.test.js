@@ -350,6 +350,18 @@ const prodFix = {
 prodFix.current = prodFix.phases[1];
 prodFix.latest = prodFix.phases[1];
 const pv = productView(prodFix, '2026-08-20');
+// 어답터 실측: live.md 셀 안의 코드 스팬에 '|' 가 있어 표 파이프로 갈라지면 백틱이 홀수로 남는다 — 렌더 전에 닫아 원문 마커 0.
+const pvDang = productView({ ...prodFix, live: [{ feature: 'a', ref: '[PLAN-02a]', status: '[WO-1] `text', example: false }] }, '2026-08-20');
+check('product: live 셀의 짝 없는 마커도 원문으로 새지 않는다', !/`|\*\*/.test(pvDang.replace(/title="[^"]*"/g, '').replace(/<[^>]*>/g, '')) && pvDang.includes('<code>text</code>'));
+// 어답터 실측: PLAN status 가 "Active (2026-07-08 승인 — … **rev1.5 …**)" 같은 산문이면 집계 알약·행 메모에 원문 마커가 샌다 → 첫 토큰으로 묶고 전문은 title.
+const pvProse = productView({ ...prodFix, plans: [
+  { domain: 'PLAN', id: '02', slug: 'payment', status: 'Active (2026-07-08 승인 — **rev1.5** `게이트` 통과)' },
+  { domain: 'PLAN', id: '03', slug: 'auth', status: 'Active' },
+] }, '2026-08-20');
+const pvText = pvProse.replace(/title="[^"]*"/g, '').replace(/<[^>]*>/g, '');
+check('product: 산문 PLAN status 는 첫 토큰으로 집계(Active 2)', /<span class="pill">Active<b>2<\/b><\/span>/.test(pvProse));
+check('product: 보이는 본문에 원문 마커 0', !/\*\*|`/.test(pvText));
+check('product: 상태 전문은 title 속성에', /title="Active \(2026-07-08 승인 — \*\*rev1\.5\*\* `게이트` 통과\)"/.test(pvProse));
 check('product: 타일 4개', (pv.match(/class="tile"/g) || []).length === 4);
 check('product: 현재 단계 타일', pv.includes('PHASE-02') && pv.includes('현재 단계'));
 check('product: 로드맵 진행 = exit 충족/전체', pv.includes('2/3'));

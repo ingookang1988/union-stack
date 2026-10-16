@@ -136,5 +136,14 @@ check('localOwned 파싱 + 정규화(역슬래시·./·공백)', JSON.stringify(
 check('localOwned 배열 아님 → 경고 + 빈 목록', parseConfig('{"localOwned": "scripts/x"}').warnings.some(w => w.includes('localOwned')) && parseConfig('{"localOwned": "x"}').localOwned.length === 0);
 check('load 기본값에 localOwned []', Array.isArray(load(require('os').tmpdir()).localOwned));
 
+// --- budgets · upstreamIgnored (어답터 C 실측: context-budget 포크 = handoff 2200 재캘리브레이션 · harness.yml 거부 불가) ---
+const bg = parseConfig('{"budgets": {"handoff": 2200, "total": 5000, "nope": 1, "project": -1}}');
+check('budgets: 알려진 키·양수만 + 경고', bg.budgets.handoff === 2200 && bg.budgets.total === 5000 && !('nope' in bg.budgets) && !('project' in bg.budgets) && bg.warnings.filter(w => w.includes('budgets')).length === 2);
+check('budgets 객체 아님 → 경고 + 빈 객체', parseConfig('{"budgets": 3}').warnings.some(w => w.includes('budgets')) && Object.keys(parseConfig('{"budgets": 3}').budgets).length === 0);
+const ui = parseConfig('{"upstreamIgnored": [".github/workflows/harness.yml", "./scripts/x.js "]}');
+check('upstreamIgnored 파싱 + 정규화', JSON.stringify(ui.upstreamIgnored) === '[".github/workflows/harness.yml","scripts/x.js"]' && ui.warnings.length === 0);
+check('upstreamIgnored 배열 아님 → 경고', parseConfig('{"upstreamIgnored": "x"}').warnings.some(w => w.includes('upstreamIgnored')));
+check('load 기본값에 budgets {} · upstreamIgnored []', (() => { const l = load(require('os').tmpdir()); return l.budgets && Object.keys(l.budgets).length === 0 && Array.isArray(l.upstreamIgnored); })());
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

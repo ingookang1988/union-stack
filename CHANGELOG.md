@@ -12,6 +12,17 @@ design, see [`DESIGN_RATIONALE.md`](./DESIGN_RATIONALE.md). Entries marked **⚠
 action in already-adopted projects.
 
 ## [Unreleased]
+- **Canary fixes from a third adopter: budgets and refusals become configuration (ADR-29).** `adapter.json budgets`
+  (`project · profile · handoff · total`) recalibrates the bootstrap token budgets for `context-budget`, `handoff-linter`
+  (`analyze(text, budget)`), `health` and the dashboard — the adopter had forked `context-budget.js` for a 2,200-token HANDOFF
+  and lost the CJK coefficient. `adapter.json upstreamIgnored` (globs) refuses upstream files outright — delivery, re-delivery
+  and reporting — for repos that retired a shipped CI workflow; refusing `scripts/` files is flagged as possible weakening. The
+  lineage tree's status filter and document rows (also embedded in the dashboard), the dashboard's product view (PLAN status
+  pills and rows) and norm cards now show the **first token** of `status:` with the full text in a `title` — prose statuses
+  leaked raw `**`/backticks into the page; `feature/live.md` cells with an unpaired marker (a `|` inside a code span splits
+  the table cell) are closed before rendering. `adopter-census` counts only shipped
+  instruments (upstream-only `adopter-arm` was still listed) and adds a **WO H2 heading distribution** column (PRO-28 input).
+  No migration.
 - **Canary fixes from a second hand-ported adopter (PRO-24 ① follow-up).** `ship-manifest` now returns CLARIFY when a shipped
   file unconditionally requires an upstream-only module (a shipped test required the evaluation-only `fetch-eval` and failed with
   MODULE_NOT_FOUND in the adopter; conditional `try { require }` is accepted and that test now skips the adversarial-plane checks

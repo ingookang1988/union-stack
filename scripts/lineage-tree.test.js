@@ -55,6 +55,20 @@ const fh = filterHtml([
 ]);
 check('필터: 실존 status 도출 + 빈도순', fh.indexOf('Active') < fh.indexOf('Draft'));
 check('필터: status 없는 문서는 (없음) 버킷', fh.includes('(없음)'));
+// 어답터 실측: 산문 status("Done (2026-01-01, **원인**)" 류 60종)가 필터 라벨로 원문 누설 → 첫 토큰으로 묶고 마커 0.
+const fp = filterHtml([
+  { domain: 'A', id: '1', file: 'a', status: 'Done (2026-01-01) — **진짜 원인** 정정' },
+  { domain: 'A', id: '2', file: 'b', status: 'Done (2026-02-02) `rev1.1` 반영' },
+  { domain: 'A', id: '3', file: 'c', status: 'Active' },
+]);
+check('필터: 산문 status 는 첫 토큰으로 묶인다(Done 2)', /data-st="Done">\s*Done <span class="fn">2<\/span>/.test(fp) && (fp.match(/<label/g) || []).length === 2);
+check('필터: 라벨에 원문 마커 0', !/\*\*|`/.test(fp));
+check('문서 data-st 도 첫 토큰(필터와 같은 키)', /data-st="Done"/.test(render([{ domain: 'A', id: '1', file: 'a', status: 'Done (2026-01-01) — **x**' }], { title: 't' })));
+// 문서 행의 상태 표시도 산문이면 샌다 — 보이는 텍스트는 첫 토큰, 전문은 title 속성(대시보드 '원문 마커 0' 회귀의 두 번째 지점).
+const prose = render([{ domain: 'A', id: '1', file: 'a', slug: 's', status: 'Reflected — ARCH `rev1.1` 반영 **완료**' }], { title: 't' });
+const visible = prose.slice(prose.indexOf('<main>') >= 0 ? prose.indexOf('<main>') : 0).replace(/title="[^"]*"/g, '').replace(/<[^>]*>/g, '');
+check('문서 행: 보이는 상태는 첫 토큰 · 원문 마커 0', !/\*\*|`/.test(visible) && /Reflected/.test(visible));
+check('문서 행: 상태 전문은 title 속성에', /title="Reflected — ARCH `rev1.1` 반영 \*\*완료\*\*"/.test(prose));
 
 // render — 성패 판정: 101노드 적대 평면(status·tier 없음, 도메인 5종) 무가정 렌더
 if (syntheticPlane) {

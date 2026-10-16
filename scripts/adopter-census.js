@@ -44,8 +44,17 @@ const RAW_DIR = 'eval/private/census';
 const OUT = 'eval/CENSUS.md';
 const BLOCK_BEGIN = '<!-- census:rows -->';
 // 어답터에 있을 수 있는 상류 계측기 — 존재만 본다(실행 안 함). 이름은 상류 도구명이라 제품 정보가 아니다.
+// 배송 도구만([TOOL-34]) — 3회차 실측: 상류 전용 adopter-arm 이 남아 사본 없는 어답터가 9/10 으로 오보됐다.
 const INSTRUMENTS = ['health.js', 'work-close.js', 'template-update.js', 'upward-fetch.js', 'blast-radius.js', 'ci.js',
-  'frontmatter-backfill.js', 'transcript-stats.js', 'session-friction.js', 'adopter-arm.js'];
+  'frontmatter-backfill.js', 'transcript-stats.js', 'session-friction.js'];
+
+/** WO 본문의 H2 헤딩 분포(순수) — 헤딩 줄만 센다([PRO-28] 재료: 한 의미에 표기 3~5종이라는 어답터 답변의 기계 계수). */
+// 선두 번호('1. 목적')는 표기 변형이지 다른 절이 아니다 — 떼고 센다.
+function headingDist(texts) {
+  const dist = {};
+  for (const t of texts) for (const m of String(t || '').matchAll(/^##\s+(.+?)\s*$/gm)) { const h = m[1].replace(/^\d+[.)]\s*/, '').replace(/\s+/g, ' '); dist[h] = (dist[h] || 0) + 1; }
+  return dist;
+}
 const ACTIVE = new Set(['Draft', 'Active', 'Verifying']);
 const DIST_CAP = 8;
 
@@ -106,6 +115,7 @@ function measure(root, label, upstreamKeys = new Set()) {
   raw.wo = { total: wos.length, malformed: wos.filter(w => w.malformed).length, statusDist: dist,
     evidence: { value: ok.filter(w => w.evidence && !/^none\b/i.test(w.evidence)).length, none: ok.filter(w => w.evidence && /^none\b/i.test(w.evidence)).length,
       missing: ok.filter(w => !w.evidence).length }, closedBy: ok.filter(w => w.closed_by.length).length };
+  raw.headings = headingDist(index.filter(d => d.domain === 'WO').map(d => readSafe(path.join(root, d.file))));
   const bf = backfillPlan(root);
   raw.backfill = { targets: bf.length, estimable: bf.filter(r => r.estimate).length };
   const v = lint(root);
@@ -132,6 +142,9 @@ function anonymize(raw) {
   const entries = Object.entries(raw.wo.statusDist).sort((a, b) => b[1] - a[1]);
   const rest = entries.slice(DIST_CAP);
   const dist = entries.slice(0, DIST_CAP).map(([k, n]) => `${k} ${n}`).join(' · ') + (rest.length ? ` · 외 ${rest.length}종 ${rest.reduce((t, [, n]) => t + n, 0)}건` : '');
+  const hEntries = Object.entries(raw.headings || {}).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  const hRest = hEntries.slice(DIST_CAP);
+  const headings = hEntries.length ? hEntries.slice(0, DIST_CAP).map(([k, n]) => `${k} ${n}`).join(' · ') + (hRest.length ? ` · 외 ${hRest.length}종 ${hRest.reduce((t, [, n]) => t + n, 0)}건` : '') : '—';
   const health = raw.health.error ? `측정 실패` : `FAIL ${raw.health.fails}${raw.health.fails ? ' (' + raw.health.dims.filter(d => d.status === 'FAIL').map(d => d.name).join(' · ') + ')' : ''}`;
   return {
     label: raw.label, measured: raw.measured,
@@ -147,12 +160,12 @@ function anonymize(raw) {
     fetch: `${raw.fetch.vacuous}/${raw.fetch.active} 공백`,
     candidates: raw.candidates.length ? `${raw.candidates.length} (${raw.candidates.join(', ')})` : '0',
     adapter: raw.adapter.present ? `statusMap ${raw.adapter.statusMapKeys} · evidenceFields ${raw.adapter.evidenceFields.join('/') || '없음'}${raw.adapter.private ? ' · private' : ''}` : '없음',
-    health, adrs: String(raw.ledger.adrs), planeKb: raw.health.planeKb != null ? String(raw.health.planeKb) : '—',
+    headings, health, adrs: String(raw.ledger.adrs), planeKb: raw.health.planeKb != null ? String(raw.health.planeKb) : '—',
   };
 }
 
 const COLS = [
-  ['label', '레포'], ['version', '버전 / 앵커'], ['instruments', '계측기'], ['docs', '문서'], ['wo', 'WO · 상태(첫 토큰)'], ['evidence', 'evidence'],
+  ['label', '레포'], ['version', '버전 / 앵커'], ['instruments', '계측기'], ['docs', '문서'], ['wo', 'WO · 상태(첫 토큰)'], ['headings', 'WO H2 헤딩(상위 8)'], ['evidence', 'evidence'],
   ['backfill', '백필 대상'], ['duplicates', '중복 ID'], ['collisions', '상류 ID 충돌'], ['arithmeticFrom', 'arithmeticFrom'], ['fetch', 'upward-fetch'],
   ['candidates', 'upstream_candidate'], ['adapter', 'adapter.json'], ['health', 'health'], ['adrs', 'ADR'], ['planeKb', '평면 KB'],
 ];
@@ -213,6 +226,6 @@ function run(argv = process.argv.slice(2), root = path.resolve(__dirname, '..'))
   return measured ? OUTCOME.PASS : OUTCOME.CLARIFY;
 }
 
-module.exports = { localDate, DIST_CAP, statusHead, estimateArithmeticFrom, isUpstreamCandidate, measure, anonymize, render, appendSection, run, CONTRACT, INSTRUMENTS, COLS, REPOS_FILE, RAW_DIR, OUT, BLOCK_BEGIN };
+module.exports = { localDate, DIST_CAP, statusHead, headingDist, estimateArithmeticFrom, isUpstreamCandidate, measure, anonymize, render, appendSection, run, CONTRACT, INSTRUMENTS, COLS, REPOS_FILE, RAW_DIR, OUT, BLOCK_BEGIN };
 
 if (require.main === module) process.exit(withContract(CONTRACT, argv => run(argv))());

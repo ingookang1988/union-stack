@@ -132,6 +132,14 @@ This file is adopter-owned — upstream never touches it.
   forks, pass paths: `node scripts/template-update.js --apply --force scripts/dashboard.js`. Scripts not listed in the manifest are local by default, so most adopters need
   no `localOwned` at all; upstream-only scripts (eval, adopter-arm, census, …) are no longer delivered and leftover copies
   are listed as removable.
+- `budgets: { project, profile, handoff, total }` — recalibrated bootstrap token budgets (positive integers; defaults 2000 · 800 ·
+  1500 · 4000). `context-budget`, `handoff-linter`, `health` and the dashboard read them, so a repo whose HANDOFF legitimately
+  needs 2,200 tokens declares it here instead of forking `context-budget.js` (a fork is overwritten or preserved stale on every
+  update — an adopter did exactly that and lost the upstream CJK token coefficient). Unknown keys and non-positive values warn.
+- `upstreamIgnored: [...]` — globs of upstream files this repo **refuses** (e.g. `.github/workflows/harness.yml` in a repo that
+  retired GitHub Actions and gates through `docker-compose.harness.yml` + `scripts/ci.js`). Unlike `localOwned`, a refusal beats the
+  ship manifest: the file is neither delivered, re-delivered on the next `--apply`, nor reported. Refusing a `scripts/` file is
+  reported as a possible gate weakening (the CI chain skips absent steps), so keep refusals to CI/config files.
 - Documents without a `status:` line are counted as *nothing* by every tool. List them with
   `node scripts/frontmatter-backfill.js` (dry-run: estimate from a body marker such as `Status: Done`,
   then from an `archived/` directory, else left blank and reported) and apply with `--apply` — it inserts

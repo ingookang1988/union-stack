@@ -14,7 +14,7 @@
 const fs = require('fs');
 const path = require('path');
 const { OUTCOME, withContract } = require('./gate-contract');
-const { estimateTokens, BUDGETS } = require('./context-budget');
+const { estimateTokens, budgetsFor, BUDGETS } = require('./context-budget');
 
 const HANDOFF_PATH = '.union-stack/sprint/HANDOFF.md';
 
@@ -78,12 +78,12 @@ function partBody(text, key) {
 }
 
 /** 순수 분석: 본문 → {findings, tokens, budget}. findings는 전부 CLARIFY급. */
-function analyze(text) {
+function analyze(text, budget = BUDGETS.handoff) {
   const findings = [];
   const tokens = estimateTokens(text);
-  if (tokens > BUDGETS.handoff) {
+  if (tokens > budget) {
     findings.push({ rule: 'budget', msg:
-      `예산 초과 ${tokens}/${BUDGETS.handoff} tok — 자르지 말고 [PRO-13] §3 트리로 라우팅하라(결정→ledger, 반복 함정→lessons, 재도출 가능→버림)` });
+      `예산 초과 ${tokens}/${budget} tok — 자르지 말고 [PRO-13] §3 트리로 라우팅하라(결정→ledger, 반복 함정→lessons, 재도출 가능→버림)` });
   }
   const assigned = assignParts(parseSections(text));
   for (const p of PARTS) {
@@ -108,16 +108,17 @@ function analyze(text) {
         '다음 작업이 WO 를 가리키지 않는다 — 이월 중인 prose 라면 WO 로 승격해 진입점을 [WO-*] 로 적어라([PRO-13] §4-4 · [PRO-19])' });
     }
   }
-  return { findings, tokens, budget: BUDGETS.handoff };
+  return { findings, tokens, budget };
 }
 
 function run(argv = process.argv.slice(2)) {
-  const p = path.join(path.resolve(__dirname, '..'), HANDOFF_PATH);
+  const root = path.resolve(__dirname, '..');
+  const p = path.join(root, HANDOFF_PATH);
   if (!fs.existsSync(p)) {
     console.log('HANDOFF 린터: HANDOFF.md 없음 — 건너뜀(신규 프로젝트 보호).');
     return OUTCOME.PASS;
   }
-  const r = analyze(fs.readFileSync(p, 'utf8'));
+  const r = analyze(fs.readFileSync(p, 'utf8'), budgetsFor(root).handoff); // adapter.json budgets.handoff 가 있으면 그 값([ADR-29])
   if (argv.includes('--json')) { console.log(JSON.stringify(r, null, 2)); return r.findings.length ? OUTCOME.CLARIFY : OUTCOME.PASS; }
   if (r.findings.length) {
     console.error(`\n[HANDOFF 린터] CLARIFY — 표면화만, 차단하지 않는다([PRO-13]):`);

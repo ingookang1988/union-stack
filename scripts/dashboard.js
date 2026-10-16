@@ -24,7 +24,7 @@ const { read: readLedger } = require('./ledger');
 const { parseEntries: parseHistory } = require('./history-linter');
 const { walkFiles } = require('./fs_walk');
 const { LOCKED } = require('./query');
-const { planeBody, PLANE_CSS, FILTER_JS } = require('./lineage-tree');
+const { planeBody, PLANE_CSS, FILTER_JS, statusHead } = require('./lineage-tree');
 
 /** frontmatter 유래 자유 문자열 이스케이프(lineage-tree 와 동일 규칙). */
 function esc(s) {
@@ -499,10 +499,11 @@ function productView(product, today) {
     `<div class="crow"><span class="nm">${esc(a.id)}</span><span class="note">${esc(a.date)}</span>`
     + `<span class="fvals t">${prose(gistOf(a.text, 80))}</span></div>`;
   const liveRow = r =>
-    `<div class="crow${r.example ? ' dim' : ''}"><span class="nm">${prose(r.feature)}</span>`
-    + `<span class="note">${prose(r.ref)}</span><span class="fvals t">${prose(r.status)}</span></div>`;
+    `<div class="crow${r.example ? ' dim' : ''}"><span class="nm">${prose(closeDanglingMarker(r.feature))}</span>`
+    + `<span class="note">${prose(closeDanglingMarker(r.ref))}</span><span class="fvals t">${prose(closeDanglingMarker(r.status))}</span></div>`;
   const planCounts = {};
-  plans.forEach(d => { planCounts[d.status || '(없음)'] = (planCounts[d.status || '(없음)'] || 0) + 1; });
+  // 산문 status(어답터 실측 60종)는 첫 토큰으로 집계 — 전문은 행의 title 로.
+  plans.forEach(d => { const k = statusHead(d.status) || '(없음)'; planCounts[k] = (planCounts[k] || 0) + 1; });
 
   return `<div class="tiles">
   <div class="tile"><div class="tl">현재 단계</div><div class="tv">${esc(current ? current.key : latest ? latest.key : '없음')}</div><div class="ts">${esc(current ? (current.status || '미기입') : latest ? `${latest.status} — 후속 단계 미정` : 'PHASE 문서 없음')}</div></div>
@@ -527,7 +528,7 @@ function productView(product, today) {
   <div class="meta">${plans.length} PLAN</div>
   ${plans.length
     ? `<div class="pills">${Object.entries(planCounts).map(([k, v]) => `<span class="pill">${esc(k)}<b>${v}</b></span>`).join('')}</div>`
-      + plans.map(d => `<div class="crow"><span class="nm">PLAN-${esc(d.id)}</span><span class="note">${esc(d.status || '(없음)')}</span><span class="fvals t">${esc(d.slug)}</span></div>`).join('')
+      + plans.map(d => `<div class="crow"><span class="nm">PLAN-${esc(d.id)}</span><span class="note"${d.status && statusHead(d.status) !== String(d.status).trim() ? ` title="${esc(d.status)}"` : ''}>${esc(statusHead(d.status) || '(없음)')}</span><span class="fvals t">${esc(d.slug)}</span></div>`).join('')
     : '<div class="meta">PLAN 문서 없음</div>'}</section>
   </div>
   <div class="grid">
@@ -708,7 +709,7 @@ function normView(norms, sync, concerns) {
     <h2>${esc(n.key)} <span class="ntitle">${esc(n.title || '')}</span></h2>
     <div class="meta"><span class="pill ${g.cls}"><b>${g.label}</b></span>
       <span class="note">${esc(g.why)}</span></div>
-    <div class="meta"><span class="note">${esc(n.file)} · ${n.kb}KB · status ${esc(n.status || '없음')} · tier ${esc(n.tier || '미기입')}</span></div>
+    <div class="meta"><span class="note">${esc(n.file)} · ${n.kb}KB · status ${esc(statusHead(n.status) || '없음')} · tier ${esc(n.tier || '미기입')}</span></div>
     ${n.headings.length ? `<div class="frow"><span class="flabel">절 구조</span><span class="fvals">${n.headings.map(h => `<code>${plain(h)}</code>`).join('')}</span></div>` : ''}
     ${n.gateContracts.length ? n.gateContracts.map(contractBlock).join('')
       : `<div class="frow"><span class="flabel">집행</span><span class="fvals t">판정하는 게이트 없음</span></div>`}

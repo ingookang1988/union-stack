@@ -39,5 +39,21 @@ const g = gather();
 check('gather rows present', Array.isArray(g.rows) && g.rows.length === 3);
 check('gather has total', typeof g.total === 'number');
 
+// --- budgetsFor: adapter.json budgets 가 기본 예산을 덮는다(어답터 C 실측 — 포크 대신 설정) ---
+const { budgetsFor, BUDGETS, TOTAL_CAP } = require('./context-budget');
+const fsB = require('fs'), osB = require('os'), pathB = require('path');
+const tmpB = fsB.mkdtempSync(pathB.join(osB.tmpdir(), 'cb-'));
+try {
+  check('설정 없음 → 기본값', JSON.stringify(budgetsFor(tmpB)) === JSON.stringify({ ...BUDGETS, total: TOTAL_CAP }));
+  fsB.mkdirSync(pathB.join(tmpB, '.union-stack'));
+  fsB.writeFileSync(pathB.join(tmpB, '.union-stack/adapter.json'), '{"budgets": {"handoff": 2200}}');
+  const b = budgetsFor(tmpB);
+  check('handoff 만 덮고 나머지 기본', b.handoff === 2200 && b.project === BUDGETS.project && b.total === TOTAL_CAP);
+  fsB.mkdirSync(pathB.join(tmpB, '.union-stack/sprint'));
+  fsB.writeFileSync(pathB.join(tmpB, '.union-stack/sprint/HANDOFF.md'), 'x'.repeat(8000));
+  const gB = gather(tmpB);
+  check('gather(root) 가 설정 예산을 쓴다(2000 tok < 2200 → OK)', gB.rows.find(r => r.name === 'handoff').budget === 2200 && gB.rows.find(r => r.name === 'handoff').status === 'OK');
+} finally { fsB.rmSync(tmpB, { recursive: true, force: true }); }
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

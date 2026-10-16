@@ -155,7 +155,7 @@ check('구버전 상류에서도 전용 스크립트는 신규로 둔갑하지 �
 check('남은 사본은 FS(presentUpstreamOnly) 기준으로 보고', planFb.upstreamOnlyLocal, ['scripts/eval.js']);
 
 // --- --force 경로 지정: 그 파일만 보호 해제, 나머지 개조는 보존(카나리아 실측 — localForked 7건 중 1건만 상류 수용) ---
-const { forceTargets } = require('./template-update');
+const { forceTargets, localCtx } = require('./template-update');
 const G = { clean: ['a.js'], modified: ['dash.js', 'hist.js'], unknown: ['q.js'] };
 check('force 없음: clean 만', forceTargets(G, false), { targets: ['a.js'], skipped: ['dash.js', 'hist.js', 'q.js'], unmatched: [] });
 check('force 전부', forceTargets(G, true).targets, ['a.js', 'dash.js', 'hist.js', 'q.js']);
@@ -188,6 +188,19 @@ check('갱신 대상 dashboard → 보류된 handoff-linter 1건(zfs_index 는 �
   [{ file: 'scripts/dashboard.js', dep: 'scripts/handoff-linter.js' }]);
 check('보류 없음 → 경고 없음', staleDeps(readSrc, ['scripts/dashboard.js'], []), []);
 check('의존이 갱신 대상에도 있으면(같이 갱신) 경고 없음', staleDeps(readSrc, ['scripts/dashboard.js', 'scripts/handoff-linter.js'], ['scripts/handoff-linter.js']), []);
+
+// --- upstreamIgnored: 상류 파일 거부(어답터 C 실측 — Actions 폐기 레포에 harness.yml 이 매 --apply 마다 돌아옴, localOwned 는 sync 에 진다) ---
+const igCtx = { manifest: { shipped: ['scripts/health.js', 'scripts/zfs_index.js'], upstreamOnly: [], optional: [] }, localOwned: [], upstreamIgnored: ['.github/workflows/harness.yml', 'scripts/health.js'] };
+check('거부 글롭은 매니페스트 배송보다 우선 → null', classifyPath('scripts/health.js', igCtx), null);
+check('거부 글롭: 워크플로 → null', classifyPath('.github/workflows/harness.yml', igCtx), null);
+check('거부 없는 파일은 그대로', classifyPath('.github/workflows/harness.yml', { ...igCtx, upstreamIgnored: [] }), 'sync');
+check('buildPlan: 거부 파일은 신규 sync 에 안 뜬다', buildPlan({}, { '.github/workflows/harness.yml': 'h', 'scripts/zfs_index.js': 'z' }, { upstream: igCtx, local: igCtx }).newSync, ['scripts/zfs_index.js']);
+const igTmp = fs.mkdtempSync(path.join(os.tmpdir(), 'tu-ig-'));
+try {
+  fs.mkdirSync(path.join(igTmp, '.union-stack'), { recursive: true });
+  fs.writeFileSync(path.join(igTmp, '.union-stack/adapter.json'), '{"upstreamIgnored": [".github/workflows/*.yml"]}');
+  check('localCtx 가 adapter.json upstreamIgnored 를 읽는다', localCtx(igTmp).upstreamIgnored, ['.github/workflows/*.yml']);
+} finally { fs.rmSync(igTmp, { recursive: true, force: true }); }
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -10,6 +10,7 @@
 //   "예산 내"를 낙관적으로 보고했다(이 레포는 문서 다수가 한국어라 직접 영향).
 const fs = require('fs');
 const path = require('path');
+const { load: loadAdapter } = require('./adapter');
 
 // 단계별 예산(토큰) — 부트스트랩이 비대해지면 분할/요약/링크-위임(extreme compression) 신호.
 const BUDGETS = {
@@ -28,6 +29,12 @@ function estimateTokens(text) {
   const t = text || '';
   const cjk = (t.match(CJK_RE) || []).length;
   return Math.ceil(cjk / CHARS_PER_TOKEN.cjk + (t.length - cjk) / CHARS_PER_TOKEN.latin);
+}
+
+/** 유효 예산: 기본값 위에 adapter.json budgets(project·profile·handoff·total)를 덮는다([ADR-29] — 포크가 아니라 설정). */
+function budgetsFor(root = path.resolve(__dirname, '..')) {
+  const b = (loadAdapter(root).budgets) || {};
+  return { ...BUDGETS, total: TOTAL_CAP, ...b };
 }
 
 /** 순수: 섹션별 {name, tokens, budget} → 평가 리포트. (FS 비의존 → 테스트 용이) */
@@ -61,11 +68,12 @@ function gather(root = path.resolve(__dirname, '..')) {
   const projectTxt = readDir(root, '.union-stack/project', /^IDENTITY.*\.md$/) + readIf(root, '.union-stack/project/HISTORY.md');
   const profileTxt = readDir(root, '.union-stack/profile/human', /^(user|team|org)/) + readDir(root, '.union-stack/profile/agent', /^agent/);
   const handoffTxt = readIf(root, '.union-stack/sprint/HANDOFF.md');
+  const b = budgetsFor(root);
   return computeBudget([
-    { name: 'project', tokens: estimateTokens(projectTxt), budget: BUDGETS.project },
-    { name: 'profile', tokens: estimateTokens(profileTxt), budget: BUDGETS.profile },
-    { name: 'handoff', tokens: estimateTokens(handoffTxt), budget: BUDGETS.handoff },
-  ]);
+    { name: 'project', tokens: estimateTokens(projectTxt), budget: b.project },
+    { name: 'profile', tokens: estimateTokens(profileTxt), budget: b.profile },
+    { name: 'handoff', tokens: estimateTokens(handoffTxt), budget: b.handoff },
+  ], b.total);
 }
 
 function run(root) {
@@ -84,6 +92,6 @@ function run(root) {
   return r.over ? 1 : 0;
 }
 
-module.exports = { estimateTokens, computeBudget, gather, BUDGETS, TOTAL_CAP, CHARS_PER_TOKEN };
+module.exports = { estimateTokens, computeBudget, gather, budgetsFor, BUDGETS, TOTAL_CAP, CHARS_PER_TOKEN };
 
 if (require.main === module) process.exit(run());

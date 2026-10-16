@@ -13,6 +13,15 @@
 
 <!-- census:rows -->
 
+### 2026-10-16 — 상류 6.0.0 @ da9cf67 · 레포 3
+
+| 레포 | 버전 / 앵커 | 계측기 | 문서 | WO · 상태(첫 토큰) | WO H2 헤딩(상위 8) | evidence | 백필 대상 | 중복 ID | 상류 ID 충돌 | arithmeticFrom | upward-fetch | upstream_candidate | adapter.json | health | ADR | 평면 KB |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| A | 6.0.0 / 앵커 main @ 2026-10-16 | 9/9 | 435 (WO 179 · ANL 98 · PRO 43 · MTG 34 · PLAN 32 · LSN 18) | 179 · frontmatter 없음 99 · Done 57 · Active 13 · Planned 6 · Verifying 3 · Review 1 | 검증 31 · 실행 기록 20 · 실행 체크리스트 18 · 목적·진입 조건 14 · 검증·실행 출발점 13 · 변경 owner·재사용 출발점 13 · 수행 범위 13 · 완료 기준 13 · 외 737종 1035건 | 값 0 · none 0 · 없음 80 · closed_by 0 | 101 (추정 가능 9) | 2 (네이밍 위반 2) | 21 | 0 → 제안 67 (PLAN·PRO 동번호 5구간) | 3/16 공백 | 0 | 없음 | FAIL 2 (naming gate · leakage gate) | 0 | 6052 |
+| B | 6.0.0 / 앵커 main @ 2026-10-16 | 9/9 | 454 (WO 233 · PLAN 83 · ANL 41 · MTG 36 · TOOL 22 · PRO 17) | 233 · frontmatter 없음 0 · Closed 151 · Verifying 49 · Active 15 · Draft 13 · Done 5 | 증거 201 · 수용 기준 198 · 목표 186 · 계보 77 · 범위 49 · 판단 기록 27 · 범위 밖 20 · 상위 축 (닫을 때 되쓸 곳) 15 · 외 118종 232건 | 값 219 · none 14 · 없음 0 · closed_by 162 | 17 (추정 가능 9) | 0 (네이밍 위반 0) | 45 | 0 → 제안 19 (PLAN·PRO 동번호 17구간) | 0/77 공백 | 0 | statusMap 0 · evidenceFields 없음 · private | FAIL 0 | 165 | 7000 |
+| C | 6.0.0 / 앵커 main @ 2026-10-16 | 9/9 | 643 (WO 439 · ANL 69 · PRO 47 · EVD 35 · PLAN 21 · MTG 15) | 439 · frontmatter 없음 0 · Complete 75 · Verified-local 59 · Verified 40 · Published 28 · Proposed 19 · Closed 19 · (없음) 18 · Implemented 17 · 외 48종 164건 | 수용 기준 203 · 비목표 133 · 진행 97 · 문제 56 · 검증 51 · 진행 기록 51 · 목적 49 · 상태 43 · 외 1289종 2161건 | 값 247 · none 0 · 없음 192 · closed_by 0 | 18 (추정 가능 0) | 1 (네이밍 위반 0) | 26 | 999 → 제안 22 (PLAN·PRO 동번호 18구간) | 0/2 공백 | 0 | statusMap 0 · evidenceFields evidence · private | FAIL 1 (naming gate) | 1 | 5317 |
+
+
 ### 2026-10-16 — 상류 6.0.0 @ 703470a · 레포 3
 
 | 레포 | 버전 / 앵커 | 계측기 | 문서 | WO · 상태(첫 토큰) | evidence | 백필 대상 | 중복 ID | 상류 ID 충돌 | arithmeticFrom | upward-fetch | upstream_candidate | adapter.json | health | ADR | 평면 KB |
