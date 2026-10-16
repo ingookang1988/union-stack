@@ -1,29 +1,26 @@
 <!-- [Wiki] 세션 이어달리기. 세션을 마치는 에이전트가 덮어쓴다. 최신 하나만 유효.
      다음 세션 부트스트랩 시 가장 먼저 읽힘. -->
 ---
-session_id: close-wo28a3-2026-10-17
-date: 2026-10-19T04:00:00Z
+session_id: canary-a2-2026-10-17
+date: 2026-10-19T06:00:00Z
 author: agent
-verification: "스위트 50 중 48 통과(실패 2 = leakage·ref 테스트, 미커밋 fdt spike 귀속 — 이전과 동일) · section-fetch 27(신설) · scaffold 39 · adapter 77 · work-close 63 · dashboard 186 · 어답터 팔 7 형상 충족 · weakening-guard PASS · work-close --table 동기화 · lint 체인 leakage 외 exit 0 · handoff-linter 통과"
+verification: "스위트 50 중 48 통과(실패 2 = leakage·ref 테스트, 미커밋 fdt spike 귀속 — 이전과 동일) · kit 19 · template-update 82 · adapter 83 · scaffold 43 · section-fetch 27 · adapter 77 · work-close 63 · dashboard 186 · 어답터 팔 7 형상 충족 · weakening-guard PASS · work-close --table 동기화 · lint 체인 leakage 외 exit 0 · handoff-linter 통과"
 version: 1.0
 ---
 
 # Handoff → 다음 세션
 
 ## 1. 세션 요약 (1~3줄)
-- 카나리아 A·B·C 완료 · 센서스 3회차 · **[PRO-28] 승인**([ADR-55], v1.0 — §7 미결 4건은 잠정값). PRO-β 는 [PRO-28] ⑤ 로 흡수(별도 승인).
-- **[WO-28a-1] Closed**(인간 승인 2026-10-17, archived · 가드 먼저): `adapter.json sections` 별칭 맵(1:N + 접두, 정규화) · `resolveSection`/`missingSections` · work-close 발행 린트가 맵으로 해소 ·
-  frontmatter `evidence:` 가 있으면 `## 증거` 불요 · 매칭 실패 CLARIFY 에 맵 안내. 상류 자신은 맵 없음 = 현행(회귀 0).
-- **[WO-28a-2] Closed**(인간 승인 2026-10-17, archived · 가드 먼저): `scripts/scaffold.js`([TOOL-36]) — `WO --parent <ID>` 한 줄로 뼈대. 다음 번호 제안(산술: 부모 아래 다음 자식 · 레거시: 도메인 최대+1) ·
-  parent 실존 확인 · 필수 3절은 `sections` 맵 첫 별칭 · ≤400 tok · dry-run 기본, `--write` 만 생성.
-- **[WO-28a-3] Closed**(인간 승인 2026-10-17, archived · 가드 먼저, scaffold 로 발행): `upward-fetch --sections [이름,…]` — 부모 문서를 H2 로 갈라 계약 절(맵 해소)+지정 절만 본문, 나머지는
-  "생략 N절 · ~M tok: 헤딩(~tok)" 목차 한 줄, 절 없는 문서는 머리 1,500 tok. MCP `upward_fetch(sections, extra)` → excerpts. 기본값 불변. 실측: PRO-28 발췌 ~9/2017 tok.
+- [PRO-22]·[PRO-24]~[PRO-27] 구현 10건 + **[PRO-28] ①~④ 3건 전부 Closed**(archived). 카나리아 A·B·C 완료, 센서스 3회차, PRO-β 는 [PRO-28] ⑤ 로 흡수(별도 승인).
+- **어답터 A 전면 적용 회신** → 상류 수리 4(가드 먼저): 키트 앵커가 추정 태그 일치 파일에 main sha 를 적어 localForked 오판(→ 일치한 쪽 sha) · template-update 가 `ci/`·
+  `docker-compose.harness.yml` 을 안 걷어 매번 "신규"(→ 걷는다) · 어답터 하위 디렉터리 `_GUIDE.md` 를 "사라진 파일"로 오보(→ 상류에 없는 디렉터리 제외) ·
+  절 해소에 **토큰 연속 일치**(접두는 토큰 경계, 가장 긴 별칭 승 — A 실측 "수용 기준 0%" 원인) · scaffold 글자 자식 계열(66a…66t → 다음 글자).
+- A 의 나머지: ⑤ 의존 결합 경고는 `staleDeps`(da9cf67) 가 이미 함(A 는 옛 template-update 보존) · ⑥ `budgets.historyPerEntry` 보류(별건) · ⑧ `health --root` 는 있다(측정이 갱신 전).
 
 ## 2. 변경 위치 (ID 목록 — Upward Fetching 진입점)
-- 승인·원장: [PRO-28] v1.0 · [ADR-55]. 오더(archived): **[WO-28a-3]** [WO-28a-2] [WO-28a-1] · [WO-27a-1]~[WO-24c-2] 10건. [PRO-28] ①②③④ 전부 Closed, ⑤ 는 별도 승인. 이전 승인 [ADR-53] [ADR-54].
-- 스크립트: adapter(`sections`·`normalizeHeading`·`resolveSection`·`missingSections`·`SECTION_KEYS`) · work-close(`parseWo` 맵 해소 · evidence 충족 · 안내) · dashboard(카드 제목 proseInline).
-  scaffold(신설) · **section-fetch**(신설: `splitSections`·`selectSections`·`excerpt`·`renderExcerpt`·`fetchExcerpts`) · upward-fetch(`--sections`) · mcp-server(`sections`·`extra`). 카드 [TOOL-02] [TOOL-23] [TOOL-36] · `sprint/_GUIDE` §Anatomy · MIGRATION · CHANGELOG ·
-  ship-manifest(배송 85) · AGENTS.md tools-index 블록 · `sprint/next.md` 재생성.
+- 승인·원장: [PRO-28] v1.0 · [ADR-55] · 이전 [ADR-53] [ADR-54]. 오더(archived): [WO-28a-1]~[WO-28a-3] · [WO-27a-1]~[WO-24c-2] 10건.
+- 이 세션 스크립트: union-stack-kit(앵커 sha) · template-update(로컬 걷기 `ci/`·compose · 디렉터리 기준 사라짐) · adapter(`resolveSection` 토큰) · scaffold(글자 계열).
+  앞 세션 신설: section-fetch · scaffold · upward-fetch `--sections` · mcp-server `sections`. 카드 [TOOL-02] [TOOL-23] [TOOL-35] [TOOL-36] · MIGRATION · CHANGELOG · `eval/CENSUS.md` 3회차.
 
 ## 3. 다음 작업 (단일 진입점)
 → **사람 몫**: ① push ② **어답터 접촉**: 세 레포에 `template-update --apply`(da9cf67~이번 커밋 수신) + `adapter.json sections` 맵 선언 + `scaffold`·`--sections` 사용 안내
@@ -33,7 +30,7 @@ version: 1.0
 
 ## 4. 미해결 / 주의
 - **AGENTS.md 예산 계측 이월 9회+** — 미착수. [PRO-13] §4-4 인간 판정 — [PRO-28] ⑤ 압축 보존 문단(Schema)과 함께.
-- [PRO-23] A/B 런 비용(인간) · Jev 보류. [PRO-27] §7 미결 4건 · [PRO-28] §7 미결 4건은 잠정값. [PRO-22] 단계 5 · [PRO-26] ⑤ 는 보류(최하).
+- [PRO-23] A/B 런 비용(인간) · Jev 보류. [PRO-27] §7 미결 4건 · [PRO-28] §7 미결 4건은 잠정값(접두 방향은 "토큰 경계 접두 + 토큰 연속" 으로 갱신됨). A 요청 ⑥ `budgets.historyPerEntry`([PRO-12] 항목당 캡) 보류. [PRO-22] 단계 5 · [PRO-26] ⑤ 는 보류(최하).
 - 어답터 잔여(각자 몫): A = dashboard.test(`--apply --force scripts/handoff-linter.js`) · 중복 ID 2쌍; C = `budgets.handoff 2200` + `upstreamIgnored harness.yml` · 상류 전용 사본 6 삭제 ·
   permission-guard 포크 CONTRACT · WO-31 중복; B = dashboard 포크 · review 12. 셋 다 `template-update --apply` 로 da9cf67·385cf80·이번 커밋을 받는다.
 - 키트 미지원 둘: `scripts/union-stack/` 하위 설치 · `init --drop-template-bits` 의 상류 전용 삭제. `upstreamIgnored` 로 scripts/ 거부는 약화 경고.

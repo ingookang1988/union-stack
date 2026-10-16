@@ -12,6 +12,14 @@ design, see [`DESIGN_RATIONALE.md`](./DESIGN_RATIONALE.md). Entries marked **⚠
 action in already-adopted projects.
 
 ## [Unreleased]
+- **Fixes from the first adopter's full apply report (PRO-24 ① follow-up).** `union-stack-kit` now anchors a file that matches
+  the guessed clone tag with *that tag's* sha (it wrote the `main` sha, so byte-identical files were later reported as localForked
+  and needed `--force`). `template-update` walks `ci/` and `docker-compose.harness.yml` locally (they re-appeared as "new" on
+  every dry-run and were rewritten on every `--apply`), and no longer reports a `_GUIDE.md` in a directory upstream does not have
+  as "removed upstream" (adopter-made sub-guides are the adopter's). Section resolution (`adapter.json sections`) adds a
+  **token-run match** after exact and prefix — `5. G5 완료 기준`, `검증·완료 기준`, `2. 목표와 공통 완료 기준` now resolve to
+  수용 기준 (prefix matches only at a token boundary, so `비목표`/`목표와` are not 목표). `scaffold` proposes the next **letter**
+  child (`66a…66k` → `66m`, skipping l/o) when a parent already has a letter-child series instead of `66a-1`. No migration.
 - **PRO-28 ③ — `upward-fetch --sections [names]` injects parent documents by section.** New `scripts/section-fetch.js` splits a
   document at H2, keeps the contract sections (resolved through `adapter.json sections`) plus any names given (prefix match), and
   replaces the rest with one line — `(생략 N절 · ~M tok: heading(~tok) …)` — a table of contents for the next fetch. Documents

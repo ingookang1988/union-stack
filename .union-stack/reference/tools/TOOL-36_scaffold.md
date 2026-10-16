@@ -13,7 +13,7 @@ version: 1.0
 ## 용도
 새 WO 를 **한 줄로** 찍는다([PRO-28] ④). 직전 WO 복사 + 손 수정이 변종 헤딩(한 의미에 3~5 표기)·중복 ID·빈 status 의 발생원이었다(회신 2곳 · 센서스 3회차) —
 린트(사후)보다 생성(사전)이 싸다. ① **다음 번호 제안**: 산술 범위면 부모 아래 다음 자식(`PLAN-01a` → `WO-01a-N`, `PRO-28` → `WO-28a-N`, 계보 글자는 `--lineage`),
-레거시 구간(`lineage.arithmeticFrom` 아래)이면 도메인 전역 최대+1. ② **parent 실존 확인**(ZFS 색인, 도메인+ID). ③ 뼈대 = frontmatter(status Draft · parent ·
+레거시 구간(`lineage.arithmeticFrom` 아래)이면 도메인 전역 최대+1. 부모 아래 **글자 자식 계열**(`66a…66k`)만 있으면 다음 글자(`66m`, l·o 건너뜀 — 어답터 실측). ② **parent 실존 확인**(ZFS 색인, 도메인+ID). ③ 뼈대 = frontmatter(status Draft · parent ·
 evidence `none — 착수 전` · closed_by []) + 필수 3절(어답터 표기는 `adapter.json sections` 의 **첫 별칭**) + 선택 절 안내 한 줄. 뼈대는 **≤400 tok**.
 
 ## 언제 쓰나

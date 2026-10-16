@@ -49,7 +49,9 @@ function planKit({ local, upstream, guess = null, kitFiles = KIT_FILES, shipped 
     if (!(p in upstream)) continue;
     if (!(p in local)) { if (!fetch.includes(p)) missing.push(p); continue; }
     const shas = local[p];
-    if (shas.includes(upstream[p]) || (guess && guess[p] && shas.includes(guess[p]))) anchor[p] = upstream[p];
+    // 앵커는 로컬이 **실제로 같은** sha 여야 3-way 가 clean 으로 읽는다 — 추정 지점과 같은 파일에 main sha 를 적으면 localForked 오판(어답터 A 실측: 8파일 --force).
+    if (shas.includes(upstream[p])) anchor[p] = upstream[p];
+    else if (guess && guess[p] && shas.includes(guess[p])) anchor[p] = guess[p];
     else unknown.push(p);
   }
   for (const p of fetch) anchor[p] = upstream[p]; // 가져온 파일은 정의상 상류와 동일

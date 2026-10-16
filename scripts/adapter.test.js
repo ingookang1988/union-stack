@@ -160,5 +160,14 @@ check('missingSections: 맵으로 3절 충족', JSON.stringify(missingSections(s
 check('missingSections: 맵 없으면 상류 표기만', JSON.stringify(missingSections(null, '## 목적\n## 수용 기준\n')) === JSON.stringify(['목표', '증거']));
 check('missingSections: H3 는 안 센다', JSON.stringify(missingSections(sc, '### 목표\n## 수용 기준\n## 증거\n')) === JSON.stringify(['목표']));
 
+// --- [PRO-28] ① 보강(어답터 A 2차 실측): 접두만으로는 "5. G5 완료 기준"·"검증·완료 기준"·"2. 목표와 공통 완료 기준" 이 0건 — 토큰 단위 연속 일치를 더한다 ---
+const scT = parseConfig('{"sections": {"수용 기준": ["완료 기준"], "증거": ["검증"]}}');
+check('토큰: 게이트명 뒤 별칭', resolveSection(scT, '5. G5 완료 기준') === '수용 기준');
+check('토큰: · 결합 — 긴 별칭 우선(검증·완료 기준 → 수용 기준)', resolveSection(scT, '검증·완료 기준') === '수용 기준');
+check('토큰: "목표와" 는 목표가 아니다(토큰 경계) · 뒤의 완료 기준으로 해소', resolveSection(scT, '2. 목표와 공통 완료 기준') === '수용 기준');
+check('토큰: 실행 항목·수용 기준(상류 표기 토큰)', resolveSection(scT, '2. 실행 항목·수용 기준') === '수용 기준');
+check('토큰 경계: 비목표 는 목표가 아니다 · 증거 없음 은 증거(접두)', resolveSection(scT, '비목표') === null && resolveSection(scT, '증거 없음') === '증거');
+check('토큰: 서사 절은 여전히 null', resolveSection(scT, '진행 기록') === null && resolveSection(scT, '검증 로그') === '증거');
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

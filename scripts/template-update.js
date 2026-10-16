@@ -180,9 +180,11 @@ function buildPlan(local, upstream, ctx = {}) {
       plan[cat === 'sync' ? 'changedSync' : 'changedReview'].push(p);
     }
   }
+  // 어답터가 만든 하위 디렉터리(상류에 그 디렉터리의 파일이 하나도 없음)의 _GUIDE 류는 템플릿 소유가 아니다 — "사라진 파일" 오보(어답터 A 실측: plan/research/_GUIDE.md).
+  const upDirs = new Set(Object.keys(upstream).map(p => p.slice(0, p.lastIndexOf('/'))));
   for (const p of Object.keys(local)) {
     if (uo.has(p)) { plan.upstreamOnlyLocal.push(p); continue; }
-    if (classifyPath(p, loCtx) && !(p in upstream)) plan.removedUpstream.push(p);
+    if (classifyPath(p, loCtx) && !(p in upstream) && upDirs.has(p.slice(0, p.lastIndexOf('/')))) plan.removedUpstream.push(p);
   }
   for (const p of (loCtx && loCtx.presentUpstreamOnly) || []) if (!plan.upstreamOnlyLocal.includes(p)) plan.upstreamOnlyLocal.push(p);
   plan.upstreamOnlyLocal.sort();
@@ -250,8 +252,9 @@ function localTemplateFiles(root, ctx = localCtx(root)) {
     if (!cat) return;
     try { out[rel] = gitBlobShas(fs.readFileSync(path.join(root, rel), 'utf8')); } catch { /* 바이너리/삭제 경합 무시 */ }
   };
-  ['scripts', '.github/workflows', 'eval', '.union-stack'].forEach(d => walkFiles(root, d, record));
-  ['AGENTS.md', 'README.md', 'README.ko.md', 'package.json', 'CHANGELOG.md', 'MIGRATION.md', 'DESIGN_RATIONALE.md']
+  // ci/ 와 루트 컨테이너 파일도 걷는다 — 빠뜨리면 로컬에 있어도 매 dry-run "신규 sync" 로 재등장하고 --apply 마다 다시 쓴다(어답터 A 실측).
+  ['scripts', '.github/workflows', 'eval', '.union-stack', 'ci'].forEach(d => walkFiles(root, d, record));
+  ['AGENTS.md', 'README.md', 'README.ko.md', 'package.json', 'CHANGELOG.md', 'MIGRATION.md', 'DESIGN_RATIONALE.md', 'docker-compose.harness.yml']
     .forEach(f => { if (fs.existsSync(path.join(root, f))) record(f); });
   return out;
 }

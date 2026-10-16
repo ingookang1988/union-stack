@@ -32,6 +32,12 @@ check('숫자 끝 부모: 계보 a 의 다음 자식', proposeId(IDX, { domain: 
 check('자식 없는 부모: -1', proposeId(IDX, { domain: 'WO', parentId: '30', cfg: cfg0 }), { id: '30a-1', basis: 'arithmetic' });
 check('계보 글자 지정(b)', proposeId(IDX, { domain: 'WO', parentId: '28', lineage: 'b', cfg: cfg0 }), { id: '28b-1', basis: 'arithmetic' });
 check('계보 글자 l·o 금지 → null', proposeId(IDX, { domain: 'WO', parentId: '28', lineage: 'l', cfg: cfg0 }), null);
+// 어답터 A 실측: PLAN-66 아래 WO-66a…66t(글자 자식 계열)가 있는데 66a-1 을 제안 — 글자 계열이면 다음 글자, l·o 는 건너뛴다.
+const IDX66 = [{ domain: 'PLAN', id: '66', file: 'p' }, ...['a', 'b', 'c', 'k'].map(l => ({ domain: 'WO', id: '66' + l, file: 'w' + l }))];
+check('글자 자식 계열: 다음 글자(k → m, l 건너뜀)', proposeId(IDX66, { domain: 'WO', parentId: '66', cfg: cfg0 }), { id: '66m', basis: 'letter-series' });
+check('글자 자식 계열: n → p(o 건너뜀)', proposeId([{ domain: 'WO', id: '66n', file: 'w' }], { domain: 'WO', parentId: '66', cfg: cfg0 }), { id: '66p', basis: 'letter-series' });
+check('글자 계열 소진(z) → null(사람 결정)', proposeId([{ domain: 'WO', id: '66z', file: 'w' }], { domain: 'WO', parentId: '66', cfg: cfg0 }), null);
+check('글자 자식과 -N 자식이 섞이면 -N 계열(명시 계보 우선)', proposeId([{ domain: 'WO', id: '66a', file: 'w' }, { domain: 'WO', id: '66a-2', file: 'w2' }], { domain: 'WO', parentId: '66', cfg: cfg0 }), { id: '66a-3', basis: 'arithmetic' });
 // 레거시 독립 채번 구간([PRO-27] ③ arithmeticFrom 아래): 도메인 전역 최대 번호 + 1 (평면 ID 들 사이 겹침 방지)
 const cfgLegacy = parseConfig('{"lineage": {"arithmeticFrom": 100}}');
 check('레거시: WO 전역 최대 번호 + 1', proposeId(IDX, { domain: 'WO', parentId: '12', cfg: cfgLegacy }), { id: '29', basis: 'legacy-max' });

@@ -23,7 +23,9 @@ const shipped = Object.keys(up);
 const local = { 'scripts/fs_walk.js': ['F'], 'scripts/health.js': ['H1'], 'scripts/zfs-linter.js': ['Zlocal'] };
 const p = planKit({ local, upstream: up, guess, shipped });
 check('fetch: 없는 키트 파일 7(fs_walk 는 있음)', p.fetch.length === 7 && !p.fetch.includes('scripts/fs_walk.js') && p.keep.join() === 'scripts/fs_walk.js');
-check('anchor: 상류와 동일(fs_walk) + 추정 지점과 동일(health) + 가져온 파일', p.anchor['scripts/fs_walk.js'] === 'F' && p.anchor['scripts/health.js'] === 'H2' && p.anchor['scripts/template-update.js'] === 'T');
+// 추정 지점(guess)과 동일한 파일의 앵커는 그 지점의 sha 다 — main sha(H2)를 적으면 로컬(H1) != 앵커 → localForked 오판(어답터 A 실측: 바이트 동일 8파일에 --force).
+check('anchor: 상류와 동일(fs_walk) + 추정 지점과 동일(health → guess sha) + 가져온 파일', p.anchor['scripts/fs_walk.js'] === 'F' && p.anchor['scripts/health.js'] === 'H1' && p.anchor['scripts/template-update.js'] === 'T');
+check('anchor: 추정 지점 sha 는 3-way 가 "clean" 으로 읽는다', require('./template-update').classifySyncTargets(['scripts/health.js'], { 'scripts/health.js': ['H1'] }, { 'scripts/health.js': p.anchor['scripts/health.js'] }).clean.length === 1);
 check('unknown: 로컬이 다른 파일(zfs-linter)만 — 위조 정합 없음', JSON.stringify(p.unknown) === '["scripts/zfs-linter.js"]' && !('scripts/zfs-linter.js' in p.anchor));
 check('missing: 배송 대상인데 없는 비키트 파일(new.js)', JSON.stringify(p.missing) === '["scripts/new.js"]');
 check('guess 없이도 동작(health 는 unknown 이 된다)', planKit({ local, upstream: up, guess: null, shipped }).unknown.includes('scripts/health.js'));

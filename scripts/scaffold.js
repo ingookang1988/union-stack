@@ -52,6 +52,17 @@ function proposeId(index, { domain, parentId, lineage = 'a', cfg = null }) {
     const max = same.reduce((m, d) => { const h = String(d.id).match(/^\d+/); return h ? Math.max(m, parseInt(h[0], 10)) : m; }, 0);
     return { id: String(max + 1), basis: 'legacy-max' };
   }
+  // 숫자 끝 부모 아래 **글자 자식 계열**(66a·66b…)이 있고 -N 자식은 없으면 다음 글자(l·o 건너뜀, z 소진 → null). 어답터 A 실측: 66a…66t 가 있는데 66a-1 을 제안 — 오분기 발생원.
+  if (/[0-9]$/.test(parentId)) {
+    const esc = parentId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const letters = same.map(d => String(d.id).match(new RegExp('^' + esc + '([a-km-np-z])$'))).filter(Boolean).map(m => m[1]);
+    const hyphen = same.some(d => new RegExp('^' + esc + '[a-km-np-z]+-\\d+$').test(String(d.id)));
+    if (letters.length && !hyphen) {
+      let c = letters.sort().pop().charCodeAt(0) + 1;
+      while (c <= 122 && /[lo]/.test(String.fromCharCode(c))) c++;
+      return c > 122 ? null : { id: parentId + String.fromCharCode(c), basis: 'letter-series' };
+    }
+  }
   const prefix = /[0-9]$/.test(parentId) ? parentId + lineage : parentId;
   const re = new RegExp('^' + prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '-(\\d+)$');
   const max = same.reduce((m, d) => { const x = String(d.id).match(re); return x ? Math.max(m, parseInt(x[1], 10)) : m; }, 0);

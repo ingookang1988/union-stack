@@ -134,7 +134,8 @@ This file is adopter-owned — upstream never touches it.
   are listed as removable.
 - `sections: { "목표": [...], "수용 기준": [...], "증거": [...] }` — your own headings for the three required WO sections
   ([PRO-28] ①). Keys are the upstream meanings; values are local spellings (`"목적"`, `"목적·진입 조건"`, `"수용 게이트"`, `"검증"`, …).
-  Headings are normalised (leading numbers, trailing colons, whitespace) and matched exactly, then by prefix. `work-close --table`
+  Headings are normalised (leading numbers, trailing colons, whitespace) and matched exactly, then by prefix at a token boundary,
+  then by a contiguous token run (`5. G5 완료 기준` → 수용 기준; `비목표` is not 목표). `work-close --table`
   resolves the issuance contract through the map; an unmatched document is a CLARIFY that names the map, never a REJECT, and
   existing documents are not rewritten. A `## 증거` section is not required when frontmatter `evidence:` is present.
   New WOs: `node scripts/scaffold.js WO --parent <DOMAIN-ID> --title "…" --write` (PRO-28 ④) proposes the next number under the

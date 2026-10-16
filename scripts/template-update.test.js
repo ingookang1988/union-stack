@@ -155,7 +155,7 @@ check('구버전 상류에서도 전용 스크립트는 신규로 둔갑하지 �
 check('남은 사본은 FS(presentUpstreamOnly) 기준으로 보고', planFb.upstreamOnlyLocal, ['scripts/eval.js']);
 
 // --- --force 경로 지정: 그 파일만 보호 해제, 나머지 개조는 보존(카나리아 실측 — localForked 7건 중 1건만 상류 수용) ---
-const { forceTargets, localCtx } = require('./template-update');
+const { forceTargets, localCtx, localTemplateFiles } = require('./template-update');
 const G = { clean: ['a.js'], modified: ['dash.js', 'hist.js'], unknown: ['q.js'] };
 check('force 없음: clean 만', forceTargets(G, false), { targets: ['a.js'], skipped: ['dash.js', 'hist.js', 'q.js'], unmatched: [] });
 check('force 전부', forceTargets(G, true).targets, ['a.js', 'dash.js', 'hist.js', 'q.js']);
@@ -201,6 +201,24 @@ try {
   fs.writeFileSync(path.join(igTmp, '.union-stack/adapter.json'), '{"upstreamIgnored": [".github/workflows/*.yml"]}');
   check('localCtx 가 adapter.json upstreamIgnored 를 읽는다', localCtx(igTmp).upstreamIgnored, ['.github/workflows/*.yml']);
 } finally { fs.rmSync(igTmp, { recursive: true, force: true }); }
+
+// --- 어답터 A 2차 실측 ② (a) scripts/ 밖 sync 파일(ci/Dockerfile · docker-compose.harness.yml)이 로컬에 있어도 매번 "신규"로 재등장 — 로컬 걷기가 그 경로를 안 본다 ---
+const ltTmp = fs.mkdtempSync(path.join(os.tmpdir(), 'tu-local-'));
+try {
+  fs.mkdirSync(path.join(ltTmp, 'ci'), { recursive: true });
+  fs.mkdirSync(path.join(ltTmp, 'scripts'), { recursive: true });
+  fs.writeFileSync(path.join(ltTmp, 'ci/Dockerfile'), 'FROM node\n');
+  fs.writeFileSync(path.join(ltTmp, 'docker-compose.harness.yml'), 'services: {}\n');
+  fs.writeFileSync(path.join(ltTmp, 'scripts/health.js'), 'x\n');
+  const lt = localTemplateFiles(ltTmp, { manifest: null, localOwned: [], upstreamIgnored: [], presentUpstreamOnly: [] });
+  check('로컬 걷기: ci/Dockerfile · docker-compose.harness.yml 포함', ['ci/Dockerfile', 'docker-compose.harness.yml', 'scripts/health.js'].every(p => p in lt), true);
+  check('로컬에 있는 컨테이너 파일은 신규가 아니다', buildPlan(lt, { 'ci/Dockerfile': gitBlobSha('FROM node\n'), 'docker-compose.harness.yml': gitBlobSha('services: {}\n') }).newSync, []);
+} finally { fs.rmSync(ltTmp, { recursive: true, force: true }); }
+// (b) 어답터가 만든 하위 디렉터리의 _GUIDE.md 는 템플릿 소유가 아니다 — 상류에 그 디렉터리가 없으면 "상류에서 사라진 파일"이 아니다
+const gl = buildPlan({ '.union-stack/plan/research/_GUIDE.md': 'g', '.union-stack/plan/_GUIDE.md': 'p', '.union-stack/sprint/_GUIDE.md': 's' },
+  { '.union-stack/plan/_GUIDE.md': 'p', '.union-stack/sprint/_GUIDE.md': 's2' });
+check('상류에 없는 디렉터리의 _GUIDE 는 보고하지 않는다', gl.removedUpstream, []);
+check('상류가 아는 디렉터리의 사라진 파일은 여전히 보고', buildPlan({ '.union-stack/plan/_GUIDE.md': 'p', '.union-stack/plan/PLAN-01_x.md': 'q' }, { '.union-stack/plan/PLAN-01_x.md': 'q', 'scripts/health.js': 'h' }).removedUpstream, ['.union-stack/plan/_GUIDE.md']);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
