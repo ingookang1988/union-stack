@@ -137,6 +137,9 @@ This file is adopter-owned — upstream never touches it.
   Headings are normalised (leading numbers, trailing colons, whitespace) and matched exactly, then by prefix. `work-close --table`
   resolves the issuance contract through the map; an unmatched document is a CLARIFY that names the map, never a REJECT, and
   existing documents are not rewritten. A `## 증거` section is not required when frontmatter `evidence:` is present.
+  New WOs: `node scripts/scaffold.js WO --parent <DOMAIN-ID> --title "…" --write` (PRO-28 ④) proposes the next number under the
+  parent (or domain max + 1 below `lineage.arithmeticFrom`), refuses a dead parent or an existing file, and writes the three
+  required sections using the **first alias** of each key in your `sections` map — so new documents follow your own spelling.
 - `budgets: { project, profile, handoff, total }` — recalibrated bootstrap token budgets (positive integers; defaults 2000 · 800 ·
   1500 · 4000). `context-budget`, `handoff-linter`, `health` and the dashboard read them, so a repo whose HANDOFF legitimately
   needs 2,200 tokens declares it here instead of forking `context-budget.js` (a fork is overwritten or preserved stale on every

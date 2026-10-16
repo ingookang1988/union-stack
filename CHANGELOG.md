@@ -12,6 +12,12 @@ design, see [`DESIGN_RATIONALE.md`](./DESIGN_RATIONALE.md). Entries marked **⚠
 action in already-adopted projects.
 
 ## [Unreleased]
+- **PRO-28 ④ — `scripts/scaffold.js` (TOOL-36) issues a WO skeleton in one line.** `node scripts/scaffold.js WO --parent PLAN-01a
+  --title "…" [--slug …] [--lineage b] [--write]` proposes the next ID under the parent (letter-ending parent → `01a-N`, digit-ending →
+  `28a-N`; below `lineage.arithmeticFrom` the domain max + 1), verifies the parent exists in the ZFS index, refuses an existing file,
+  and writes frontmatter (status Draft, parent, `evidence: "none — …"`, `closed_by: []`) plus the three required sections — spelled
+  with the first alias of your `sections` map — in ≤400 tokens. Dry-run by default; CLARIFY (3) on a dead parent, ID clash, missing
+  slug for a non-ASCII title, or an unsupported domain. No migration.
 - **PRO-28 ①② — the section contract becomes a read-time mapping.** `adapter.json sections` maps the three required WO
   sections (목표 · 수용 기준 · 증거) to an adopter's own headings (1:N, normalised, exact-then-prefix). `work-close` resolves the
   issuance lint through the map, accepts frontmatter `evidence:` in place of a `## 증거` section, and reports an unmatched

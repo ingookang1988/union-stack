@@ -21,6 +21,10 @@ parent: PLAN-01a
 evidence: "<test/artifact/commit>"  |  "none — <이유>"   # 빈 값 금지
 closed_by: []                                            # 상위 축 흔적(파일 경로)
 ```
+**Issue with the scaffold, not by copying the last WO** ([PRO-28] ④, [TOOL-36]): `node scripts/scaffold.js WO --parent PLAN-01a --title "…" --write`
+proposes the next number under the parent (legacy ranges: domain max + 1), refuses a dead parent or an existing file, and writes the
+frontmatter plus the three required sections (an adopter's own headings via `adapter.json sections`) in ≤400 tokens. Copying is how
+heading variants, duplicate IDs and missing `status:` lines appeared downstream.
 
 ### Budget: 1,500 tok — and what an overrun *means*
 Same quantum as a scenario body and HANDOFF (no third number). Per [PRO-13], an overrun is a **routing

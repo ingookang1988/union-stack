@@ -51,6 +51,8 @@
     "scripts/ref-linter.test.js",
     "scripts/retro.js",
     "scripts/retro.test.js",
+    "scripts/scaffold.js",
+    "scripts/scaffold.test.js",
     "scripts/session-friction.js",
     "scripts/session-friction.test.js",
     "scripts/ship-manifest.js",

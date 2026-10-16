@@ -181,4 +181,5 @@ this file only pins the deterministic core. The detail lives in the structure.
 - **[TOOL-33]** label (파생 라벨 — ID 단독 자리에 slug 토큰 · 선택적 mnemonic override) — ID 만 단독으로 나오는 자리(`sprint/next.md` 작업대 · MCP `list_docs`)에 사람이 읽을 라벨을 붙인다 — `[WO-27a-1 · prereq_upstream]`([PRO-26] ④ v0.2). (`scripts/label.js`)
 - **[TOOL-34]** ship-manifest (배송 화이트리스트 — @ship 태그에서 생성) — 어답터에 가는 스크립트를 **상류가 열거**한다([PRO-24] ①(c) · §9 ①). 수기 목록이 아니라 정의 지점 태그(`// @ship upstream-only` · `// @ship optional`)에서 (`scripts/ship-manifest.js`)
 - **[TOOL-35]** union-stack-kit (손 이식 어답터의 사후 입장권 — 의존 0 단일 파일) — `template-update` 도 정합 앵커도 없는 어답터(손으로 이식한 레포)에 **갱신 통로**를 연다([PRO-24] ①(a) · §9 ①). 의존 0 단일 파일을 한 줄로 받아 실행하면 (`scripts/union-stack-kit.js`)
+- **[TOOL-36]** scaffold (WO 뼈대 생성기 — 다음 번호 제안 + parent 실존 확인 + 필수 3절) — 새 WO 를 **한 줄로** 찍는다([PRO-28] ④). 직전 WO 복사 + 손 수정이 변종 헤딩(한 의미에 3~5 표기)·중복 ID·빈 status 의 발생원이었다(회신 2곳 · 센서스 3회차) — (`scripts/scaffold.js`)
 <!-- tools-index:end -->
