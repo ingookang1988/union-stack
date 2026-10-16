@@ -2,10 +2,10 @@
 ---
 id: WO-27a-2
 title: 교차 레포 전제 — ② 상태 어휘 매핑(adapter.json statusMap·evidenceFields) + frontmatter 백필 스크립트(dry-run 기본)
-status: Verifying
+status: Closed
 parent: PRO-27
-evidence: "구현 완료(2026-10-16, 가드 먼저): adapter(statusMap·evidenceFields 파싱·경고 · mapStatus/fieldAliases) · zfs_index.buildIndex 가 매핑 status + rawStatus · work-close.parseWo 별칭·매핑 · scripts/frontmatter-backfill.js(dry-run 기본 · 본문 표식→종결 디렉터리→비움 · --apply 는 status: 한 줄 · --root) · 어답터 팔 형상 vocab(4 바 충족) · 상류 자신: adapter.json 부재에서 출력 동일 · 백필 대상 0. 카드 [TOOL-29] 신설 · [TOOL-21]·[TOOL-23]·[TOOL-26] 갱신 · MIGRATION/CHANGELOG. 잔여: [WO-27a-3](③) 발행"
-closed_by: []
+evidence: "구현 완료(2026-10-16, 가드 먼저): adapter(statusMap·evidenceFields 파싱·경고 · mapStatus/fieldAliases) · zfs_index.buildIndex 가 매핑 status + rawStatus · work-close.parseWo 별칭·매핑 · scripts/frontmatter-backfill.js(dry-run 기본 · 본문 표식→종결 디렉터리→비움 · --apply 는 status: 한 줄 · --root) · 어답터 팔 형상 vocab(4 바 충족) · 상류 자신: adapter.json 부재에서 출력 동일 · 백필 대상 0. 카드 [TOOL-29] 신설 · [TOOL-21]·[TOOL-23]·[TOOL-26] 갱신 · MIGRATION/CHANGELOG. 잔여: [WO-27a-3](③) 발행 · rcpt:n/a — 소급 없음([PRO-22] 단계 2 이전 발행) · Closed 판정 2026-10-17(인간 승인)"
+closed_by: [.union-stack/reference/tools/TOOL-26_adopter_arm.md, .union-stack/reference/tools/TOOL-29_frontmatter_backfill.md]
 version: 1.0
 ---
 # [WO-27a-2] 교차 레포 전제 — ② 상태 어휘 매핑 + 백필

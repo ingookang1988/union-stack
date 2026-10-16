@@ -2,10 +2,10 @@
 ---
 id: WO-27a-3
 title: 교차 레포 전제 — ③ frontmatter 계보 1급(plan:/parent: ∪ ID 산술 · lineage.arithmeticFrom · 우산 WO/중간 PLAN 루트)
-status: Verifying
+status: Closed
 parent: PRO-27
-evidence: "구현 완료(2026-10-16, 가드 먼저): adapter lineage.arithmeticFrom + arithmeticApplies · zfs_index parents(parent:∪plan:, 스칼라·인라인·블록·끝 주석·up: 제외)+arithmetic 플래그 · query.lineageAncestors(산술 ∪ 선언 폐포) → upwardFetch(선언 부모 도메인 무관, via:frontmatter)·blastRadius(선언 자식 폐포, viaParent)·roadmapWiring(합산 도달) · work-close lineage-break 는 산술 구간만 · 팔 serial(plan: 부모 수집 exit 0 + 고아 CLARIFY)·legacy(arithmeticFrom 36 아래 무관 PLAN 상속 차단) 상향. 상류 PRO-부모 WO 5건 upward-fetch 전부 exit 0. 카드 TOOL-02·03·26 · MIGRATION · CHANGELOG. 잔여: lineage-tree 뷰는 산술 부모만(관측 뷰, 별건)"
-closed_by: []
+evidence: "구현 완료(2026-10-16, 가드 먼저): adapter lineage.arithmeticFrom + arithmeticApplies · zfs_index parents(parent:∪plan:, 스칼라·인라인·블록·끝 주석·up: 제외)+arithmetic 플래그 · query.lineageAncestors(산술 ∪ 선언 폐포) → upwardFetch(선언 부모 도메인 무관, via:frontmatter)·blastRadius(선언 자식 폐포, viaParent)·roadmapWiring(합산 도달) · work-close lineage-break 는 산술 구간만 · 팔 serial(plan: 부모 수집 exit 0 + 고아 CLARIFY)·legacy(arithmeticFrom 36 아래 무관 PLAN 상속 차단) 상향. 상류 PRO-부모 WO 5건 upward-fetch 전부 exit 0. 카드 TOOL-02·03·26 · MIGRATION · CHANGELOG. 잔여: lineage-tree 뷰는 산술 부모만(관측 뷰, 별건) · rcpt:n/a — 소급 없음([PRO-22] 단계 2 이전 발행) · Closed 판정 2026-10-17(인간 승인)"
+closed_by: [.union-stack/reference/tools/TOOL-26_adopter_arm.md, .union-stack/reference/tools/TOOL-02_upward_fetch.md]
 version: 1.0
 ---
 # [WO-27a-3] 교차 레포 전제 — ③ frontmatter 계보 1급

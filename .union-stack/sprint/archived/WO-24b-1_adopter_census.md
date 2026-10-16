@@ -2,10 +2,10 @@
 ---
 id: WO-24b-1
 title: 어답터 연결 ② 회수층 — adopter-census(형제 레포 읽기 전용 계측 → eval/CENSUS.md 익명 행) 구현 + 1회차 실측
-status: Verifying
+status: Closed
 parent: PRO-24
-evidence: "구현 완료 + 1회차 실측(2026-10-16): scripts/adopter-census.js([TOOL-30], 새 게이트 계약 PASS/CLARIFY · 상류 도구를 root 인자로 · 어답터 스크립트 실행 0 · 본문 읽기 0 · 쓰기 0) → eval/CENSUS.md 1회차 레포 3 행(익명) + eval/private/census/ 원자료(gitignore). 테스트 26(읽기 전용 스냅샷 · 익명성 · 추정 순수) · 팔 vocab 바 2(경로·제목 0 · 사본 변경 0). 1회차 발견: 산문 status(Done (날짜))가 statusMap 을 비껴가 첫 토큰 폴백 추가 · 상태 어휘 60종 레포가 있어 분포 상위 8종으로 캡. [PRO-24] §7 입력: 주기 = 릴리스마다+설문 시, 원자료 = gitignored eval/private/"
-closed_by: []
+evidence: "구현 완료 + 1회차 실측(2026-10-16): scripts/adopter-census.js([TOOL-30], 새 게이트 계약 PASS/CLARIFY · 상류 도구를 root 인자로 · 어답터 스크립트 실행 0 · 본문 읽기 0 · 쓰기 0) → eval/CENSUS.md 1회차 레포 3 행(익명) + eval/private/census/ 원자료(gitignore). 테스트 26(읽기 전용 스냅샷 · 익명성 · 추정 순수) · 팔 vocab 바 2(경로·제목 0 · 사본 변경 0). 1회차 발견: 산문 status(Done (날짜))가 statusMap 을 비껴가 첫 토큰 폴백 추가 · 상태 어휘 60종 레포가 있어 분포 상위 8종으로 캡. [PRO-24] §7 입력: 주기 = 릴리스마다+설문 시, 원자료 = gitignored eval/private/ · rcpt:n/a — 소급 없음([PRO-22] 단계 2 이전 발행) · Closed 판정 2026-10-17(인간 승인)"
+closed_by: [eval/CENSUS.md, .union-stack/reference/tools/TOOL-30_adopter_census.md]
 version: 1.0
 ---
 # [WO-24b-1] 어답터 연결 ② 회수층 — adopter-census

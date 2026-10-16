@@ -2,10 +2,10 @@
 ---
 id: WO-27a-1
 title: 교차 레포 전제 — 상류 도구 몫 구현 ([PRO-27] ④ health --root · ⑤ ID 유일성 · ① up: 네임스페이스 인식)
-status: Verifying
+status: Closed
 parent: PRO-27
-evidence: "구현 완료(2026-10-15, 가드 먼저): 6 스위트에 회귀 고정(zfs-linter.test 신설 · ref-linter/query/health/adopter-arm/zfs_util 확장) → ④ health --root(루트 검증 · REJECT 측정 대상 아님) · ⑤ zfs-linter 중복 ID REJECT(상류 0) · ① [up:ID] 외부 참조(ref-linter·upward-fetch·blast-radius·MCP 가 INFO) + scripts/upstream-prefix.js(배포 접두) · 빈 upward-fetch CLARIFY(exit 3). 어답터 팔 형상 legacy·serial 추가 — 4 형상 성공 바 전부 충족. health --root . 출력 = 기본 출력. 카드 TOOL-01·02·03·04·26 갱신. 잔여: [WO-27a-2](②) · [WO-27a-3](③) 발행"
-closed_by: []
+evidence: "구현 완료(2026-10-15, 가드 먼저): 6 스위트에 회귀 고정(zfs-linter.test 신설 · ref-linter/query/health/adopter-arm/zfs_util 확장) → ④ health --root(루트 검증 · REJECT 측정 대상 아님) · ⑤ zfs-linter 중복 ID REJECT(상류 0) · ① [up:ID] 외부 참조(ref-linter·upward-fetch·blast-radius·MCP 가 INFO) + scripts/upstream-prefix.js(배포 접두) · 빈 upward-fetch CLARIFY(exit 3). 어답터 팔 형상 legacy·serial 추가 — 4 형상 성공 바 전부 충족. health --root . 출력 = 기본 출력. 카드 TOOL-01·02·03·04·26 갱신. 잔여: [WO-27a-2](②) · [WO-27a-3](③) 발행 · rcpt:n/a — 소급 없음([PRO-22] 단계 2 이전 발행) · Closed 판정 2026-10-17(인간 승인)"
+closed_by: [.union-stack/reference/tools/TOOL-26_adopter_arm.md, .union-stack/reference/tools/TOOL-04_health.md]
 version: 1.0
 ---
 # [WO-27a-1] 교차 레포 전제 — 상류 도구 몫

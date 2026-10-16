@@ -2,10 +2,10 @@
 ---
 id: WO-22b-2
 title: 약화 표면화 + 기준선 만료 — [PRO-22] §3 단계 3·4 구현 (weakening-guard · known_failures · 예외 증가 red)
-status: Verifying
+status: Closed
 parent: PRO-22
-evidence: "구현 완료(2026-10-16, 가드 먼저): scripts/weakening-guard.js([TOOL-31], 계약 PASS/CLARIFY/REJECT) — 신호 6종 질문 한 줄(CLARIFY, 절대 차단 아님) · weakening: 사유 면제 · 단계 4 ⓑ 예외 순증 red + known_failures(id·reason·owner·until, 줄 단위 덮기) · 만료 REJECT · 자기언급 오염 방지(따옴표 안 마커 제외, [ADR-19]) · ci.js 체인 permission-guard 다음(차단) · 팔 nonjs 바 2(예외 +2 REJECT → known_failures 로 CLARIFY). 도그푸딩: 상류 작업트리·최근 커밋 범위 PASS. rcpt:n/a — 이 WO 의 검사는 하네스 스위트(harness 영수증)이지 제품 검사가 아니다"
-closed_by: []
+evidence: "구현 완료(2026-10-16, 가드 먼저): scripts/weakening-guard.js([TOOL-31], 계약 PASS/CLARIFY/REJECT) — 신호 6종 질문 한 줄(CLARIFY, 절대 차단 아님) · weakening: 사유 면제 · 단계 4 ⓑ 예외 순증 red + known_failures(id·reason·owner·until, 줄 단위 덮기) · 만료 REJECT · 자기언급 오염 방지(따옴표 안 마커 제외, [ADR-19]) · ci.js 체인 permission-guard 다음(차단) · 팔 nonjs 바 2(예외 +2 REJECT → known_failures 로 CLARIFY). 도그푸딩: 상류 작업트리·최근 커밋 범위 PASS. rcpt:n/a — 이 WO 의 검사는 하네스 스위트(harness 영수증)이지 제품 검사가 아니다 · Closed 판정 2026-10-17(인간 승인)"
+closed_by: [.union-stack/reference/tools/TOOL-31_weakening_guard.md, .union-stack/reference/tools/TOOL-27_ci_container.md]
 version: 1.0
 ---
 # [WO-22b-2] 약화 표면화 + 기준선 만료

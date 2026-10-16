@@ -2,10 +2,10 @@
 ---
 id: WO-22b-1
 title: 검사 선언 + 실행 영수증 — [PRO-22] §3 단계 1·2 구현 (0건 검사 = 실패 포함)
-status: Verifying
+status: Closed
 parent: PRO-22
-evidence: "구현 완료(2026-10-16, 가드 먼저): scripts/receipts.js(순수: 러너 출력 파싱 · 2-bis 3분할 judge · 줄 스키마 · 나이 · --scan 초안 · 인용) + ci.js(선언 검사 실행 · 단계마다 영수증 1줄 scope=harness/product · --only-checks · --no-receipts · --scan) · adapter.json checks[](6분류·3비용·expected_zero_unless) · health receipts 절(차단 검사별 최신 포인터·나이, 선언 부재 무기입) · work-close rcpt: 인용 CLARIFY(소급 없음 — n/a 허용) · init 이 receipts.md 리셋 · 팔 nonjs 형상 4 바 충족. 도그푸딩: 상류 adapter.json 선언 1(suite) + 영수증 rcpt:suite@2133507(REJECT — 미커밋 fdt spike 귀속 실패 2를 정직하게 기록). [PRO-22] §3 단계 3~5 는 [WO-22b-2]부터"
-closed_by: []
+evidence: "구현 완료(2026-10-16, 가드 먼저): scripts/receipts.js(순수: 러너 출력 파싱 · 2-bis 3분할 judge · 줄 스키마 · 나이 · --scan 초안 · 인용) + ci.js(선언 검사 실행 · 단계마다 영수증 1줄 scope=harness/product · --only-checks · --no-receipts · --scan) · adapter.json checks[](6분류·3비용·expected_zero_unless) · health receipts 절(차단 검사별 최신 포인터·나이, 선언 부재 무기입) · work-close rcpt: 인용 CLARIFY(소급 없음 — n/a 허용) · init 이 receipts.md 리셋 · 팔 nonjs 형상 4 바 충족. 도그푸딩: 상류 adapter.json 선언 1(suite) + 영수증 rcpt:suite@2133507(REJECT — 미커밋 fdt spike 귀속 실패 2를 정직하게 기록). [PRO-22] §3 단계 3~5 는 [WO-22b-2]부터 · Closed 판정 2026-10-17(인간 승인)"
+closed_by: [.union-stack/reference/tools/TOOL-27_ci_container.md, .union-stack/reference/tools/TOOL-23_work_close.md]
 version: 1.0
 ---
 # [WO-22b-1] 검사 선언 + 실행 영수증
