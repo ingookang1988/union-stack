@@ -175,5 +175,19 @@ try {
 } finally { fs.rmSync(seedTmp, { recursive: true, force: true }); }
 check('--seed 는 main 의 분기(네트워크 전)에 있다', /argv\.indexOf\('--seed'\)/.test(fs.readFileSync(path.join(__dirname, 'template-update.js'), 'utf8')) && typeof spawnTU === 'function', true);
 
+// --- staleDeps: 부분 갱신의 의존 불일치 경고(어답터 A 실측 — dashboard.js 는 갱신됐는데 그것이 require 하는 handoff-linter.js 는
+//     앵커 없음으로 보존돼 `handoffPart is not a function`). 갱신 대상이 require 하는 파일이 "갱신 보류(변경됐는데 보존)" 이면 경고. ---
+const { staleDeps } = require('./template-update');
+const SRC = {
+  'scripts/dashboard.js': "const { partBody } = require('./handoff-linter');\nconst { x } = require('./zfs_index');\n",
+  'scripts/health.js': "const fs = require('fs');\n",
+};
+const readSrc = p => (p in SRC ? SRC[p] : null);
+check('갱신 대상 dashboard → 보류된 handoff-linter 1건(zfs_index 는 보류 아님 · 신규 파일은 로컬 본문 없음 → 건너뜀)',
+  staleDeps(readSrc, ['scripts/dashboard.js', 'scripts/health.js', 'scripts/new.js'], ['scripts/handoff-linter.js', 'scripts/other.js']),
+  [{ file: 'scripts/dashboard.js', dep: 'scripts/handoff-linter.js' }]);
+check('보류 없음 → 경고 없음', staleDeps(readSrc, ['scripts/dashboard.js'], []), []);
+check('의존이 갱신 대상에도 있으면(같이 갱신) 경고 없음', staleDeps(readSrc, ['scripts/dashboard.js', 'scripts/handoff-linter.js'], ['scripts/handoff-linter.js']), []);
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

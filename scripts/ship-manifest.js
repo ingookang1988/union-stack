@@ -78,6 +78,28 @@ function readManifest(root = path.resolve(__dirname, '..')) {
   try { return parseManifest(fs.readFileSync(path.join(root, MANIFEST), 'utf8')); } catch { return null; }
 }
 
+/** 열 0 의 무조건 `require('./x')` 만 — try 안의 조건부 require 는 부재를 감수하는 명시적 선택이라 제외. 결과는 `scripts/x.js`. */
+function topLevelRequires(txt) {
+  const out = [];
+  const re = /^(?:(?:const|let|var)\s+(?:\{[^}\n]*\}|[\w$]+)\s*=\s*)?require\('\.\/([\w.-]+?)(?:\.js)?'\)/gm;
+  const src = String(txt).replace(/\r\n/g, '\n');
+  let m;
+  while ((m = re.exec(src))) { const p = `scripts/${m[1]}.js`; if (!out.includes(p)) out.push(p); }
+  return out;
+}
+
+/** 배송 파일이 상류 전용 모듈을 무조건 require 하면 어답터에서 MODULE_NOT_FOUND 다(어답터 A 실측: lineage-tree.test → fetch-eval). [{file, dep}]. */
+function requireLeaks(root, manifest = scan(root)) {
+  const uo = new Set(manifest.upstreamOnly);
+  const leaks = [];
+  for (const f of manifest.shipped) {
+    if (!f.endsWith('.js')) continue;
+    let txt; try { txt = fs.readFileSync(path.join(root, f), 'utf8'); } catch { continue; }
+    for (const dep of topLevelRequires(txt)) if (uo.has(dep)) leaks.push({ file: f, dep });
+  }
+  return leaks;
+}
+
 function run(argv = process.argv.slice(2), root = path.resolve(__dirname, '..')) {
   const m = scan(root);
   const expected = render(m);
@@ -96,12 +118,17 @@ function run(argv = process.argv.slice(2), root = path.resolve(__dirname, '..'))
     else console.log('ship-manifest: 이미 최신.');
     return OUTCOME.PASS;
   }
+  const leaks = requireLeaks(root, m);
+  if (leaks.length) {
+    console.error(`ship-manifest: 배송 파일이 상류 전용 모듈을 무조건 require 한다 — 어답터에서 MODULE_NOT_FOUND. try 로 감싸(조건부) 검사를 건너뛰게 하거나 모듈을 배송하라:\n${leaks.map(l => `  ${l.file} → ${l.dep}`).join('\n')}`);
+    return OUTCOME.CLARIFY;
+  }
   if (current == null) { console.error(`ship-manifest: ${MANIFEST} 없음 — \`node scripts/ship-manifest.js --write\` 로 생성하라.`); return OUTCOME.CLARIFY; }
   if (current.replace(/\r\n/g, '\n') !== expected) { console.error('ship-manifest: 드리프트 — 태그·파일 목록과 매니페스트가 다르다. `node scripts/ship-manifest.js --write` 후 커밋에 포함하라.'); return OUTCOME.CLARIFY; }
   console.log(`ship-manifest 통과: 배송 ${m.shipped.length} · 상류 전용 ${m.upstreamOnly.length} · 선택 ${m.optional.length}, 매니페스트 동기화됨.`);
   return OUTCOME.PASS;
 }
 
-module.exports = { MANIFEST, TAG_RE, parseTag, build, render, scan, parseManifest, readManifest, run, CONTRACT };
+module.exports = { MANIFEST, TAG_RE, parseTag, build, render, scan, parseManifest, readManifest, topLevelRequires, requireLeaks, run, CONTRACT };
 
 if (require.main === module) process.exit(withContract(CONTRACT, argv => run(argv))());

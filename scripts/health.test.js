@@ -43,7 +43,9 @@ check('ref integrity INFO', sz.dims.find(d => d.name === 'ref integrity').value.
 // 단 leakage는 *미커밋* 작업트리 콘텐츠에 좌우된다(검토 중 spike 등) — 커밋 평면 게이트만 단언.
 const g = gather();
 const nonLeakFails = g.dims.filter(d => d.status === 'FAIL' && d.name !== 'leakage gate').length;
-check('gather 커밋 평면 게이트 그린', nonLeakFails === 0);
+// 어답터 평면의 FAIL(예: 자기 중복 ID 의 naming) 은 상류 테스트 실패가 아니다 — 그린 단언은 템플릿 모드에서만([ADR-30]).
+if (require('./adapter').isTemplateRepo()) check('gather 커밋 평면 게이트 그린', nonLeakFails === 0);
+else check('어답터: gather 가 전 절을 산출(판정은 어답터 몫)', g.dims.every(d => d.name && d.status));
 check('gather dims 19 (관측 10절 포함 — test infra [PRO-21] · receipts [PRO-22] · retro due [PRO-25])', g.dims.length === 19);
 // 로드맵 배선 관측([PRO-19] ②) — 판정 없는 INFO. roadmap 은 Schema 라 표면화가 수단의 전부다.
 const rDim = g.dims.find(d => d.name === 'roadmap wiring');

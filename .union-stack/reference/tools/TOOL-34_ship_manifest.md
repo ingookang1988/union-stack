@@ -19,6 +19,8 @@ scenario-rubric · token-accounting · hook-replay · check-prereqs · adopter-a
 ## 언제 쓰나
 - 스크립트를 새로 만들거나 상류 전용으로 바꿨을 때 → 선두 주석에 태그 → `--write` → 커밋에 포함(CI 체인이 드리프트를 CLARIFY 로 표면화).
 - 어답터가 "이 스크립트가 상류 것인가"를 물을 때 → 매니페스트가 답이다.
+- **배송 파일이 상류 전용 모듈을 무조건 require** 하면 검사가 CLARIFY 다(어답터 실측: 배송 테스트가 상류 전용 평가 모듈을 require → 어답터에서
+  MODULE_NOT_FOUND). 열 0 의 `const x = require('./y')` 만 본다 — try 로 감싼 조건부 require 는 부재를 감수하는 명시적 선택이라 통과.
 
 ## 언제 쓰지 않나
 - **어답터 로컬 파일 선언** — 그건 `adapter.json localOwned`(글롭)다. 매니페스트는 상류 몫.

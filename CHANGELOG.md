@@ -12,6 +12,14 @@ design, see [`DESIGN_RATIONALE.md`](./DESIGN_RATIONALE.md). Entries marked **⚠
 action in already-adopted projects.
 
 ## [Unreleased]
+- **Canary fixes from a second hand-ported adopter (PRO-24 ① follow-up).** `ship-manifest` now returns CLARIFY when a shipped
+  file unconditionally requires an upstream-only module (a shipped test required the evaluation-only `fetch-eval` and failed with
+  MODULE_NOT_FOUND in the adopter; conditional `try { require }` is accepted and that test now skips the adversarial-plane checks
+  when the module is absent). `template-update` warns when a file about to be updated requires a file that is being preserved
+  (localForked / no anchor), since the two can drift apart in interface (an updated `dashboard.js` could not find the new
+  `partBody` export of a preserved `handoff-linter.js`); `--json` carries `staleDeps`. Three more template-only assertions
+  (health gate green, test-catalog asset count/sync, tools-index card completeness) are skipped outside the template repo
+  ([ADR-30]). No migration.
 - **PRO-24 ①(a) — bootstrap kit for hand-ported adopters.** `scripts/union-stack-kit.js` (**TOOL-35**) is a single
   dependency-free file fetched with one command; its first run is a dry-run, `--apply` fetches only the files
   `template-update` needs that you lack and seeds the sync anchor as `clone@<version>(추정)` with **byte-identical files

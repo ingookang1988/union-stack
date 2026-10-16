@@ -68,5 +68,31 @@ try {
   check('어답터: 자기 스캔과 달라도 PASS(드리프트는 상류 몫)', quiet(() => runA([], tmpA)) === 0);
 } finally { fs.rmSync(tmpA, { recursive: true, force: true }); }
 
+// --- 배송 파일 → 상류 전용 모듈 require 누설(어답터 A 실측: lineage-tree.test 가 fetch-eval 을 require → MODULE_NOT_FOUND) ---
+// 열 0 의 무조건 require 만 누설이다. try 안의 조건부 require 는 어답터에서 부재를 감수하는 명시적 선택이라 제외.
+const { requireLeaks, topLevelRequires } = require('./ship-manifest');
+check('topLevelRequires: 열 0 const/let/bare 만 · ./ 상대 · .js 유무 무관',
+  JSON.stringify(topLevelRequires("const { a } = require('./x');\nlet b = require('./y.js');\nrequire('./z');\n  const c = require('./deep');\ntry { d = require('./cond'); } catch {}\nconst fs = require('fs');\n"))
+  === JSON.stringify(['scripts/x.js', 'scripts/y.js', 'scripts/z.js']));
+const tmpL = fs.mkdtempSync(path.join(os.tmpdir(), 'ship-leak-'));
+try {
+  fs.mkdirSync(path.join(tmpL, 'scripts'));
+  fs.writeFileSync(path.join(tmpL, 'package.json'), JSON.stringify({ name: 'union-stack' }));
+  fs.writeFileSync(path.join(tmpL, 'scripts/a.js'), "const { x } = require('./b');\nconst y = require('./c');\n");
+  fs.writeFileSync(path.join(tmpL, 'scripts/a.test.js'), "let z = null; try { ({ z } = require('./b')); } catch {}\n");
+  fs.writeFileSync(path.join(tmpL, 'scripts/b.js'), '// @ship upstream-only — x\n');
+  fs.writeFileSync(path.join(tmpL, 'scripts/c.js'), '// c\n');
+  const { run: runL, scan: scanL } = require('./ship-manifest');
+  const hush = (fn) => { const c = console.log, e = console.error; console.log = () => {}; console.error = () => {}; try { return fn(); } finally { console.log = c; console.error = e; } };
+  check('requireLeaks: 배송 a.js → 상류 전용 b.js 1건(조건부 require 의 a.test.js 는 제외 · 배송 c.js 는 제외)',
+    JSON.stringify(requireLeaks(tmpL, scanL(tmpL))) === JSON.stringify([{ file: 'scripts/a.js', dep: 'scripts/b.js' }]));
+  check('누설 있어도 --write 는 생성(PASS)', hush(() => runL(['--write'], tmpL)) === 0);
+  check('누설 → 검사 CLARIFY(3)', hush(() => runL([], tmpL)) === 3);
+  fs.writeFileSync(path.join(tmpL, 'scripts/a.js'), "let x = null; try { ({ x } = require('./b')); } catch {}\nconst y = require('./c');\n");
+  check('조건부로 바꾸면 PASS', hush(() => runL([], tmpL)) === 0);
+} finally { fs.rmSync(tmpL, { recursive: true, force: true }); }
+// 상류 자신: 배송 파일은 상류 전용을 무조건 require 하지 않는다(템플릿 모드에서만 — 어답터 트리에는 상류 전용이 없다).
+if (require('./adapter').isTemplateRepo()) check('상류 배송 파일의 상류 전용 require 누설 0', requireLeaks(path.resolve(__dirname, '..'), scan(path.resolve(__dirname, '..'))).length === 0);
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

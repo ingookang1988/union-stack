@@ -63,10 +63,13 @@ fs.rmSync(tmp, { recursive: true, force: true });
 // --- 실레포 통합 ---
 check('계약 완전성', validateContract(CONTRACT).length === 0);
 const real = gather();
-check('실레포: 자산 3건 이상', real.length >= 3);
 check('실레포: 자기 파일(test-catalog*.js)에서 유령 태그 0',
   real.every(a => a.file !== 'scripts/test-catalog.js' && a.file !== 'scripts/test-catalog.test.js'));
-check('실레포: 블록 동기화(check PASS)', run([]) === 0);
+// 자산 수·블록 동기화는 상류 트리의 상태 — 어답터는 자기 카탈로그를 자기 CI 에서 본다([ADR-30]).
+if (require('./adapter').isTemplateRepo()) {
+  check('실레포: 자산 3건 이상', real.length >= 3);
+  check('실레포: 블록 동기화(check PASS)', run([]) === 0);
+} else check('어답터: run 은 계약 결과로 끝난다(0 PASS · 3 CLARIFY — 동기화 여부는 어답터 몫)', [0, 3].includes(run([])));
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
