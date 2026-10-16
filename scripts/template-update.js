@@ -296,6 +296,15 @@ async function applyPlan(root, ref, targets, upstreamMap) {
 
 async function main(argv = process.argv.slice(2)) {
   const root = path.resolve(__dirname, '..');
+  // --seed [ref]: 사람이 "지금 로컬 == 상류"를 **명시적으로** 단언할 때만 전 파일 앵커를 심는다([PRO-24] ①(a)). 키트는 이것을 쓰지 않는다(동일 파일만 기록).
+  const si = argv.indexOf('--seed');
+  if (si >= 0) {
+    const ref = argv[si + 1] && !argv[si + 1].startsWith('--') ? argv[si + 1] : 'manual';
+    seedAnchor(root, ref);
+    const n = Object.keys(readAnchor(root)).length;
+    console.log(`앵커 시딩: ${ANCHOR_PATH} ← 로컬 ${n}건을 \`${ref}\` 정합으로 기록. ⚠ 로컬 개조가 있었다면 그것도 "정합"이 됐다 — 다음 --apply 가 덮어쓴다. 확신이 없으면 키트([TOOL-35])가 동일 파일만 기록한다.`);
+    return OUTCOME.PASS;
+  }
   const apply = argv.includes('--apply');
   // --force [경로,경로] — 값이 없으면 전부, 있으면 그 파일만 보호 해제([TOOL-21]).
   const fi = argv.indexOf('--force');

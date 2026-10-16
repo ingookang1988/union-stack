@@ -96,5 +96,11 @@ const njChecks = JSON.parse(nj.files['.union-stack/adapter.json']).checks;
 check('nonjs: 선언 4행 — 0건 전수·정상·메타·env 조건부', njChecks.length === 4 && njChecks.some(c => c.kind === '메타') && njChecks.some(c => c.expected_zero_unless === 'env'));
 check('nonjs: 정답 3분할', nj.truth.expect.zero === 'REJECT' && nj.truth.expect.guard === 'NOOP_PASS' && nj.truth.expect.probe === 'CLARIFY' && nj.truth.expect.ok === 'PASS');
 
+// --- [PRO-24] ①(a) 손 이식 어답터 형상 kit ---
+const { kitShape } = require('./adopter-arm');
+check('형상 목록에 kit', SHAPES.includes('kit'));
+const ks = kitShape();
+check('kit: 키트 8 + 앵커를 지우고 한 파일을 패치', ks.remove.length === 9 && ks.remove.includes('.union-stack/template-sync.json') && ks.truth.patched === 'scripts/health.js' && ks.truth.kitFiles === 8);
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

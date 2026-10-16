@@ -27,6 +27,9 @@
 //   nonjs  : **비-JS 제품 검사 선언** — adapter.json checks[] 4행(0건 전수·정상·메타·env 조건부), 영수증 0 에서 시작.
 //            health 가 영수증 공백을 표면화하는가, ci.js 가 0건 검사를 3분할로 판정하고 영수증을 선언 행마다 쓰는가. 근거 [PRO-22] §3 1·2·2-bis.
 //
+//   kit    : **손 이식 어답터** — 키트 파일 8 + 앵커를 지우고 한 파일을 로컬 패치한 사본. 키트 dry-run 이 쓰지 않는가, --apply 가 없는 것만 가져오는가,
+//            앵커가 동일 파일만 담는가(패치 파일 제외 → 3-way 가 보호). 근거 [PRO-24] ①(a) · §9 ①(a)(의존 0 · 첫 실행 dry-run).
+//
 //   vocab  : **로컬 상태 어휘** — `status: Done`·`Review`, 별칭 증거 필드, frontmatter 없는 WO·PRO(본문 산문 상태), 종결 디렉터리 문서.
 //            statusMap·evidenceFields 로 읽히는가, 백필 dry-run 이 쓰지 않는가, --apply 뒤 대상 0 인가. 근거 [PRO-27] ② (SURVEY-02:
 //            WO 99/179 frontmatter 없음 · PRO 17/17 YAML 없음 · status 38종 자유 문자열).
@@ -39,7 +42,7 @@
 //
 // 실행:
 //   node scripts/adopter-arm.js                 # 두 축 전부
-//   node scripts/adopter-arm.js --shape env     # 한 축만 (env|data|legacy|serial|vocab|nonjs)
+//   node scripts/adopter-arm.js --shape env     # 한 축만 (env|data|legacy|serial|vocab|nonjs|kit)
 //   node scripts/adopter-arm.js --keep <dir>    # 워크스페이스 보존(디버깅)
 //   node scripts/adopter-arm.js --json
 const fs = require('fs');
@@ -509,8 +512,39 @@ function nonjsArm(ws) {
   return bars;
 }
 
-const SHAPES = ['env', 'data', 'legacy', 'serial', 'vocab', 'nonjs'];
-const ARMS = { env: envArm, data: dataArm, legacy: legacyArm, serial: serialArm, vocab: vocabArm, nonjs: nonjsArm };
+/** 손 이식 어답터 형상(순수 계획): 지울 것·패치할 것. */
+function kitShape() {
+  const { KIT_FILES, ANCHOR } = require('./union-stack-kit');
+  return { remove: [...KIT_FILES, ANCHOR], patch: { 'scripts/health.js': '\n// (example) 어답터 로컬 패치 — 키트가 건드리면 안 된다\n' }, truth: { kitFiles: KIT_FILES.length, patched: 'scripts/health.js' } };
+}
+
+function kitArm(ws) {
+  const { remove, patch, truth } = kitShape();
+  for (const rel of remove) { try { fs.unlinkSync(path.join(ws, rel)); } catch { /* 없음 */ } }
+  for (const [rel, add] of Object.entries(patch)) fs.appendFileSync(path.join(ws, rel), add);
+  const kit = path.join(ROOT, 'scripts/union-stack-kit.js');
+  const bars = [];
+  const snap = () => fs.readdirSync(path.join(ws, 'scripts')).sort().join(',') + '|' + fs.existsSync(path.join(ws, '.union-stack/template-sync.json'));
+  const before = snap();
+  const dry = run(ws, [kit, '--from-dir', ROOT, '--json']);
+  let dj = null;
+  try { dj = JSON.parse(dry.stdout); } catch { /* null */ }
+  bars.push({ name: `키트 dry-run: 쓰기 0 · 가져올 키트 파일 ${truth.kitFiles} · 패치 파일은 unknown`, ok: dry.code === 0 && !crashed(dry) && snap() === before && !!dj && dj.plan.fetch.length === truth.kitFiles && dj.plan.unknown.includes(truth.patched),
+    detail: dj ? `fetch ${dj.plan.fetch.length} · unknown ${dj.plan.unknown.length}` : `exit ${dry.code} · 측정 실패` });
+  const ap = run(ws, [kit, '--apply', '--from-dir', ROOT, '--json']);
+  let aj = null;
+  try { aj = JSON.parse(ap.stdout); } catch { /* null */ }
+  const anchorPath = path.join(ws, '.union-stack/template-sync.json');
+  let anchor = null;
+  try { anchor = JSON.parse(fs.readFileSync(anchorPath, 'utf8')); } catch { /* null */ }
+  bars.push({ name: '키트 --apply: 8 파일 복원 · 앵커 clone@…(추정) · 동일 파일만(패치 파일 제외)', ok: ap.code === 0 && !crashed(ap) && !!aj && aj.applied && !!anchor && /^clone@.*\(추정\)$/.test(anchor.ref) && !(truth.patched in anchor.blobs) && 'scripts/template-update.js' in anchor.blobs,
+    detail: anchor ? `${anchor.ref} · 정합 ${Object.keys(anchor.blobs).length}` : `exit ${ap.code} · 측정 실패` });
+  bars.push({ name: '키트는 있는 파일을 건드리지 않는다(패치 보존)', ok: fs.readFileSync(path.join(ws, truth.patched), 'utf8').includes('어답터 로컬 패치'), detail: '' });
+  return bars;
+}
+
+const SHAPES = ['env', 'data', 'legacy', 'serial', 'vocab', 'nonjs', 'kit'];
+const ARMS = { env: envArm, data: dataArm, legacy: legacyArm, serial: serialArm, vocab: vocabArm, nonjs: nonjsArm, kit: kitArm };
 
 function main(argv = process.argv.slice(2)) {
   const si = argv.indexOf('--shape');
@@ -547,6 +581,6 @@ function main(argv = process.argv.slice(2)) {
   return failed ? 1 : 0;
 }
 
-module.exports = { dataShape, legacyShape, serialShape, vocabShape, nonjsShape, SHAPES, rawMarkers, noJsReachable, crashed, ZONES, ROWS_PER_ZONE, HISTORY_ENTRIES };
+module.exports = { dataShape, legacyShape, serialShape, vocabShape, nonjsShape, kitShape, SHAPES, rawMarkers, noJsReachable, crashed, ZONES, ROWS_PER_ZONE, HISTORY_ENTRIES };
 
 if (require.main === module) process.exit(main());

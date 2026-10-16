@@ -12,6 +12,11 @@ design, see [`DESIGN_RATIONALE.md`](./DESIGN_RATIONALE.md). Entries marked **⚠
 action in already-adopted projects.
 
 ## [Unreleased]
+- **PRO-24 ①(a) — bootstrap kit for hand-ported adopters.** `scripts/union-stack-kit.js` (**TOOL-35**) is a single
+  dependency-free file fetched with one command; its first run is a dry-run, `--apply` fetches only the files
+  `template-update` needs that you lack and seeds the sync anchor as `clone@<version>(추정)` with **byte-identical files
+  only** — modified files stay unknown so the 3-way protection keeps them. `template-update --seed <ref>` is the explicit
+  all-files alternative. Adopter arm gains the `kit` shape. No migration.
 - **PRO-24 ① — delivery narrowed to a whitelist; adopter-owned files declared, not guessed.** `scripts/ship-manifest.json`
   (**TOOL-34**, generated from `// @ship upstream-only|optional` tags) lists the scripts upstream ships; `template-update` reads
   the local and the upstream manifest separately, so upstream-only tooling (eval, eval-arm, fetch-eval, scenario-rubric,

@@ -53,6 +53,22 @@ If you migrated before this existed, your entries were silently counted as **0 t
 to convert — re-run `node scripts/history-linter.js` and the count is real. To move to the table form,
 one row per `###` block: date → Date, title → fact, `Rationale` → reason, `Impact` → implication.
 
+## Adopting without `template-update` — the kit
+If your copy was ported by hand (no `scripts/template-update.js`, no `.union-stack/template-sync.json`), fetch one dependency-free file and run it
+from the repo root — **the first run only prints a plan**:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ingookang1988/union-stack/main/scripts/union-stack-kit.js -o scripts/union-stack-kit.js
+node scripts/union-stack-kit.js            # dry-run
+node scripts/union-stack-kit.js --apply    # fetches the 8 files template-update needs (only the ones you lack) and seeds the anchor
+node scripts/template-update.js            # then the normal path: report → --apply
+```
+
+The anchor is labelled `clone@<version>(추정)` and records as "in sync" **only files that are byte-identical to upstream** (at the guessed clone tag,
+default `v<your CHANGELOG version>`, or at `main`). Everything else stays *unknown*, so `template-update --apply` will not overwrite it until you
+decide per file with `--force <path>`. Files you already have are never touched by the kit. (`template-update --seed <ref>` is the explicit
+alternative: it marks *all* local files as in sync — use it only when you are sure nothing was modified.)
+
 ## Adopter configuration — `.union-stack/adapter.json`
 Adopters legitimately need to change how two gates behave. Declare it here instead of patching the
 scripts: `scripts/*.js` is the **sync** category, so `template-update --apply` overwrites local patches.

@@ -43,4 +43,5 @@ node scripts/template-update.js --apply      # sync 파일 갱신(개조·판별
 node scripts/template-update.js --apply --force  # 보존 해제 — 개조·판별불가까지 덮어씀
 node scripts/template-update.js --apply --force scripts/dashboard.js,scripts/x.js  # 그 파일만 보호 해제(나머지 개조 보존)
 node scripts/template-update.js --ref v6.1.0 # 특정 태그 기준 (--json 지원, guard 목록 포함)
+node scripts/template-update.js --seed clone@6.0.0  # 전 파일을 정합 앵커로(명시적 단언 — 개조가 있었다면 그것도 정합이 된다; 키트[TOOL-35]는 동일 파일만 기록)
 ```

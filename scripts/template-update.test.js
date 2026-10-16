@@ -161,5 +161,19 @@ check('force 없음: clean 만', forceTargets(G, false), { targets: ['a.js'], sk
 check('force 전부', forceTargets(G, true).targets, ['a.js', 'dash.js', 'hist.js', 'q.js']);
 check('force 경로 1건: 그것만 + 나머지 보존 + 대상 아님 표기', forceTargets(G, ['dash.js', 'nope.js']), { targets: ['a.js', 'dash.js'], skipped: ['hist.js', 'q.js'], unmatched: ['nope.js'] });
 
+// --- --seed [ref]: 네트워크 없이 전 파일 앵커(명시적 단언) ---
+const { spawnSync: spawnTU } = require('child_process');
+const seedTmp = fs.mkdtempSync(path.join(os.tmpdir(), 'tu-seed-'));
+try {
+  fs.mkdirSync(path.join(seedTmp, 'scripts'), { recursive: true });
+  fs.mkdirSync(path.join(seedTmp, '.union-stack'), { recursive: true });
+  fs.writeFileSync(path.join(seedTmp, 'scripts/health.js'), 'x\n');
+  // run 은 __dirname 기준 root 라 CLI 는 상류를 본다 — 함수로 검증(seedAnchor 는 위에서 이미), CLI 는 상류 자신에 --seed 가 **쓰지 않게** 하기 위해 여기선 호출하지 않는다.
+  seedAnchor(seedTmp, 'manual-test');
+  const sa = JSON.parse(fs.readFileSync(path.join(seedTmp, ANCHOR_PATH), 'utf8'));
+  check('seed: ref 라벨 + 로컬 해시', sa.ref === 'manual-test' && (sa.blobs['scripts/health.js'] || []).includes(gitBlobSha('x\n')), true);
+} finally { fs.rmSync(seedTmp, { recursive: true, force: true }); }
+check('--seed 는 main 의 분기(네트워크 전)에 있다', /argv\.indexOf\('--seed'\)/.test(fs.readFileSync(path.join(__dirname, 'template-update.js'), 'utf8')) && typeof spawnTU === 'function', true);
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

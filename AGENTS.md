@@ -180,4 +180,5 @@ this file only pins the deterministic core. The detail lives in the structure.
 - **[TOOL-32]** retro (회고 트리거 — 지표 7 관측 · 회차 기록 초안) — 회고가 필요한지를 **파일과 git 날짜만으로** 잰다([PRO-25] ① v0.2): 발행 증분(직전 회고 기록 스냅샷 대비) · 보관 부채 · 정체 WO(비종결 + 마지막 커밋 ≥30일) · (`scripts/retro.js`)
 - **[TOOL-33]** label (파생 라벨 — ID 단독 자리에 slug 토큰 · 선택적 mnemonic override) — ID 만 단독으로 나오는 자리(`sprint/next.md` 작업대 · MCP `list_docs`)에 사람이 읽을 라벨을 붙인다 — `[WO-27a-1 · prereq_upstream]`([PRO-26] ④ v0.2). (`scripts/label.js`)
 - **[TOOL-34]** ship-manifest (배송 화이트리스트 — @ship 태그에서 생성) — 어답터에 가는 스크립트를 **상류가 열거**한다([PRO-24] ①(c) · §9 ①). 수기 목록이 아니라 정의 지점 태그(`// @ship upstream-only` · `// @ship optional`)에서 (`scripts/ship-manifest.js`)
+- **[TOOL-35]** union-stack-kit (손 이식 어답터의 사후 입장권 — 의존 0 단일 파일) — `template-update` 도 정합 앵커도 없는 어답터(손으로 이식한 레포)에 **갱신 통로**를 연다([PRO-24] ①(a) · §9 ①). 의존 0 단일 파일을 한 줄로 받아 실행하면 (`scripts/union-stack-kit.js`)
 <!-- tools-index:end -->

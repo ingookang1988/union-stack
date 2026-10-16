@@ -68,6 +68,8 @@
     "scripts/tools-index.test.js",
     "scripts/transcript-stats.js",
     "scripts/transcript-stats.test.js",
+    "scripts/union-stack-kit.js",
+    "scripts/union-stack-kit.test.js",
     "scripts/upstream-prefix.js",
     "scripts/upward-fetch.js",
     "scripts/weakening-guard.js",
