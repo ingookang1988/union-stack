@@ -7,4 +7,5 @@
 |---|---|---|---|---|
 | [WO-01a-1 · auth_wiring] | (예시) 인증 게이트웨이 배선 | PLAN-01 | Draft | 해당없음 |
 | [WO-10a-1 · e6_scenario] | E6 시나리오 A/B 1사이클 (팔 2개 × 5런) | PRO-10 | Draft | 해당없음 |
+| [WO-24c-2 · bootstrap_kit] | 어답터 연결 ① 배송층 — 부트스트랩 키트(손 이식 어답터의 사후 입장권, 의존 0 단일 파일) — [PRO-24] ①(a) | PRO-24 | Verifying | 있음 |
 <!-- worktable:end -->
