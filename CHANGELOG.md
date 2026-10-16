@@ -12,6 +12,12 @@ design, see [`DESIGN_RATIONALE.md`](./DESIGN_RATIONALE.md). Entries marked **⚠
 action in already-adopted projects.
 
 ## [Unreleased]
+- **PRO-26 ④ — derived labels next to bare IDs; `mnemonic:` as an optional override.** Where an ID stands alone
+  (`sprint/next.md` worktable, MCP `list_docs`) it now reads `[WO-27a-1 · prereq_upstream]`: the label is derived from the
+  document's own slug (first 1–2 tokens), else its direct parent's, with a frontmatter `mnemonic:` overriding and being
+  inherited through `plan:`/`parent:` then ID arithmetic — never across a legacy range below `lineage.arithmeticFrom`
+  (three downstream repos and a cold read rejected slug prefixes and numeric-root inheritance: a false label is worse than
+  none). `scripts/label.js` (**TOOL-33**) prints the generated table. No file or ID changes; ARCH-00 unchanged. No migration.
 - **PRO-25 — retro is a consolidation machine: observed trigger, human-run round, append-only record.** `scripts/retro.js`
   (**TOOL-32**) measures seven indicators from files and git dates only — issuance since the last round, archive debt, stale
   non-terminal WOs (last commit ≥ 30 d), GC-able PLANs, plane lag (oldest plane; generated views listed separately), distillation

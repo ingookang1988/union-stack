@@ -20,6 +20,7 @@ const { buildIndex } = require('./zfs_index');
 const { withContract, OUTCOME, toShellExit } = require('./gate-contract');
 const { load: loadAdapter, mapStatus, fieldAliases } = require('./adapter');
 const receipts = require('./receipts');
+const { labelMap, renderId } = require('./label');
 
 const SPRINT_DIR = '.union-stack/sprint';
 const NEXT = '.union-stack/sprint/next.md';
@@ -218,7 +219,8 @@ function buildTable(wos) {
     .map(w => {
       const parent = w.parent || ancestorChain(w.id)[1] || '—';
       const ev = w.evidence ? (/^none\b/i.test(w.evidence) ? '해당없음' : '있음') : '—';
-      return `| [WO-${w.id}] | ${w.title || '—'} | ${parent} | ${w.status} | ${ev} |`;
+      // 파생 라벨([PRO-26] ④): 레코드에 label 이 있으면 `[WO-id · label]` — 없으면(순수 테스트·구버전) 기존 꼴.
+      return `| ${renderId('WO', w.id, w.label || null)} | ${w.title || '—'} | ${parent} | ${w.status} | ${ev} |`;
     });
   const head = '| WO | 제목 | 부모 | 상태 | 증거 |\n|---|---|---|---|---|';
   return rows.length ? `${head}\n${rows.join('\n')}` : `${head}\n| — | 활성 WO 없음 | — | — | — |`;
@@ -259,6 +261,8 @@ function run(argv = process.argv.slice(2), root = path.resolve(__dirname, '..'))
   if (argv.includes('--table')) {
     // 발행 점검([PRO-19] ①) — 활성(및 frontmatter 불능) WO 전수. 표면화만, 뷰 생성을 막지 않는다.
     const index = buildIndex(root);
+    const labels = labelMap(index);
+    for (const w of wos) w.label = labels.get(`WO-${w.id}`) || null;
     const issuance = wos
       .filter(w => w.malformed || ACTIVE.has(w.status))
       .flatMap(w => checkIssuance(w, index).map(i => ({ id: w.id, ...i })));

@@ -256,7 +256,9 @@ function legacyShape() {
   // 어답터에서 통째로 걸리는 결함(SURVEY-02: 설문 파일 자체가 Fail-close)의 재현이다.
   // [PRO-27] ③ — 레거시 구간(36 미만)은 산술 상속을 끈다: WO-12a-1 은 무관한 PLAN-12 를 상속하지 않고 선언 부모 PRO-36 만 싣는다.
   files['.union-stack/adapter.json'] = JSON.stringify({ lineage: { arithmeticFrom: 36 } }, null, 2) + '\n';
-  files['.union-stack/plan/PLAN-12_unrelated_legacy.md'] = doc('<!-- [Wiki] 무관한 레거시 PLAN(example). -->', 'PLAN-12', 'Active', '무관한 레거시 기획');
+  files['.union-stack/plan/PLAN-12_unrelated_legacy.md'] = doc('<!-- [Wiki] 무관한 레거시 PLAN(example). -->', 'PLAN-12', 'Active', '무관한 레거시 기획').replace('status: Active', 'status: Active\nmnemonic: wrongroot');
+  // PRO-36 에 mnemonic — WO-12a-1(parent PRO-36, arithmetic:false)은 이것을 받고 PLAN-12 의 wrongroot 는 받지 않아야 한다([PRO-26] ④ 거짓 라벨 금지).
+  files['.union-stack/proposals/PRO-36_independent_numbering.md'] = files['.union-stack/proposals/PRO-36_independent_numbering.md'].replace('status: Proposed', 'status: Proposed\nmnemonic: indep');
   files['.union-stack/sprint/WO-12a-1_legacy_task.md'] = [
     '<!-- (example) 레거시 구간 WO -->', '---', 'id: WO-12a-1', 'title: 레거시 구간 작업(example)', 'status: Active', 'parent: PRO-36',
     'evidence: "none — 형상 픽스처"', 'closed_by: []', '---', '', '# [WO-12a-1] 레거시 구간 작업', '## 목표', '- 예시', '## 수용 기준', '- 예시', '## 증거', '- 예시', '',
@@ -326,6 +328,12 @@ function legacyArm(ws) {
   const hasParent = lf.stdout.includes(`[${truth.legacyParent}]`);
   bars.push({ name: `arithmeticFrom 아래 WO: 무관한 ${truth.unrelated} 상속 안 함 · 선언 부모 ${truth.legacyParent} 수집 · exit 0`,
     ok: lf.code === 0 && !crashed(lf) && !hasUnrelated && hasParent, detail: `exit ${lf.code} · ${truth.unrelated} ${hasUnrelated ? '포함(!)' : '제외'} · ${truth.legacyParent} ${hasParent ? '포함' : '누락(!)'}` });
+  // [PRO-26] ④ — 파생 라벨: 레거시 구간 WO 는 선언 부모의 mnemonic(indep)을 받고 무관한 숫자 루트의 mnemonic(wrongroot)은 받지 않는다.
+  const lb = run(ws, ['scripts/label.js', `WO-${truth.legacyWo}`, '--json']);
+  let lj = null;
+  try { lj = JSON.parse(lb.stdout)[0]; } catch { /* null */ }
+  bars.push({ name: '파생 라벨: 선언 부모 mnemonic(indep) 상속 · 무관한 PLAN-12 의 wrongroot 금지', ok: !crashed(lb) && !!lj && lj.label === 'indep' && lj.source === 'mnemonic:PRO-36',
+    detail: lj ? `${lj.label} ← ${lj.source}` : `exit ${lb.code} · 측정 실패` });
   return bars;
 }
 

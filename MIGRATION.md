@@ -104,6 +104,11 @@ This file is adopter-owned — upstream never touches it.
   the retro trigger (PRO-25): `health` shows `retro due` as WARN when any of the seven indicators crosses its threshold; the agent then
   writes one proposal line in HANDOFF §4 and a human opens the retro session. `node scripts/retro.js --record --write --adopter` drafts the
   round record (`plan/analytics/ANL-00<x>_retro_<date>.md`, `parent: up:PRO-25`). Defaults: 30 · 10 · 30d · 5 · 1 · 30d · 30 · 30 KB.
+- `mnemonic: <token>` (frontmatter, any document — not adapter.json): optional override of the **derived label** that
+  `sprint/next.md` and MCP `list_docs` show next to an ID (`[WO-27a-1 · prereq_upstream]`, PRO-26 ④). Without it the label is
+  the first 1–2 tokens of the document's own slug, else its direct parent's. A mnemonic is inherited through `plan:`/`parent:`
+  and then ID arithmetic — never across a legacy range below `lineage.arithmeticFrom` (a numeric root's label on an unrelated
+  document is a false label). File names and IDs never change. `node scripts/label.js` prints the generated table.
 - Documents without a `status:` line are counted as *nothing* by every tool. List them with
   `node scripts/frontmatter-backfill.js` (dry-run: estimate from a body marker such as `Status: Done`,
   then from an `archived/` directory, else left blank and reported) and apply with `--apply` — it inserts

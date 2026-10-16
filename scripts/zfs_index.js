@@ -31,9 +31,11 @@ function readFront(full) {
       status: g('status'), tier: tier ? tier.toLowerCase() : null,
       consumers: parseConsumers(fm[1]), concerns: parseList(fm[1], 'concern'),
       parents: parseParents(fm[1]),
+      // 선택적 라벨 override([PRO-26] ①) — 2~16자 소문자·숫자·_-. 형식 밖은 null(label.js 가 다시 검증).
+      mnemonic: (() => { const v = g('mnemonic'); return v ? v.replace(/\s+#.*$/, '').replace(/^["']|["']$/g, '').trim() : null; })(),
     };
   } catch {
-    return { status: null, tier: null, consumers: [], concerns: [], parents: [] };
+    return { status: null, tier: null, consumers: [], concerns: [], parents: [], mnemonic: null };
   }
 }
 
@@ -95,7 +97,7 @@ function collect(dir, root, out, cfg = null) {
     out.push({ file: rel, ...parsed, status: mapStatus(cfg, front.status), rawStatus: front.status, tier: front.tier,
       consumers: front.consumers || [], concerns: front.concerns || [],
       // 계보([PRO-27] ③): 선언 부모 + 이 ID 에 산술 상속이 적용되는가(레거시 독립 채번 구간은 false).
-      parents: front.parents || [], arithmetic: arithmeticApplies(cfg, parsed.id) });
+      parents: front.parents || [], arithmetic: arithmeticApplies(cfg, parsed.id), mnemonic: front.mnemonic || null });
   });
 }
 

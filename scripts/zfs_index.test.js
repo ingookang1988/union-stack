@@ -91,5 +91,16 @@ try {
   check('arithmeticFrom 아래는 arithmetic:false', cfgIdx.find(d => d.id === '12a-1').arithmetic === false && cfgIdx.find(d => d.id === '36a-1').arithmetic === true);
 } finally { fs.rmSync(tmp3, { recursive: true, force: true }); }
 
+// --- [PRO-26] ① frontmatter mnemonic 이 레코드에 실린다 ---
+const tmpM = fs.mkdtempSync(path.join(os.tmpdir(), 'zfsidx-mn-'));
+try {
+  const wm = (rel, s) => { const p = path.join(tmpM, rel); fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, s); };
+  wm('.union-stack/plan/PLAN-07_x.md', '---\nstatus: Active\nmnemonic: auth   # 주석\n---\n# (예시)\n');
+  wm('.union-stack/plan/PLAN-08_y.md', '---\nstatus: Active\n---\n# (예시)\n');
+  const im = buildIndex(tmpM);
+  check('mnemonic 파싱(끝 주석 제거)', im.find(d => d.id === '07').mnemonic === 'auth');
+  check('mnemonic 없으면 null', im.find(d => d.id === '08').mnemonic === null);
+} finally { fs.rmSync(tmpM, { recursive: true, force: true }); }
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -41,6 +41,7 @@ node scripts/work-close.js WO-01a-1 --json   # 기계 판독 (--contract 로 계
 | `evidence:` 가 영수증을 인용하지 않음(선언 검사가 있는 레포만) | CLARIFY — `rcpt:<검사명>@<sha>`(ci.js 가 쓴 `receipts.md` 줄과 대조) 또는 `rcpt:n/a — 이유`([PRO-22] 단계 2, 소급 없음) |
 | 인용한 영수증이 `receipts.md` 에 없음 | CLARIFY — **수기 인용** 의심 |
 
+작업대 행의 ID 는 파생 라벨을 단다 — `[WO-27a-1 · prereq_upstream]`([PRO-26] ④, [TOOL-33]; slug 첫 1~2 토큰 또는 `mnemonic:` override).
 어답터 어휘([PRO-27] ②): `adapter.json statusMap` 이 `Done`→`Closed` 처럼 매핑하면 그대로 집계되고(원문은 `rawStatus`), `evidenceFields` 의 별칭(`implementation_commit`·`surfaces`)도 `evidence`·`closed_by` 로 읽힌다. `status:` 가 없는 문서는 [TOOL-29] 로 백필.
 | 계보에 PHASE 존재 | 정보 — exit criteria **검토 후보**(로드맵은 Schema — 대필 아닌 표면화, [PRO-19]) |
 

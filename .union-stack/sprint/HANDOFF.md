@@ -1,10 +1,10 @@
 <!-- [Wiki] 세션 이어달리기. 세션을 마치는 에이전트가 덮어쓴다. 최신 하나만 유효.
      다음 세션 부트스트랩 시 가장 먼저 읽힘. -->
 ---
-session_id: close-wo25a1-2026-10-17
-date: 2026-10-17T16:00:00Z
+session_id: wo26a1-derived-labels-2026-10-17
+date: 2026-10-17T19:00:00Z
 author: agent
-verification: "스위트 44 중 42 통과(실패 2 = leakage·ref 테스트, 미커밋 fdt spike 귀속 — 이전과 동일) · lint 체인 17종 중 leakage 외 전부 exit 0(retro 는 CLARIFY = 회고 제안) · 어답터 팔 6 형상 성공 바 전부 충족 · health retro due WARN(평면 지연 50d) · handoff-linter 통과 · context budget 예산 내"
+verification: "스위트 45 중 43 통과(실패 2 = leakage·ref 테스트, 미커밋 fdt spike 귀속 — 이전과 동일) · lint 체인 17종 중 leakage 외 전부 exit 0(retro 는 CLARIFY = 회고 제안) · 어답터 팔 6 형상 성공 바 전부 충족 · handoff-linter 통과 · context budget 예산 내"
 version: 1.0
 ---
 
@@ -18,18 +18,20 @@ version: 1.0
 - 설문 WO 둘([WO-22a-1]·[WO-24a-1]) Closed → archived · 어답터 3곳 설문 spike 폐기(인간 지시).
 - **[PRO-25] 회고 트리거 구현 — [WO-25a-1] Closed(인간 승인 2026-10-17).** `scripts/retro.js`([TOOL-32]) 지표 7 + health `retro due` + 회차 기록 `ANL-00a_retro_20261016`
   (첫 회고 = 오늘의 PO 판정 묶음 6건). 상류는 **retro due WARN**(평면 지연 50d — evidence 평면 = CI 미실행 기간).
+- **[PRO-26] ④ 파생 라벨 — [WO-26a-1] Verifying.** `scripts/label.js`([TOOL-33]) · next.md 행 `[WO-id · label]` · list_docs label · `mnemonic:` override(선언 부모 → 산술 상속,
+  레거시 횡단 금지). ARCH-00·파일명·ID 무변경.
 
 ## 2. 변경 위치 (ID 목록 — Upward Fetching 진입점)
-- 승인·원장: [PRO-22] [PRO-24] [PRO-25] [PRO-26] [PRO-27] v1.0 · [ADR-53] [ADR-54]. 오더: [WO-27a-1] [WO-27a-2] [WO-27a-3] [WO-24b-1] [WO-22b-1] [WO-22b-2](Closed → archived) · [WO-25a-1](Closed → archived) · [ANL-00a](회고 기록).
-- 스크립트(신규): upstream-prefix · frontmatter-backfill · adopter-census · receipts · weakening-guard([TOOL-31]) · retro([TOOL-32]). (변경): adapter · zfs_index · query · upward-fetch · blast-radius · health ·
+- 승인·원장: [PRO-22] [PRO-24] [PRO-25] [PRO-26] [PRO-27] v1.0 · [ADR-53] [ADR-54]. 오더: [WO-27a-1] [WO-27a-2] [WO-27a-3] [WO-24b-1] [WO-22b-1] [WO-22b-2](Closed → archived) · [WO-25a-1](Closed → archived) · [WO-26a-1](Verifying) · [ANL-00a](회고 기록).
+- 스크립트(신규): upstream-prefix · frontmatter-backfill · adopter-census · receipts · weakening-guard([TOOL-31]) · retro([TOOL-32]) · label([TOOL-33]). (변경): adapter · zfs_index · query · upward-fetch · blast-radius · health ·
   zfs-linter · ref-linter · work-close · ci · init · adopter-arm(형상 legacy·serial·vocab·nonjs) · mcp-server · eval · leakage-guard.
 - 평면·문서: `.union-stack/adapter.json`(상류 선언 1) · `verification/raw/receipts.md` · `eval/CENSUS.md` · 카드 [TOOL-01]~[TOOL-04] [TOOL-21] [TOOL-23] [TOOL-26]
-  [TOOL-27] [TOOL-29] [TOOL-30] [TOOL-31] [TOOL-32] · plan/analytics/_GUIDE(회고 템플릿) · [CON-00] 블록 · AGENTS.md tools/blocks 블록 · MIGRATION · CHANGELOG(⚠ init 이 receipts.md 리셋) · harness.yml(영수증 커밋).
+  [TOOL-27] [TOOL-29] [TOOL-30] [TOOL-31] [TOOL-32] [TOOL-33] · plan/analytics/_GUIDE(회고 템플릿) · [CON-00] 블록 · AGENTS.md tools/blocks 블록 · MIGRATION · CHANGELOG(⚠ init 이 receipts.md 리셋) · harness.yml(영수증 커밋).
 
 ## 3. 다음 작업 (단일 진입점)
-→ **사람 몫**([WO-25a-1] 후속): `retro due` WARN 의 처분 — 평면 지연의 실체는 "CI 를 안 돌렸다"(push 0)이므로 **push 1회**(evidence·receipts 가 CI 에서
-  append 되며 지연이 0 으로 접힌다) 또는 임계 조정(`adapter.json retro.planeLagDays`). 에이전트 진입점 = [PRO-26] ④ 파생 라벨 뷰 WO 발행(예: [WO-26a-1?]) · `lineage-tree` frontmatter 부모 ·
-  [PRO-22] 단계 5(보류 가능). 하류 접촉은 [PRO-24] ①(b) `localOwned`·키트 — 인간 지시 후.
+→ **사람 몫 둘**: ① [WO-26a-1] Closed 판정 ② `retro due` WARN 의 처분 — 평면 지연의 실체는 "CI 를 안 돌렸다"(push 0)이므로 **push 1회**(evidence·receipts 가 CI 에서
+  append 되며 지연이 접힌다) 또는 임계 조정(`adapter.json retro.planeLagDays`). 승인된 PRO 4건의 구현은 이것으로 전부 끝났다([PRO-22] 단계 5·[PRO-26] ⑤ 는 보류).
+  에이전트 진입점 후보: `lineage-tree` frontmatter 부모(예: [WO-27a-4?]) · 하류 접촉 [PRO-24] ①(b) `localOwned`·키트(인간 지시 후) · PRO-β 초안(인간 결정 후).
 
 ## 4. 미해결 / 주의
 - **회고 제안 — 평면 지연 50≥30**([PRO-25] ②, `node scripts/retro.js --proposal`): evidence 평면 마지막 2026-08-27(CI 미실행), live·gap 날짜 무기입. 다음 회차 기준 = [ANL-00a].

@@ -32,7 +32,13 @@ function callTool(name, args = {}) {
   if (name === 'blast_radius') { const id = parseId(args.id || ''); if (!id) throw new Error(`bad id: ${args.id}`); return blastRadius(id, buildIndex()); }
   if (name === 'where_to_record') return whereToRecord(args.kind);
   if (name === 'zfs_lint') return { violations: lint() };
-  if (name === 'list_docs') { const idx = buildIndex(); return { docs: args.domain ? idx.filter(d => d.domain === args.domain) : idx }; }
+  if (name === 'list_docs') {
+    // 파생 라벨([PRO-26] ④) — ID 단독 자리라 라벨을 함께 낸다(upward_fetch·blast_radius 는 file 을 내므로 생략).
+    const idx = buildIndex();
+    const labels = require('./label').labelMap(idx);
+    const docs = (args.domain ? idx.filter(d => d.domain === args.domain) : idx).map(d => ({ ...d, label: labels.get(`${d.domain}-${d.id}`) || null }));
+    return { docs };
+  }
   throw new Error(`unknown tool: ${name}`);
 }
 

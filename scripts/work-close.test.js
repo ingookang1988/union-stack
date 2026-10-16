@@ -153,5 +153,9 @@ check('없는 영수증 인용 → receipt-missing(수기 인용 의심)', check
 check('none — 이유 는 인용 면제', !checkClosure(evWo('none — 문서 작업'), rcTraces, [], [], rcptCtx).issues.length);
 check('선언 없는 레포는 묻지 않는다', !checkClosure(evWo('테스트 12/12'), rcTraces, [], [], { declared: false, receipts: [] }).issues.length && !checkClosure(evWo('테스트 12/12'), rcTraces, [], []).issues.length);
 
+// --- [PRO-26] ④ 작업대 행의 파생 라벨 — label 있으면 `[WO-id · label]`, 없으면 기존 꼴 ---
+check('라벨 있는 레코드', buildTable([{ ...FULL_WO, status: 'Active', label: 'auth_wiring' }]).includes('| [WO-01a-1 · auth_wiring] |'));
+check('라벨 없는 레코드는 기존 꼴', buildTable([{ ...FULL_WO, status: 'Active' }]).includes('| [WO-01a-1] |'));
+
 console.log(`work-close.test: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
