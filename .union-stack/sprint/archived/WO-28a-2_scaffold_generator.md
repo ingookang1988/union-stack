@@ -2,9 +2,9 @@
 ---
 id: WO-28a-2
 title: 절 계약 ④ — scaffold 뼈대 생성기(전역 다음 번호 제안 + parent 실존 확인 + 필수 3절, ≤400 tok) — [PRO-28] ④
-status: Verifying
+status: Closed
 parent: PRO-28
-evidence: "구현 완료(2026-10-17, 가드 먼저): scripts/scaffold.js([TOOL-36]) — proposeId(산술: 글자 끝 부모 `01a-N` · 숫자 끝 부모 `28a-N` · --lineage · l·o 금지 / 레거시: 도메인 전역 최대+1) · findParent(도메인+ID 실존) · sectionNames(sections 맵 첫 별칭) · slugOf(ZFS 문법, 비ASCII 제목은 --slug 요구) · renderBody(frontmatter + 3절 + 안내 1줄, 뼈대 ≤400 tok) · plan/run(dry-run 기본 · --write · --json · --contract · 파일 존재·ID 충돌·죽은 parent·도메인 미지원 = CLARIFY). rcpt:n/a — 하네스 스위트(scaffold.test 39) · 스위트 49 중 47(실패 2 = fdt spike 귀속) · 팔 7 형상 충족 · 상류 dry-run: PRO-28 아래 28a-3 제안"
+evidence: "구현 완료(2026-10-17, 가드 먼저): scripts/scaffold.js([TOOL-36]) — proposeId(산술: 글자 끝 부모 `01a-N` · 숫자 끝 부모 `28a-N` · --lineage · l·o 금지 / 레거시: 도메인 전역 최대+1) · findParent(도메인+ID 실존) · sectionNames(sections 맵 첫 별칭) · slugOf(ZFS 문법, 비ASCII 제목은 --slug 요구) · renderBody(frontmatter + 3절 + 안내 1줄, 뼈대 ≤400 tok) · plan/run(dry-run 기본 · --write · --json · --contract · 파일 존재·ID 충돌·죽은 parent·도메인 미지원 = CLARIFY). rcpt:n/a — 하네스 스위트(scaffold.test 39) · 스위트 49 중 47(실패 2 = fdt spike 귀속) · 팔 7 형상 충족 · 상류 dry-run: PRO-28 아래 28a-3 제안 · Closed 판정 2026-10-17(인간 승인)"
 closed_by: [.union-stack/reference/tools/TOOL-36_scaffold.md, .union-stack/sprint/_GUIDE.md]
 version: 1.0
 ---
