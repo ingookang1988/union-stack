@@ -2,10 +2,10 @@
 ---
 id: WO-24c-1
 title: 어답터 연결 ① 배송층 최소분 — localOwned·localForked + @ship 매니페스트(배송 범주 축소) — [PRO-24] ①(b)(c)
-status: Verifying
+status: Closed
 parent: PRO-24
-evidence: "구현 완료(2026-10-17, 가드 먼저): adapter.json localOwned(글롭·정규화) · scripts/ship-manifest.js([TOOL-34] — @ship 태그 → scripts/ship-manifest.json, 테스트 짝 상속, 드리프트 CLARIFY) · 상류 전용 10종 태그(테스트 포함 20 파일) · template-update: matchGlob · classifyPath(ctx: 매니페스트 화이트리스트 · 상류 전용 제외 · 매니페스트 밖 스크립트 기본 로컬 · localOwned → 불가침 · 글롭 충돌 sync 우선+경고) · buildPlan(local/upstream ctx 분리 · upstreamOnlyLocal) · 보고에 localForked 명명 · ci 체인 ship-manifest(비차단) · 팔 env 바(상류 전용이 buildPlan 에서 빠짐). 상류 template-update 실보고: 상류 main(미push, 매니페스트 없음)과 대조 → 로컬 변경 27·신규 2(ci/Dockerfile·compose), 상류 전용 스크립트가 신규로 둔갑하지 않음(규칙 폴백+전용 제외 보강), exit 3. rcpt:n/a — 하네스 스위트"
-closed_by: []
+evidence: "구현 완료(2026-10-17, 가드 먼저): adapter.json localOwned(글롭·정규화) · scripts/ship-manifest.js([TOOL-34] — @ship 태그 → scripts/ship-manifest.json, 테스트 짝 상속, 드리프트 CLARIFY) · 상류 전용 10종 태그(테스트 포함 20 파일) · template-update: matchGlob · classifyPath(ctx: 매니페스트 화이트리스트 · 상류 전용 제외 · 매니페스트 밖 스크립트 기본 로컬 · localOwned → 불가침 · 글롭 충돌 sync 우선+경고) · buildPlan(local/upstream ctx 분리 · upstreamOnlyLocal) · 보고에 localForked 명명 · ci 체인 ship-manifest(비차단) · 팔 env 바(상류 전용이 buildPlan 에서 빠짐). 상류 template-update 실보고: 상류 main(미push, 매니페스트 없음)과 대조 → 로컬 변경 27·신규 2(ci/Dockerfile·compose), 상류 전용 스크립트가 신규로 둔갑하지 않음(규칙 폴백+전용 제외 보강), exit 3. rcpt:n/a — 하네스 스위트 · Closed 판정 2026-10-17(인간 승인)"
+closed_by: [.union-stack/reference/tools/TOOL-34_ship_manifest.md, .union-stack/reference/tools/TOOL-21_template_update.md]
 version: 1.0
 ---
 # [WO-24c-1] 배송층 최소분 — localOwned · localForked · @ship

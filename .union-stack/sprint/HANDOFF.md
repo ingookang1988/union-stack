@@ -1,10 +1,10 @@
 <!-- [Wiki] 세션 이어달리기. 세션을 마치는 에이전트가 덮어쓴다. 최신 하나만 유효.
      다음 세션 부트스트랩 시 가장 먼저 읽힘. -->
 ---
-session_id: wo24c1-delivery-localowned-ship-2026-10-17
-date: 2026-10-17T23:00:00Z
+session_id: close-wo24c1-merge-origin-2026-10-17
+date: 2026-10-18T02:00:00Z
 author: agent
-verification: "스위트 46 중 44 통과(실패 2 = leakage·ref 테스트, 미커밋 fdt spike 귀속 — 이전과 동일) · lint 체인 18종 중 leakage 외 전부 exit 0(retro 는 CLARIFY = 회고 제안) · 어답터 팔 6 형상 성공 바 전부 충족 · ship-manifest 동기화 · handoff-linter 통과 · context budget 예산 내"
+verification: "스위트 47 중 45 통과(실패 2 = leakage·ref 테스트, 미커밋 fdt spike 귀속 — 이전과 동일) · lint 체인 18종 중 leakage 외 전부 exit 0(retro 는 CLARIFY = 회고 제안) · 어답터 팔 6 형상 성공 바 전부 충족 · ship-manifest 동기화 · origin/main 병합(evidence 1줄, 충돌 0) · handoff-linter 통과 · context budget 예산 내"
 version: 1.0
 ---
 
@@ -14,23 +14,23 @@ version: 1.0
 - 하류 설문 2회(9+4건) → [PRO-22] 승인([ADR-53]) + [PRO-24]·[PRO-25]·[PRO-26]·[PRO-27] 일괄 승인([ADR-54]). 구현 WO 8건 Closed(인간 승인, `sprint/archived/`):
   [PRO-27] 전제 ①~⑤ · [PRO-22] 단계 1~4(선언·영수증·**0건 검사 = 실패**·약화 질문·예외 증가 red) · [PRO-24] ② 센서스(`eval/CENSUS.md` 1회차) ·
   [PRO-25] 회고 트리거(`retro.js` · [ANL-00a] 첫 회차 = PO 판정 묶음) · [PRO-26] ④ 파생 라벨. 설문 WO 둘 Closed · 어답터 spike 폐기.
-- **[PRO-24] ①(b)(c) 배송층 최소분 — [WO-24c-1] Verifying.** `adapter.json localOwned` · `scripts/ship-manifest.json`([TOOL-34], @ship 태그 — 상류 전용 10종
+- **[PRO-24] ①(b)(c) 배송층 최소분 — [WO-24c-1] Closed(인간 승인 2026-10-17).** `adapter.json localOwned` · `scripts/ship-manifest.json`([TOOL-34], @ship 태그 — 상류 전용 10종
   배송 제외) · template-update 가 로컬·상류 매니페스트를 각각 읽고 localForked 를 명명. 카나리아(B) 전 위험 둘(로컬 파일 오보·상류 전용 배송)을 닫았다.
 - 상류는 **retro due WARN**(평면 지연 50d = evidence 평면이 CI 미실행 기간) — push 가 접는다.
 
 ## 2. 변경 위치 (ID 목록 — Upward Fetching 진입점)
 - 승인·원장: [PRO-22] [PRO-24] [PRO-25] [PRO-26] [PRO-27] v1.0 · [ADR-53] [ADR-54]. 오더(archived): [WO-27a-1] [WO-27a-2] [WO-27a-3] [WO-24b-1] [WO-22b-1]
-  [WO-22b-2] [WO-25a-1] [WO-26a-1] · [WO-24c-1](Verifying) · [ANL-00a].
+  [WO-22b-2] [WO-25a-1] [WO-26a-1] [WO-24c-1] · [ANL-00a]. ci.js 선택 단계(스크립트 없으면 건너뜀 — 어답터 체인 보호) + ci.test 신설.
 - 스크립트(신규): upstream-prefix · frontmatter-backfill · adopter-census · receipts · weakening-guard · retro · label · ship-manifest(+json). (변경): adapter · zfs_index ·
   query · upward-fetch · blast-radius · health · zfs-linter · ref-linter · work-close · ci · init · adopter-arm(형상 legacy·serial·vocab·nonjs) · mcp-server · template-update.
 - 평면·문서: `.union-stack/adapter.json`(상류 선언 1) · `verification/raw/receipts.md` · `eval/CENSUS.md` · 카드 [TOOL-01]~[TOOL-04] [TOOL-21] [TOOL-23] [TOOL-26]
   [TOOL-27] [TOOL-29]~[TOOL-34] · plan/analytics/_GUIDE(회고 템플릿) · [CON-00] 블록 · AGENTS.md tools/blocks 블록 · MIGRATION · CHANGELOG(⚠ init 이 receipts.md 리셋) · harness.yml.
 
 ## 3. 다음 작업 (단일 진입점)
-→ **추천 순서(2026-10-17 합의)의 다음 칸 = 사람 몫 둘**: ① [WO-24c-1] Closed 판정 ② **push 1회** — CI 가 체인을 돌려 evidence·receipts 를 쌓고(`retro due` 접힘),
+→ **추천 순서(2026-10-17 합의)의 다음 칸 = 사람 몫 하나**([WO-24c-1] 후속): **push 1회**(origin/main 의 CI evidence 커밋은 이미 병합됨 — fast-forward) — CI 가 체인을 돌려 evidence·receipts 를 쌓고(`retro due` 접힘),
   상류 main 에 매니페스트가 올라 하류가 당길 원본이 생긴다. 그 뒤 **카나리아(어답터 B)**: B 에서 `template-update`(dry-run 보고 — localForked·상류 전용 사본·충돌) →
   사람 승인 → `--apply` → 센서스 2회차로 Δ. 그 뒤 [WO-24c-2](①(a) 키트: 의존 0 단일 파일 · 첫 실행 dry-run — A·C 용; ci 체인의 `adopter-arm` 단계를
-  파일 없으면 건너뜀으로 바꾸는 것 포함) · PRO-28(절 계약·부분 인출) 질문 3개는 카나리아 접촉에 얹는다.
+  파일 없으면 건너뜀은 **완료**) · PRO-28(절 계약·부분 인출) 질문 3개는 카나리아 접촉에 얹는다. 카나리아 dry-run 보고는 상류 세션이 읽기 전용으로 받아 함께 본다.
 
 ## 4. 미해결 / 주의
 - **회고 제안 — 평면 지연 50≥30**([PRO-25] ②, `node scripts/retro.js --proposal`): evidence 평면 마지막 2026-08-27(CI 미실행). 다음 회차 기준 = [ANL-00a].

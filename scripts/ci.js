@@ -89,6 +89,16 @@ function chain({ range = null } = {}) {
   ];
 }
 
+/**
+ * 단계의 스크립트가 **없으면** 건너뛸 수 있는가(순수). 상류 전용 도구(adopter-arm 등 — [TOOL-34] 매니페스트 밖)는 어답터에 배송되지 않으므로
+ * 파일 부재가 정상이다. 그때 spawn 실패를 UNKNOWN → 차단으로 읽으면 어답터 체인이 영구 red 가 된다([PRO-24] ①(c)). 스크립트 단계만 해당(--test 는 제외).
+ */
+function missingScript(stepDef, root = ROOT) {
+  const first = stepDef.args[0];
+  if (!first || first.startsWith('--')) return false;
+  return !fs.existsSync(path.join(root, first));
+}
+
 /** 스위트 목록은 glob 없이 디렉터리에서 읽는다 — 셸(및 셸 없는 컨테이너)에 의존하지 않기 위해. */
 function testFiles() {
   return fs.readdirSync(path.join(ROOT, 'scripts'))
@@ -175,6 +185,7 @@ function main(argv = process.argv.slice(2)) {
   if (!onlyChecks) {
     for (const s of chain({ range })) {
       if (skip.has(s.name)) { if (!json) console.log(`- ${s.name}: 건너뜀(--skip)`); continue; }
+      if (missingScript(s)) { if (!json) console.log(`- ${s.name}: 건너뜀(스크립트 없음 — 상류 전용·미배송, [TOOL-34])`); continue; }
       const r = step(s.name, s.args, { blocking: s.blocking !== false });
       results.push(r);
       log(r);
@@ -219,4 +230,4 @@ function main(argv = process.argv.slice(2)) {
 }
 
 if (require.main === module) process.exit(main());
-module.exports = { chain, step, runCheck, receiptOf, scanSources, testFiles, gitState, OUTCOME, BLOCKING };
+module.exports = { chain, step, runCheck, receiptOf, scanSources, testFiles, gitState, missingScript, OUTCOME, BLOCKING };

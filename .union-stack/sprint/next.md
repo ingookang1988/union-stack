@@ -7,5 +7,4 @@
 |---|---|---|---|---|
 | [WO-01a-1 · auth_wiring] | (예시) 인증 게이트웨이 배선 | PLAN-01 | Draft | 해당없음 |
 | [WO-10a-1 · e6_scenario] | E6 시나리오 A/B 1사이클 (팔 2개 × 5런) | PRO-10 | Draft | 해당없음 |
-| [WO-24c-1 · delivery_localowned] | 어답터 연결 ① 배송층 최소분 — localOwned·localForked + @ship 매니페스트(배송 범주 축소) — [PRO-24] ①(b)(c) | PRO-24 | Verifying | 있음 |
 <!-- worktable:end -->

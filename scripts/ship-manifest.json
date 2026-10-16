@@ -7,6 +7,7 @@
     "scripts/blocks-index.js",
     "scripts/blocks-index.test.js",
     "scripts/ci.js",
+    "scripts/ci.test.js",
     "scripts/context-budget.js",
     "scripts/context-budget.test.js",
     "scripts/dashboard.js",
