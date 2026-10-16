@@ -19,7 +19,10 @@ action in already-adopted projects.
   as "removed upstream" (adopter-made sub-guides are the adopter's). Section resolution (`adapter.json sections`) adds a
   **token-run match** after exact and prefix — `5. G5 완료 기준`, `검증·완료 기준`, `2. 목표와 공통 완료 기준` now resolve to
   수용 기준 (prefix matches only at a token boundary, so `비목표`/`목표와` are not 목표). `scaffold` proposes the next **letter**
-  child (`66a…66k` → `66m`, skipping l/o) when a parent already has a letter-child series instead of `66a-1`. No migration.
+  child (`66a…66k` → `66m`, skipping l/o) when a parent already has a letter-child series instead of `66a-1`. After the re-apply
+  report: the dependency-mismatch warning now also covers files **already in sync** (an updated `dashboard.js` requiring a preserved
+  `handoff-linter.js` was silent in every later dry-run because only that run's targets were checked), and token matching strips
+  Korean particles (`목표와 …` → 목표). No migration.
 - **PRO-28 ③ — `upward-fetch --sections [names]` injects parent documents by section.** New `scripts/section-fetch.js` splits a
   document at H2, keeps the contract sections (resolved through `adapter.json sections`) plus any names given (prefix match), and
   replaces the rest with one line — `(생략 N절 · ~M tok: heading(~tok) …)` — a table of contents for the next fetch. Documents

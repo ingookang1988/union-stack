@@ -220,5 +220,11 @@ const gl = buildPlan({ '.union-stack/plan/research/_GUIDE.md': 'g', '.union-stac
 check('상류에 없는 디렉터리의 _GUIDE 는 보고하지 않는다', gl.removedUpstream, []);
 check('상류가 아는 디렉터리의 사라진 파일은 여전히 보고', buildPlan({ '.union-stack/plan/_GUIDE.md': 'p', '.union-stack/plan/PLAN-01_x.md': 'q' }, { '.union-stack/plan/PLAN-01_x.md': 'q', 'scripts/health.js': 'h' }).removedUpstream, ['.union-stack/plan/_GUIDE.md']);
 
+// --- A 재적용 실측: 의존 불일치는 "이번 런의 갱신 대상" 만 보면 지난 회차에 갱신된 파일(dashboard) → 보존 파일(handoff-linter) 의 실재 불일치가 다시는 경고되지 않는다.
+//     이미 상류와 동기화된 로컬 파일(syncedPaths)도 매 dry-run 의 검사 대상에 넣는다. ---
+const { syncedPaths } = require('./template-update');
+check('syncedPaths: 로컬 sha(후보 배열 포함)가 상류와 같은 파일만', syncedPaths({ 'a.js': ['A', 'A2'], 'b.js': ['B'], 'c.js': 'C' }, { 'a.js': 'A2', 'b.js': 'B9', 'c.js': 'C', 'd.js': 'D' }), ['a.js', 'c.js']);
+check('동기화된 dashboard 가 보류된 handoff-linter 를 require → 매 런 경고', staleDeps(readSrc, [...syncedPaths({ 'scripts/dashboard.js': ['X'] }, { 'scripts/dashboard.js': 'X' })], ['scripts/handoff-linter.js']), [{ file: 'scripts/dashboard.js', dep: 'scripts/handoff-linter.js' }]);
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

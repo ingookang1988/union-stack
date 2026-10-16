@@ -196,7 +196,10 @@ function resolveSection(cfg, heading) {
   const map = (cfg && cfg.sections) || {};
   const tokens = h.split(/[\s·/,()]+/).filter(Boolean);
   // 토큰 연속 일치(어답터 A 2차 실측: "5. G5 완료 기준"·"검증·완료 기준"·"2. 목표와 공통 완료 기준" 은 접두로 0건) — 토큰 경계라 "비목표"·"목표와" 는 목표가 아니다.
-  const hasRun = n => { const nt = n.split(/\s+/); for (let i = 0; i + nt.length <= tokens.length; i++) if (nt.every((t, j) => tokens[i + j] === t)) return true; return false; };
+  // 토큰 비교 때 한국어 조사(와·과·은·는·이·가·을·를·의·로·으로)를 뗀다 — "목표와 공통 완료 기준"(A 실측). 어간이 다른 "비목표" 는 그대로 불일치.
+  const stem = t => t.replace(/(으로|와|과|은|는|이|가|을|를|의|로)$/, '');
+  const same = (a, b) => a === b || stem(a) === b;
+  const hasRun = n => { const nt = n.split(/\s+/); for (let i = 0; i + nt.length <= tokens.length; i++) if (nt.every((t, j) => same(tokens[i + j], t))) return true; return false; };
   // 접두는 토큰 경계에서만 — "목표·진입"·"목표 및 범위" 는 목표지만 "목표와 …" 는 아니다.
   const prefixAt = n => h === n || (h.startsWith(n) && /^[\s·/,(:：—-]/.test(h.slice(n.length)));
   // 후보(접두·토큰 연속) 중 **가장 긴 별칭**이 이긴다 — "검증·완료 기준" 은 검증(2)보다 완료 기준(5): 수용 기준. 같은 길이면 접두.

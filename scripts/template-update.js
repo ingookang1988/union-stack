@@ -217,6 +217,11 @@ function classifySyncTargets(paths, local, anchor = {}) {
  * `handoffPart is not a function`). 갱신 대상 target 이 require 하는 파일이 보류 목록 pending — 변경됐지만 보존돼 갱신 보류 — 에 있으면 경고 [{file, dep}].
  * 로컬 본문의 require 를 본다(dry-run 에 상류 본문은 없다) — 신규 파일(로컬 부재)은 건너뛴다. 순수: readFn(path) → 텍스트 | null.
  */
+/** 로컬 sha(후보 배열 가능)가 상류와 같은 경로(순수) — 이미 동기화된 파일. 의존 불일치 검사의 상시 대상(A 실측: 지난 회차 갱신분은 target 이 아니라 영구 무음이었다). */
+function syncedPaths(local, upstream) {
+  return Object.keys(local).filter(p => p in upstream && (Array.isArray(local[p]) ? local[p] : [local[p]]).includes(upstream[p]));
+}
+
 function staleDeps(readFn, targets, pending) {
   const pend = new Set(pending.filter(p => !targets.includes(p)));
   const out = [];
@@ -363,7 +368,8 @@ async function main(argv = process.argv.slice(2)) {
   const drift = plan.changedSync.length + plan.changedReview.length + plan.newSync.length + plan.newReview.length;
   const migrations = migrationActions(upstreamChangelog, localVer, upstreamVer);
   const ft = forceTargets(guard, force);
-  const stale = staleDeps(p => { try { return fs.readFileSync(path.join(root, p), 'utf8'); } catch { return null; } }, ft.targets, ft.skipped);
+  // 검사 대상 = 이번 런 갱신 대상 + 이미 동기화된 파일(A 실측: 지난 회차에 갱신된 dashboard → 보존 handoff-linter 의 실재 불일치가 다시는 경고되지 않았다).
+  const stale = staleDeps(p => { try { return fs.readFileSync(path.join(root, p), 'utf8'); } catch { return null; } }, [...new Set([...ft.targets, ...syncedPaths(localFiles, upstreamMap)])], ft.skipped);
 
   if (json) {
     console.log(JSON.stringify({ ref, localVer, upstreamVer, plan, guard, staleDeps: stale, migrations, localOwned: lo.localOwned, upstreamIgnored: lo.upstreamIgnored, ownedConflicts: conflicts, shipManifest: !!upManifest, applied: false }, null, 2));
@@ -431,6 +437,6 @@ async function main(argv = process.argv.slice(2)) {
   return OUTCOME.CLARIFY;
 }
 
-module.exports = { classifyPath, matchGlob, ownedConflicts, localCtx, forceTargets, parseChangelogVersion, cmpVersions, gitBlobSha, gitBlobShas, buildPlan, classifySyncTargets, staleDeps, readAnchor, writeAnchor, seedAnchor, localTemplateFiles, migrationActions, UPSTREAM, ANCHOR_PATH, SHIP_MANIFEST };
+module.exports = { classifyPath, matchGlob, ownedConflicts, localCtx, forceTargets, parseChangelogVersion, cmpVersions, gitBlobSha, gitBlobShas, buildPlan, classifySyncTargets, staleDeps, syncedPaths, readAnchor, writeAnchor, seedAnchor, localTemplateFiles, migrationActions, UPSTREAM, ANCHOR_PATH, SHIP_MANIFEST };
 
 if (require.main === module) main().then(c => process.exit(c), e => { console.error(e); process.exit(OUTCOME.REJECT); });

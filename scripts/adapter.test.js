@@ -169,5 +169,10 @@ check('토큰: 실행 항목·수용 기준(상류 표기 토큰)', resolveSecti
 check('토큰 경계: 비목표 는 목표가 아니다 · 증거 없음 은 증거(접두)', resolveSection(scT, '비목표') === null && resolveSection(scT, '증거 없음') === '증거');
 check('토큰: 서사 절은 여전히 null', resolveSection(scT, '진행 기록') === null && resolveSection(scT, '검증 로그') === '증거');
 
+// --- A 재적용 실측 ③(b): 조사가 붙은 토큰("목표와 공통 완료 기준"·"목표와 범위")은 토큰 비교 때 조사를 뗀다 — 최장 별칭 규칙은 그대로 ---
+check('조사 제거: 목표와 범위 → 목표', resolveSection(null, '목표와 범위') === '목표');
+check('조사 제거 + 최장 별칭: 목표와 공통 완료 기준 → 수용 기준', resolveSection(scT, '2. 목표와 공통 완료 기준') === '수용 기준');
+check('조사 제거: 증거는 → 증거 · 비목표는 → null(어간이 다름)', resolveSection(null, '증거는 여기') === '증거' && resolveSection(null, '비목표는') === null);
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

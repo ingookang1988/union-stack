@@ -15,7 +15,8 @@ version: 1.0
 - **어답터 A 전면 적용 회신** → 상류 수리 4(가드 먼저): 키트 앵커가 추정 태그 일치 파일에 main sha 를 적어 localForked 오판(→ 일치한 쪽 sha) · template-update 가 `ci/`·
   `docker-compose.harness.yml` 을 안 걷어 매번 "신규"(→ 걷는다) · 어답터 하위 디렉터리 `_GUIDE.md` 를 "사라진 파일"로 오보(→ 상류에 없는 디렉터리 제외) ·
   절 해소에 **토큰 연속 일치**(접두는 토큰 경계, 가장 긴 별칭 승 — A 실측 "수용 기준 0%" 원인) · scaffold 글자 자식 계열(66a…66t → 다음 글자).
-- A 의 나머지: ⑤ 의존 결합 경고는 `staleDeps`(da9cf67) 가 이미 함(A 는 옛 template-update 보존) · ⑥ `budgets.historyPerEntry` 보류(별건) · ⑧ `health --root` 는 있다(측정이 갱신 전).
+- A 재적용 회신: ①②④⑧ 확인 · 절 해소 수용 기준 0→50% · anatomy-missing 16→13 · `statusMap` 선언으로 retro due 3지표가 깨어남([PRO-25] 실측). 추가 수리 2: 의존 불일치 검사에
+  **이미 동기화된 파일** 포함(지난 회차 갱신분의 불일치가 영구 무음이었다) · 토큰 매칭에 조사 제거("목표와"). 잔여는 A 의 별칭 추가(15/16·14/16 예상) + evidence 소급. ⑥ 보류.
 
 ## 2. 변경 위치 (ID 목록 — Upward Fetching 진입점)
 - 승인·원장: [PRO-28] v1.0 · [ADR-55] · 이전 [ADR-53] [ADR-54]. 오더(archived): [WO-28a-1]~[WO-28a-3] · [WO-27a-1]~[WO-24c-2] 10건.
