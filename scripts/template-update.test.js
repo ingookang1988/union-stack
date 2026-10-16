@@ -180,12 +180,17 @@ check('--seed 는 main 의 분기(네트워크 전)에 있다', /argv\.indexOf\(
 const { staleDeps } = require('./template-update');
 const SRC = {
   'scripts/dashboard.js': "const { partBody } = require('./handoff-linter');\nconst { x } = require('./zfs_index');\n",
-  'scripts/health.js': "const fs = require('fs');\n",
+  'scripts/health.js': "const fs = require('fs');\nconst { lint } = require('./zfs-linter');\nconst gc = require('./gate-contract');\n",
+  'scripts/handoff-linter.js': "module.exports = { analyze, run };\n",          // 보존된 옛 판 — partBody 없음
+  'scripts/zfs-linter.js': "module.exports = { lint, run };\n",                // 보존됐지만 요구 심볼은 있다
 };
 const readSrc = p => (p in SRC ? SRC[p] : null);
-check('갱신 대상 dashboard → 보류된 handoff-linter 1건(zfs_index 는 보류 아님 · 신규 파일은 로컬 본문 없음 → 건너뜀)',
+// 심볼 수준(어답터 A 3차 실측: 경로만 보면 41쌍, 실제 불일치 1쌍) — missing 이 비면 정상 동작, null 은 판별 불가(기본 require·exports 없음)
+check('갱신 대상 dashboard → 보류된 handoff-linter: 없는 심볼 partBody (zfs_index 는 보류 아님 · 신규 파일은 로컬 본문 없음 → 건너뜀)',
   staleDeps(readSrc, ['scripts/dashboard.js', 'scripts/health.js', 'scripts/new.js'], ['scripts/handoff-linter.js', 'scripts/other.js']),
-  [{ file: 'scripts/dashboard.js', dep: 'scripts/handoff-linter.js' }]);
+  [{ file: 'scripts/dashboard.js', dep: 'scripts/handoff-linter.js', missing: ['partBody'] }]);
+check('보존 파일이 요구 심볼을 export 하면 missing 빈 배열(⚠ 아님)', staleDeps(readSrc, ['scripts/health.js'], ['scripts/zfs-linter.js']), [{ file: 'scripts/health.js', dep: 'scripts/zfs-linter.js', missing: [] }]);
+check('기본 require 는 판별 불가(null)', staleDeps(readSrc, ['scripts/health.js'], ['scripts/gate-contract.js']), [{ file: 'scripts/health.js', dep: 'scripts/gate-contract.js', missing: null }]);
 check('보류 없음 → 경고 없음', staleDeps(readSrc, ['scripts/dashboard.js'], []), []);
 check('의존이 갱신 대상에도 있으면(같이 갱신) 경고 없음', staleDeps(readSrc, ['scripts/dashboard.js', 'scripts/handoff-linter.js'], ['scripts/handoff-linter.js']), []);
 
@@ -224,7 +229,7 @@ check('상류가 아는 디렉터리의 사라진 파일은 여전히 보고', b
 //     이미 상류와 동기화된 로컬 파일(syncedPaths)도 매 dry-run 의 검사 대상에 넣는다. ---
 const { syncedPaths } = require('./template-update');
 check('syncedPaths: 로컬 sha(후보 배열 포함)가 상류와 같은 파일만', syncedPaths({ 'a.js': ['A', 'A2'], 'b.js': ['B'], 'c.js': 'C' }, { 'a.js': 'A2', 'b.js': 'B9', 'c.js': 'C', 'd.js': 'D' }), ['a.js', 'c.js']);
-check('동기화된 dashboard 가 보류된 handoff-linter 를 require → 매 런 경고', staleDeps(readSrc, [...syncedPaths({ 'scripts/dashboard.js': ['X'] }, { 'scripts/dashboard.js': 'X' })], ['scripts/handoff-linter.js']), [{ file: 'scripts/dashboard.js', dep: 'scripts/handoff-linter.js' }]);
+check('동기화된 dashboard 가 보류된 handoff-linter 를 require → 매 런 경고', staleDeps(readSrc, [...syncedPaths({ 'scripts/dashboard.js': ['X'] }, { 'scripts/dashboard.js': 'X' })], ['scripts/handoff-linter.js']), [{ file: 'scripts/dashboard.js', dep: 'scripts/handoff-linter.js', missing: ['partBody'] }]);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

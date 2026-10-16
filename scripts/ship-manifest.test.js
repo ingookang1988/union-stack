@@ -94,5 +94,14 @@ try {
 // 상류 자신: 배송 파일은 상류 전용을 무조건 require 하지 않는다(템플릿 모드에서만 — 어답터 트리에는 상류 전용이 없다).
 if (require('./adapter').isTemplateRepo()) check('상류 배송 파일의 상류 전용 require 누설 0', requireLeaks(path.resolve(__dirname, '..'), scan(path.resolve(__dirname, '..'))).length === 0);
 
+// --- 심볼 수준 의존(어답터 A 실측: 경로만 보면 41쌍, 실제 심볼 불일치 1쌍) ---
+const { requireSymbols, exportKeys } = require('./ship-manifest');
+check('requireSymbols: 구조 분해 심볼(별칭은 export 키) · 기본 require 는 null · 중복 모듈 병합',
+  JSON.stringify(requireSymbols("const { a, b: bb } = require('./x');\nconst y = require('./y');\nconst { c } = require('./x.js');\nrequire('./z');\n"))
+  === JSON.stringify([{ dep: 'scripts/x.js', symbols: ['a', 'b', 'c'] }, { dep: 'scripts/y.js', symbols: null }, { dep: 'scripts/z.js', symbols: null }]));
+check('exportKeys: module.exports 객체 키(단축·별칭) + exports.k 대입 · 스프레드 무시',
+  JSON.stringify([...exportKeys("module.exports = { analyze, run: runCli, ...rest, CONTRACT };\nmodule.exports.extra = 1;\nexports.more = 2;\n")]) === JSON.stringify(['analyze', 'run', 'CONTRACT', 'extra', 'more']));
+check('exportKeys: module.exports 없음 → null', exportKeys('const a = 1;\n') === null);
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

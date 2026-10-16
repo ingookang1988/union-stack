@@ -88,6 +88,34 @@ function topLevelRequires(txt) {
   return out;
 }
 
+/** 열 0 require 의 **심볼**(순수): [{dep, symbols}] — 구조 분해 `{ a, b: c }` 는 export 키 [a, b], 기본 require 는 null(판별 불가). 같은 모듈은 병합. */
+function requireSymbols(txt) {
+  const out = [];
+  const re = /^(?:(?:const|let|var)\s+(?:\{([^}\n]*)\}|[\w$]+)\s*=\s*)?require\('\.\/([\w.-]+?)(?:\.js)?'\)/gm;
+  const src = String(txt).replace(/\r\n/g, '\n');
+  let m;
+  while ((m = re.exec(src))) {
+    const dep = `scripts/${m[2]}.js`;
+    const syms = m[1] == null ? null : m[1].split(',').map(x => x.trim()).filter(Boolean).map(x => x.split(':')[0].trim()).filter(x => /^[\w$]+$/.test(x));
+    const hit = out.find(o => o.dep === dep);
+    if (!hit) out.push({ dep, symbols: syms });
+    else if (syms && hit.symbols) for (const s of syms) if (!hit.symbols.includes(s)) hit.symbols.push(s);
+    else if (syms && !hit.symbols) hit.symbols = syms;
+  }
+  return out;
+}
+
+/** 파일의 export 키(순수): `module.exports = { a, b: c, ...x }` 의 키 + `module.exports.k =`/`exports.k =`. module.exports 가 없으면 null(판별 불가). */
+function exportKeys(txt) {
+  const src = String(txt).replace(/\r\n/g, '\n');
+  const keys = [];
+  const obj = src.match(/module\.exports\s*=\s*\{([\s\S]*?)\};/);
+  if (obj) for (const part of obj[1].split(',')) { const k = part.trim(); if (!k || k.startsWith('...')) continue; const name = k.split(':')[0].trim(); if (/^[\w$]+$/.test(name) && !keys.includes(name)) keys.push(name); }
+  for (const m of src.matchAll(/^(?:module\.)?exports\.([\w$]+)\s*=/gm)) if (!keys.includes(m[1])) keys.push(m[1]);
+  if (!obj && !keys.length) return null;
+  return new Set(keys);
+}
+
 /** 배송 파일이 상류 전용 모듈을 무조건 require 하면 어답터에서 MODULE_NOT_FOUND 다(어답터 A 실측: lineage-tree.test → fetch-eval). [{file, dep}]. */
 function requireLeaks(root, manifest = scan(root)) {
   const uo = new Set(manifest.upstreamOnly);
@@ -129,6 +157,6 @@ function run(argv = process.argv.slice(2), root = path.resolve(__dirname, '..'))
   return OUTCOME.PASS;
 }
 
-module.exports = { MANIFEST, TAG_RE, parseTag, build, render, scan, parseManifest, readManifest, topLevelRequires, requireLeaks, run, CONTRACT };
+module.exports = { MANIFEST, TAG_RE, parseTag, build, render, scan, parseManifest, readManifest, topLevelRequires, requireSymbols, exportKeys, requireLeaks, run, CONTRACT };
 
 if (require.main === module) process.exit(withContract(CONTRACT, argv => run(argv))());

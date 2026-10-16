@@ -36,7 +36,7 @@ const { walkFiles } = require('./fs_walk');
 const { OUTCOME } = require('./gate-contract');
 const { TEMPLATE_BITS } = require('./init');
 const { load: loadAdapter } = require('./adapter');
-const { readManifest, parseManifest, topLevelRequires, MANIFEST: SHIP_MANIFEST } = require('./ship-manifest');
+const { readManifest, parseManifest, requireSymbols, exportKeys, MANIFEST: SHIP_MANIFEST } = require('./ship-manifest');
 
 // 마지막 정합 앵커 매니페스트(어답터 소유 — classifyPath 가 불가침으로 분류한다).
 const ANCHOR_PATH = '.union-stack/template-sync.json';
@@ -225,10 +225,18 @@ function syncedPaths(local, upstream) {
 function staleDeps(readFn, targets, pending) {
   const pend = new Set(pending.filter(p => !targets.includes(p)));
   const out = [];
+  const keyCache = new Map();
+  const keysOf = dep => { if (!keyCache.has(dep)) { const t = readFn(dep); keyCache.set(dep, t == null ? null : exportKeys(t)); } return keyCache.get(dep); };
   for (const t of targets) {
     const txt = readFn(t);
     if (txt == null) continue;
-    for (const dep of topLevelRequires(txt)) if (pend.has(dep)) out.push({ file: t, dep });
+    for (const { dep, symbols } of requireSymbols(txt)) {
+      if (!pend.has(dep)) continue;
+      // 심볼 수준(어답터 A 3차 실측: 경로만 보면 41쌍, 실제 불일치 1쌍) — 둘 다 알 때만 판정, 아니면 null(판별 불가)
+      const keys = keysOf(dep);
+      const missing = symbols && keys ? symbols.filter(s => !keys.has(s)) : null;
+      out.push({ file: t, dep, missing });
+    }
   }
   return out;
 }
@@ -411,9 +419,13 @@ async function main(argv = process.argv.slice(2)) {
     console.log('      다음부터는 개조만 골라 건너뛴다.');
   }
   if (stale.length) {
-    console.log('\n  ⚠ 의존 불일치 — 갱신될 파일이 require 하는 파일이 보존(갱신 보류)된다. 인터페이스가 어긋날 수 있다(실측: dashboard ↔ handoff-linter):');
-    stale.forEach(s => console.log(`    ! ${s.file} → ${s.dep}`));
-    console.log('    → 함께 갱신하려면 `--apply --force <보존 파일>` · 개조를 지키려면 그 파일의 개조를 상류 인터페이스에 맞춰라.');
+    const bad = stale.filter(s => s.missing && s.missing.length), unknown = stale.filter(s => s.missing == null);
+    if (bad.length) {
+      console.log('\n  ⚠ 의존 불일치 — 갱신된 파일이 보존(갱신 보류) 파일에서 **없는 심볼**을 require 한다(실측: dashboard ↔ handoff-linter):');
+      bad.forEach(s => console.log(`    ! ${s.file} → ${s.dep} (없는 심볼: ${s.missing.join(', ')})`));
+      console.log('    → 함께 갱신하려면 `--apply --force <보존 파일>` · 개조를 지키려면 그 파일의 개조를 상류 인터페이스에 맞춰라.');
+    }
+    console.log(`\n  보존 파일에 의존하는 갱신 파일 ${stale.length}쌍 — 심볼 불일치 ${bad.length} · 판별 불가 ${unknown.length}(기본 require 또는 exports 없음)`);
   }
   if (plan.dropped.length) console.log(`\n  (drop-template-bits 제거분 ${plan.dropped.length}건은 재추가하지 않음)`);
   if (migrations.length) {
