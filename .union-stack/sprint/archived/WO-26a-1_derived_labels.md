@@ -2,10 +2,10 @@
 ---
 id: WO-26a-1
 title: 파생 라벨 뷰 — [PRO-26] ④ + ① 선택적 mnemonic override (next.md · list_docs · label CLI)
-status: Verifying
+status: Closed
 parent: PRO-26
-evidence: "구현 완료(2026-10-17, 가드 먼저): scripts/label.js([TOOL-33] — deriveLabel 순수: mnemonic override → 선언 부모 체인 → 산술 조상(arithmetic 적용 시) → 자기 slug 2 토큰(stopword 제거) → 직계 부모 slug · labelMap · renderId · CLI 생성 표) · zfs_index mnemonic 파싱 · next.md 작업대 행 [WO-id · label] · MCP list_docs label 필드 · 팔 legacy 바 1(선언 부모 indep 상속 · 무관한 PLAN-12 wrongroot 금지). ARCH-00·파일명·ID 무변경. rcpt:n/a — 하네스 스위트"
-closed_by: []
+evidence: "구현 완료(2026-10-17, 가드 먼저): scripts/label.js([TOOL-33] — deriveLabel 순수: mnemonic override → 선언 부모 체인 → 산술 조상(arithmetic 적용 시) → 자기 slug 2 토큰(stopword 제거) → 직계 부모 slug · labelMap · renderId · CLI 생성 표) · zfs_index mnemonic 파싱 · next.md 작업대 행 [WO-id · label] · MCP list_docs label 필드 · 팔 legacy 바 1(선언 부모 indep 상속 · 무관한 PLAN-12 wrongroot 금지). ARCH-00·파일명·ID 무변경. rcpt:n/a — 하네스 스위트 · Closed 판정 2026-10-17(인간 승인)"
+closed_by: [.union-stack/reference/tools/TOOL-33_label.md, .union-stack/reference/tools/TOOL-23_work_close.md]
 version: 1.0
 ---
 # [WO-26a-1] 파생 라벨 뷰
