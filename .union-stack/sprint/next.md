@@ -7,5 +7,4 @@
 |---|---|---|---|---|
 | [WO-01a-1 · auth_wiring] | (예시) 인증 게이트웨이 배선 | PLAN-01 | Draft | 해당없음 |
 | [WO-10a-1 · e6_scenario] | E6 시나리오 A/B 1사이클 (팔 2개 × 5런) | PRO-10 | Draft | 해당없음 |
-| [WO-28a-1 · sections_alias] | 절 계약 ① — adapter.json `sections` 별칭 맵(1:N + 접두) + ② 발행 린트가 맵으로 해소(매칭 실패 = CLARIFY) — [PRO-28] ①② | PRO-28 | Verifying | 있음 |
 <!-- worktable:end -->

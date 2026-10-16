@@ -1,8 +1,8 @@
 <!-- [Wiki] 세션 이어달리기. 세션을 마치는 에이전트가 덮어쓴다. 최신 하나만 유효.
      다음 세션 부트스트랩 시 가장 먼저 읽힘. -->
 ---
-session_id: wo28a1-2026-10-17
-date: 2026-10-18T21:00:00Z
+session_id: close-wo28a1-2026-10-17
+date: 2026-10-18T22:00:00Z
 author: agent
 verification: "스위트 48 중 46 통과(실패 2 = leakage·ref 테스트, 미커밋 fdt spike 귀속 — 이전과 동일) · adapter 77 · work-close 63 · dashboard 186 · 어답터 팔 7 형상 충족 · weakening-guard PASS · work-close --table 동기화 · lint 체인 leakage 외 exit 0 · handoff-linter 통과"
 version: 1.0
@@ -12,18 +12,18 @@ version: 1.0
 
 ## 1. 세션 요약 (1~3줄)
 - 카나리아 A·B·C 완료 · 센서스 3회차 · **[PRO-28] 승인**([ADR-55], v1.0 — §7 미결 4건은 잠정값). PRO-β 는 [PRO-28] ⑤ 로 흡수(별도 승인).
-- **[WO-28a-1] Verifying**(가드 먼저): `adapter.json sections` 별칭 맵(1:N + 접두, 정규화) · `resolveSection`/`missingSections` · work-close 발행 린트가 맵으로 해소 ·
+- **[WO-28a-1] Closed**(인간 승인 2026-10-17, archived · 가드 먼저): `adapter.json sections` 별칭 맵(1:N + 접두, 정규화) · `resolveSection`/`missingSections` · work-close 발행 린트가 맵으로 해소 ·
   frontmatter `evidence:` 가 있으면 `## 증거` 불요 · 매칭 실패 CLARIFY 에 맵 안내. 상류 자신은 맵 없음 = 현행(회귀 0).
 - 부수 수리: 대시보드 카드 제목의 코드 스팬·볼드 렌더(이 WO 제목이 '원문 마커 0' 회귀를 바로 깨뜨렸다 — 상류 형상 가정 4번째 사례).
 
 ## 2. 변경 위치 (ID 목록 — Upward Fetching 진입점)
-- 승인·원장: [PRO-28] v1.0 · [ADR-55]. 오더: **[WO-28a-1]**(Verifying) · archived [WO-27a-1]~[WO-24c-2] 10건. 이전 승인 [ADR-53] [ADR-54].
+- 승인·원장: [PRO-28] v1.0 · [ADR-55]. 오더(archived): **[WO-28a-1]** · [WO-27a-1]~[WO-24c-2] 10건. 이전 승인 [ADR-53] [ADR-54].
 - 스크립트: adapter(`sections`·`normalizeHeading`·`resolveSection`·`missingSections`·`SECTION_KEYS`) · work-close(`parseWo` 맵 해소 · evidence 충족 · 안내) · dashboard(카드 제목 proseInline).
   카드 [TOOL-23] · MIGRATION(`sections` 키) · CHANGELOG · `sprint/next.md` 재생성.
 
 ## 3. 다음 작업 (단일 진입점)
-→ **사람 몫**: ① push ② **[WO-28a-1] 닫기 승인**(Verifying → Closed, archived) ③ 어답터에 `sections` 맵 선언 안내(A: 목적·진입 조건/완료 기준/검증 · C: 목적/수용 게이트·완료 기준/검증 —
-  각자 선언, 상류는 안 쓴다). 그 뒤 에이전트 몫([PRO-28] 순서): **④ scaffold WO**(발행 ID WO-28a-2 예정: `scripts/scaffold.js WO --parent <ID> [--next]` — 전역 다음 번호 제안 +
+→ **사람 몫**: ① push ② 어답터에 `sections` 맵 선언 안내(A: 목적·진입 조건/완료 기준/검증 · C: 목적/수용 게이트·완료 기준/검증 — 각자 선언, 상류는 안 쓴다).
+  에이전트 몫([PRO-28] 순서, [WO-28a-1] 후속): **④ scaffold WO 발행·착수**(발행 ID WO-28a-2 예정: `scripts/scaffold.js WO --parent <ID> [--next]` — 전역 다음 번호 제안 +
   parent ZFS 실존 확인 + 필수 3절(맵의 첫 별칭 또는 상류 표기) + frontmatter 빈 값, 뼈대 ≤400 tok, 가드 먼저) → ③ `upward-fetch --sections` → 센서스 4회차(맵 적용 뒤 매칭률).
 
 ## 4. 미해결 / 주의

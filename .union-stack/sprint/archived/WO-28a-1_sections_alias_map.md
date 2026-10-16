@@ -2,9 +2,9 @@
 ---
 id: WO-28a-1
 title: 절 계약 ① — adapter.json `sections` 별칭 맵(1:N + 접두) + ② 발행 린트가 맵으로 해소(매칭 실패 = CLARIFY) — [PRO-28] ①②
-status: Verifying
+status: Closed
 parent: PRO-28
-evidence: "구현 완료(2026-10-17, 가드 먼저): adapter.json sections(키 = 상류 의미 3 · 값 = 별칭 배열 · 알 수 없는 키/배열 아님 경고) · normalizeHeading(선두 번호·꼬리 콜론·공백) · resolveSection(정확 → 접두, 맵 없음 = 상류 표기 현행) · missingSections(H2 만) · work-close parseWo 가 맵으로 해소 + frontmatter evidence: 가 있으면 증거 절 불요 · anatomy-missing CLARIFY 에 맵 안내 한 줄 · 부수 수리: 대시보드 카드 제목의 코드 스팬·볼드 렌더(실측: 이 WO 제목의 `sections` 가 본문에 백틱으로 샘). rcpt:n/a — 하네스 스위트(adapter 77 · work-close 63 · dashboard 186) · 스위트 48 중 46(실패 2 = fdt spike 귀속) · 팔 7 형상 충족"
+evidence: "구현 완료(2026-10-17, 가드 먼저): adapter.json sections(키 = 상류 의미 3 · 값 = 별칭 배열 · 알 수 없는 키/배열 아님 경고) · normalizeHeading(선두 번호·꼬리 콜론·공백) · resolveSection(정확 → 접두, 맵 없음 = 상류 표기 현행) · missingSections(H2 만) · work-close parseWo 가 맵으로 해소 + frontmatter evidence: 가 있으면 증거 절 불요 · anatomy-missing CLARIFY 에 맵 안내 한 줄 · 부수 수리: 대시보드 카드 제목의 코드 스팬·볼드 렌더(실측: 이 WO 제목의 `sections` 가 본문에 백틱으로 샘). rcpt:n/a — 하네스 스위트(adapter 77 · work-close 63 · dashboard 186) · 스위트 48 중 46(실패 2 = fdt spike 귀속) · 팔 7 형상 충족 · Closed 판정 2026-10-17(인간 승인)"
 closed_by: [.union-stack/reference/tools/TOOL-23_work_close.md, MIGRATION.md]
 version: 1.0
 ---
