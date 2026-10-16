@@ -20,6 +20,7 @@ const { load: loadAdapter } = require('./adapter');
 const { gather: gatherBrokenRefs } = require('./ref-linter');
 const { gather: gatherBudget } = require('./context-budget');
 const receipts = require('./receipts');
+const retro = require('./retro');
 
 const { contractEdges, normEnforcement, concernUsage, roadmapWiring, NORM_DOMAINS } = require('./query');
 const { gather: gatherCards } = require('./tools-index');
@@ -87,7 +88,7 @@ function lastDateIn(txt) {
 }
 
 /** 순수 계산: 1차 지표 → 차원별 평가 리포트. (FS 비의존 → 테스트 용이) */
-function computeHealth({ index, domainsDefined, guideCount, namingViolations, historyViolations, leakageViolations, oversize = [], brokenRefs = 0, budget = null, sync = null, lessons = null, effect = null, contracts = null, norms = null, roadmap = null, adapter = null, historyClarifications = 0, testInfra = null, receiptsInfo = null }) {
+function computeHealth({ index, domainsDefined, guideCount, namingViolations, historyViolations, leakageViolations, oversize = [], brokenRefs = 0, budget = null, sync = null, lessons = null, effect = null, contracts = null, norms = null, roadmap = null, adapter = null, historyClarifications = 0, testInfra = null, receiptsInfo = null, retroInfo = null }) {
   const used = new Set(index.map(d => d.domain));
   const unused = domainsDefined.filter(d => !used.has(d));
   const locked = index.filter(d => LOCKED.includes(d.status));
@@ -191,6 +192,14 @@ function computeHealth({ index, domainsDefined, guideCount, namingViolations, hi
       : ['선언 무기입', `영수증 ${receiptsInfo.lines}줄`];
     dims.push({ name: 'receipts', status: 'INFO', value: bits.join(' · '), note: receiptsInfo.missing.length ? '영수증 없음: ' + receiptsInfo.missing.join(' ') : '' });
   }
+  if (retroInfo) {
+    // 회고 트리거([PRO-25] ① v0.2) — 등급 매핑: PRO 의 "CLARIFY" 는 health 에선 WARN(비차단 표면화, §8 ④). 넘지 않으면 INFO 로 현재 값만.
+    // 에이전트가 할 일은 HANDOFF §4 에 제안 한 줄뿐이다([PRO-25] ②). 판정·GC·승격은 사람의 세션.
+    const vals = retroInfo.indicators.map(i => `${i.name} ${i.value == null ? '—' : i.value}`).join(' · ');
+    dims.push({ name: 'retro due', status: retroInfo.due ? 'WARN' : 'INFO',
+      value: retroInfo.due ? `due — ${retroInfo.reasons.join(' · ')}` : `사유 없음 · ${vals}`,
+      note: retroInfo.due ? vals + (retroInfo.delta && retroInfo.delta.length ? ' · Δ ' + retroInfo.delta.map(d => `${d.name} ${d.prev}→${d.now}`).join(' ') : '') + ' — 회고 제안은 HANDOFF §4 한 줄(node scripts/retro.js --proposal)' : '' });
+  }
   const tiers = { draft: 0, reviewed: 0, ratified: 0, untagged: 0 };
   index.forEach(d => { tiers[d.tier && tiers[d.tier] !== undefined ? d.tier : 'untagged']++; });
   dims.push({ name: 'tier distribution', status: 'INFO',
@@ -240,10 +249,15 @@ function gather(root = path.resolve(__dirname, '..')) {
     index, domainsDefined: [...VALID_DOMAINS], guideCount: countGuides(root),
     namingViolations, historyViolations, historyClarifications, leakageViolations, oversize, brokenRefs, budget,
     sync, lessons: gatherLessons(root), effect: gatherEffectSurface(root), contracts, norms, roadmap, adapter,
-    testInfra: gatherTestInfra(root), receiptsInfo: gatherReceipts(root, adapter),
+    testInfra: gatherTestInfra(root), receiptsInfo: gatherReceipts(root, adapter), retroInfo: gatherRetro(root),
   });
   // 판정(dims) 외에 원자료도 함께 낸다 — 대시보드가 같은 수집을 두 번 하지 않도록(합성 원칙).
   return { ...r, sizes, sizeCapKb: SIZE_CAP_KB, sync, contracts, norms, roadmap, adapter, concerns: concernUsage(index) };
+}
+
+/** 회고 트리거 수집([PRO-25] ①) — retro.gather 의 얇은 래퍼. 고장은 null 로(점수표가 통째로 죽지 않게 — [ADR-28]). */
+function gatherRetro(root) {
+  try { const r = retro.gather(root); return { due: r.due, reasons: r.reasons, indicators: r.indicators, delta: r.delta }; } catch { return null; }
 }
 
 /** 영수증 관측 수집([PRO-22] 단계 2) — 선언(adapter.checks)과 receipts.md 를 대조. 순수 계산은 computeReceipts. */
@@ -459,6 +473,6 @@ function run(argv = process.argv.slice(2)) {
   return r.fails ? 1 : 0;
 }
 
-module.exports = { computeHealth, gather, gatherSync, gatherLessons, gatherTestInfra, computeReceipts, gatherReceipts, computeEffectSurface, gatherEffectSurface, parseContract, lastDateIn, resolveRoot, validateRoot, CONTRACT };
+module.exports = { computeHealth, gather, gatherSync, gatherLessons, gatherTestInfra, computeReceipts, gatherReceipts, gatherRetro, computeEffectSurface, gatherEffectSurface, parseContract, lastDateIn, resolveRoot, validateRoot, CONTRACT };
 
 if (require.main === module) process.exit(withContract(CONTRACT, argv => run(argv))());

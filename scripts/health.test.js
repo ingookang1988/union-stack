@@ -44,7 +44,7 @@ check('ref integrity INFO', sz.dims.find(d => d.name === 'ref integrity').value.
 const g = gather();
 const nonLeakFails = g.dims.filter(d => d.status === 'FAIL' && d.name !== 'leakage gate').length;
 check('gather 커밋 평면 게이트 그린', nonLeakFails === 0);
-check('gather dims 18 (관측 9절 포함 — test infra [PRO-21] · receipts [PRO-22])', g.dims.length === 18);
+check('gather dims 19 (관측 10절 포함 — test infra [PRO-21] · receipts [PRO-22] · retro due [PRO-25])', g.dims.length === 19);
 // 로드맵 배선 관측([PRO-19] ②) — 판정 없는 INFO. roadmap 은 Schema 라 표면화가 수단의 전부다.
 const rDim = g.dims.find(d => d.name === 'roadmap wiring');
 check('roadmap wiring 절은 INFO', rDim && rDim.status === 'INFO');
@@ -153,6 +153,16 @@ check('receipts 절은 INFO · 값에 포인터·나이·공백', rcDim.status =
 const rNone = computeHealth({ index, domainsDefined: defined, guideCount: 5, namingViolations: 0, historyViolations: 0, leakageViolations: 0, receiptsInfo: computeReceipts([], []) }).dims.find(d => d.name === 'receipts');
 check('선언 부재는 무기입(0 아님)', /선언 무기입/.test(rNone.value) && rNone.status === 'INFO');
 check('미수집이면 절 없음(구버전 호환)', computeHealth({ index, domainsDefined: defined, guideCount: 5, namingViolations: 0, historyViolations: 0, leakageViolations: 0 }).dims.every(d => d.name !== 'receipts'));
+
+// --- [PRO-25] ① retro due 절: due 면 WARN(= PRO 의 CLARIFY), 아니면 INFO 현재 값 ---
+const rtDue = computeHealth({ index, domainsDefined: defined, guideCount: 5, namingViolations: 0, historyViolations: 0, leakageViolations: 0,
+  retroInfo: { due: true, reasons: ['평면 지연 45≥30'], indicators: [{ name: '평면 지연', value: 45 }], delta: [{ name: '보관 부채', prev: 7, now: 2 }] } }).dims.find(d => d.name === 'retro due');
+check('retro due: WARN + 사유 + Δ + 제안 안내', rtDue.status === 'WARN' && /due — 평면 지연 45≥30/.test(rtDue.value) && /Δ 보관 부채 7→2/.test(rtDue.note) && /HANDOFF §4/.test(rtDue.note));
+const rtNo = computeHealth({ index, domainsDefined: defined, guideCount: 5, namingViolations: 0, historyViolations: 0, leakageViolations: 0,
+  retroInfo: { due: false, reasons: [], indicators: [{ name: '원장 크기', value: 22 }], delta: [] } }).dims.find(d => d.name === 'retro due');
+check('retro due: 사유 없으면 INFO 현재 값', rtNo.status === 'INFO' && /사유 없음 · 원장 크기 22/.test(rtNo.value));
+check('retro 미수집이면 절 없음', computeHealth({ index, domainsDefined: defined, guideCount: 5, namingViolations: 0, historyViolations: 0, leakageViolations: 0 }).dims.every(d => d.name !== 'retro due'));
+check('gatherRetro(상류): 지표 7', (() => { const { gatherRetro } = require('./health'); const r = gatherRetro(pathR.resolve(__dirname, '..')); return !!r && r.indicators.length === 7; })());
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

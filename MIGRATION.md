@@ -100,6 +100,10 @@ This file is adopter-owned — upstream never touches it.
   appears in the added lines, and turns **red** when an entry expires. Weakening signals (deleted test files,
   added skips, fewer assertions, snapshot field changes, runner-config edits, changed numeric literals in tests)
   are only ever *questions* (CLARIFY); put `weakening: <reason>` in the WO's evidence to answer them.
+- `retro: { issuance, archiveDebt, staleDays, staleCount, gcPlans, planeLagDays, distill, ledgerKb, off: [...] }` — thresholds of
+  the retro trigger (PRO-25): `health` shows `retro due` as WARN when any of the seven indicators crosses its threshold; the agent then
+  writes one proposal line in HANDOFF §4 and a human opens the retro session. `node scripts/retro.js --record --write --adopter` drafts the
+  round record (`plan/analytics/ANL-00<x>_retro_<date>.md`, `parent: up:PRO-25`). Defaults: 30 · 10 · 30d · 5 · 1 · 30d · 30 · 30 KB.
 - Documents without a `status:` line are counted as *nothing* by every tool. List them with
   `node scripts/frontmatter-backfill.js` (dry-run: estimate from a body marker such as `Status: Done`,
   then from an `archived/` directory, else left blank and reported) and apply with `--apply` — it inserts

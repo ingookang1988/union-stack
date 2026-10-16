@@ -123,5 +123,12 @@ check('checks 배열 아님 → 경고', parseConfig('{"checks": {}}').warnings.
 check('CHECK_KINDS 6분류', CHECK_KINDS.size === 6 && CHECK_KINDS.has('수용') && CHECK_KINDS.has('메타'));
 check('load 기본값에 checks []', Array.isArray(load(require('os').tmpdir()).checks));
 
+// --- [PRO-25] ① retro 임계 키 ---
+const rc = parseConfig('{"retro": {"issuance": 20, "planeLagDays": 45, "off": ["ledger"], "bogus": 1, "staleDays": "x"}}');
+check('retro 숫자 키 파싱 + off', rc.retro.issuance === 20 && rc.retro.planeLagDays === 45 && JSON.stringify(rc.retro.off) === '["ledger"]');
+check('retro 알 수 없는 키·비숫자 → 경고', rc.warnings.some(w => w.includes('retro.bogus')) && rc.warnings.some(w => w.includes('retro.staleDays')) && rc.retro.staleDays === undefined);
+check('retro 객체 아님 → 경고', parseConfig('{"retro": 3}').warnings.some(w => w.includes('retro')));
+check('load 기본값에 retro {}', typeof load(require('os').tmpdir()).retro === 'object');
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -12,6 +12,13 @@ design, see [`DESIGN_RATIONALE.md`](./DESIGN_RATIONALE.md). Entries marked **⚠
 action in already-adopted projects.
 
 ## [Unreleased]
+- **PRO-25 — retro is a consolidation machine: observed trigger, human-run round, append-only record.** `scripts/retro.js`
+  (**TOOL-32**) measures seven indicators from files and git dates only — issuance since the last round, archive debt, stale
+  non-terminal WOs (last commit ≥ 30 d), GC-able PLANs, plane lag (oldest plane; generated views listed separately), distillation
+  stall (closures since the last LSN update), ledger size — thresholds in `adapter.json retro:`. `health` gains a `retro due` row
+  (WARN when due); the agent's only move is one proposal line in HANDOFF §4. `--record --write` drafts the round record
+  `plan/analytics/ANL-00<x>_retro_<date>.md` (meta lineage 00, append-only) with the snapshot, the 8-item checklist and the delta
+  against the previous round. No auto-distillation (ADR-12 boundary unchanged). No migration.
 - **PRO-22 §3 1·2 — check declarations and execution receipts; a check that saw nothing is a failure.**
   Nine downstream answers found the same defect class in 3/3 repos: a type check idling for three days, a
   permission guard passing an empty stage, a disabled CI staying green. `adapter.json checks[]` declares the

@@ -177,4 +177,5 @@ this file only pins the deterministic core. The detail lives in the structure.
 - **[TOOL-29]** frontmatter-backfill (status: 없는 WO·PRO 백필 — dry-run 기본, 적용은 어답터) — `status:` frontmatter 가 없는 WO·PRO 문서를 나열하고 추정값(본문 표식 → 종결 디렉터리 → 비움)과 출처를 병기한다([PRO-27] ②). (`scripts/frontmatter-backfill.js`)
 - **[TOOL-30]** adopter-census (형제 레포 읽기 전용 계측 → 익명 집계 행) — 이 머신의 형제 레포(어답터)를 **읽기 전용**으로 재서 `eval/CENSUS.md` 에 익명 행을 남긴다([PRO-24] ② 회수층). 상류 도구(health·work-close· (`scripts/adopter-census.js`)
 - **[TOOL-31]** weakening-guard (약화 표면화 질문 + 예외 목록 증가 red) — 범위 diff 에서 **검사를 약하게 만드는 변경**을 찾아 질문 한 줄씩 낸다([PRO-22] §3 단계 3 — CLARIFY, 차단 아님): 테스트 파일 삭제 · skip/only 추가 · (`scripts/weakening-guard.js`)
+- **[TOOL-32]** retro (회고 트리거 — 지표 7 관측 · 회차 기록 초안) — 회고가 필요한지를 **파일과 git 날짜만으로** 잰다([PRO-25] ① v0.2): 발행 증분(직전 회고 기록 스냅샷 대비) · 보관 부채 · 정체 WO(비종결 + 마지막 커밋 ≥30일) · (`scripts/retro.js`)
 <!-- tools-index:end -->

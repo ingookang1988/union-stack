@@ -25,3 +25,22 @@ that backs it — the full rationale (deliberation + evidence) travels with the 
 
 ## Files
 - `ANL-*` (ZFS, lineage shared with the target PLAN-*). e.g. `ANL-01a_example_provider_usage.md`
+- `ANL-00<x>_retro_<yyyymmdd>.md` — **retro round record** (PRO-25 ④): meta lineage `00` (like ARCH-00 · PHASE-00 · CON-00),
+  `parent: PRO-25` (adopters: `up:PRO-25`), append-only — a new round is a new file, never a rewrite.
+
+## Retro round (PRO-25 — the "consolidation machine")
+The trigger is observed (`health` → `retro due`, `node scripts/retro.js`); the round itself is a **human-opened PO judgement session**.
+The agent's only move when the trigger fires is one line in HANDOFF §4: `회고 제안 — <reason>`. Entry point of the session is the
+*previous* round record, not HANDOFF. `node scripts/retro.js --record --write` drafts the record with the indicator snapshot; a human
+fills the 수행/보류 columns of the checklist:
+
+| # | item | who |
+|---|---|---|
+| 1 | archive: Closed WO still in `sprint/` → `sprint/archived/`, `work-close --table --write` | agent (config on/off) |
+| 2 | **PO judgement batch**: every Verifying WO → Closed / Active with a one-line reason | human |
+| 3 | upper-axis traces: a Closed WO whose `closed_by` axis has no real row → fix the row (field alias map applies) | agent proposes, human confirms |
+| 4 | PLAN GC: PLANs whose children are all terminal → Crystallized, **one batch 2a approval** (one ledger line or a GRANTS row) | human |
+| 5 | lesson candidates: the same failure shape 2–3 times (evidence `none` reasons, rework WOs) → LSN candidate list | agent lists, human promotes |
+| 6 | strategy candidates: superseded PLANs, dependency changes → HISTORY candidates | agent lists, human decides |
+| 7 | hygiene: ledger rotation when > 30 KB (PRO-18) · PROs left Proposed too long | agent (config on/off) / human |
+| 8 | record: this file (append-only) | agent drafts, human completes |

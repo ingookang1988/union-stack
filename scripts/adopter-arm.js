@@ -411,6 +411,15 @@ function vocabArm(ws) {
   bars.push({ name: '센서스가 사본을 재고 행에 경로·제목·파일명 0', ok: census.code === 0 && !!crow && !crow.error && !flat.includes(path.basename(ws)) && !flat.includes('local_vocab') && !flat.includes('.md'),
     detail: crow ? `exit ${census.code} · WO ${crow.wo}` : `exit ${census.code} · 측정 실패` });
   bars.push({ name: '센서스 뒤 사본 변경 0(읽기 전용)', ok: treeSnap() === beforeCensus, detail: '' });
+  // [PRO-25] 회고 트리거 — git 없는 사본(mtime 폴백)에서 지표 7 이 나오고 health 에 retro due 절이 있으며 크래시 0.
+  const rt = run(ROOT, ['scripts/retro.js', '--root', ws, '--json']);
+  let rj = null;
+  try { rj = JSON.parse(rt.stdout); } catch { /* null */ }
+  const hr = run(ROOT, ['scripts/health.js', '--root', ws, '--json']);
+  let rd = null;
+  try { rd = JSON.parse(hr.stdout).dims.find(d => d.name === 'retro due'); } catch { /* null */ }
+  bars.push({ name: '회고 트리거: 사본(git 없음 → mtime)에서 지표 7 · health retro due 절 · 크래시 0', ok: !crashed(rt) && !!rj && rj.indicators.length === 7 && rj.dateSource === 'mtime' && !!rd && ['INFO', 'WARN'].includes(rd.status),
+    detail: rj ? `지표 ${rj.indicators.length} · 출처 ${rj.dateSource} · health ${rd ? rd.status : '없음'}` : `exit ${rt.code} · 측정 실패` });
   return bars;
 }
 
