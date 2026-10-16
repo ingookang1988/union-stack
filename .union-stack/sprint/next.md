@@ -7,5 +7,4 @@
 |---|---|---|---|---|
 | [WO-01a-1] | (예시) 인증 게이트웨이 배선 | PLAN-01 | Draft | 해당없음 |
 | [WO-10a-1] | E6 시나리오 A/B 1사이클 (팔 2개 × 5런) | PRO-10 | Draft | 해당없음 |
-| [WO-25a-1] | 회고 트리거 — [PRO-25] ①②④ 구현 (health retro due 관측 · HANDOFF §4 제안 한 줄 · ANL-00<x> 회차 기록 초안) | PRO-25 | Verifying | 있음 |
 <!-- worktable:end -->

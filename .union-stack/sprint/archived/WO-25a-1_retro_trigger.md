@@ -2,10 +2,10 @@
 ---
 id: WO-25a-1
 title: 회고 트리거 — [PRO-25] ①②④ 구현 (health retro due 관측 · HANDOFF §4 제안 한 줄 · ANL-00<x> 회차 기록 초안)
-status: Verifying
+status: Closed
 parent: PRO-25
-evidence: "구현 완료(2026-10-17, 가드 먼저): scripts/retro.js([TOOL-32], 계약 PASS/CLARIFY) — 지표 7(v0.2) · git log 1회 날짜(없으면 mtime) · 직전 회고 스냅샷 Δ · adapter.json retro: 임계·off · --proposal · --record --write(ANL-00<x>, 체크리스트 8, 어답터 --adopter → up:PRO-25) · health retro due 절(WARN = PRO 의 CLARIFY) · 팔 vocab 바 1(mtime 폴백·크래시 0). 도그푸딩: 첫 회차 기록 ANL-00a_retro_20261016(오늘의 PO 판정 묶음 6건 = 체크리스트 1·2·3·8 수행, 4 해당 없음, 5~7 보류·후보 기재) · 상류 retro due = WARN(평면 지연 50≥30 — evidence 평면이 08-27 이후 CI 미실행) → HANDOFF §4 제안 한 줄. rcpt:n/a — 하네스 스위트"
-closed_by: []
+evidence: "구현 완료(2026-10-17, 가드 먼저): scripts/retro.js([TOOL-32], 계약 PASS/CLARIFY) — 지표 7(v0.2) · git log 1회 날짜(없으면 mtime) · 직전 회고 스냅샷 Δ · adapter.json retro: 임계·off · --proposal · --record --write(ANL-00<x>, 체크리스트 8, 어답터 --adopter → up:PRO-25) · health retro due 절(WARN = PRO 의 CLARIFY) · 팔 vocab 바 1(mtime 폴백·크래시 0). 도그푸딩: 첫 회차 기록 ANL-00a_retro_20261016(오늘의 PO 판정 묶음 6건 = 체크리스트 1·2·3·8 수행, 4 해당 없음, 5~7 보류·후보 기재) · 상류 retro due = WARN(평면 지연 50≥30 — evidence 평면이 08-27 이후 CI 미실행) → HANDOFF §4 제안 한 줄. rcpt:n/a — 하네스 스위트 · Closed 판정 2026-10-17(인간 승인)"
+closed_by: [.union-stack/reference/tools/TOOL-32_retro.md, .union-stack/plan/analytics/ANL-00a_retro_20261016.md]
 version: 1.0
 ---
 # [WO-25a-1] 회고 트리거
