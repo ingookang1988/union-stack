@@ -109,6 +109,12 @@ This file is adopter-owned — upstream never touches it.
   the first 1–2 tokens of the document's own slug, else its direct parent's. A mnemonic is inherited through `plan:`/`parent:`
   and then ID arithmetic — never across a legacy range below `lineage.arithmeticFrom` (a numeric root's label on an unrelated
   document is a false label). File names and IDs never change. `node scripts/label.js` prints the generated table.
+- `localOwned: [...]` — globs (`*`, `**`, `?`, '/' separators) of files that are **yours** although they sit where template files
+  sit (e.g. `scripts/verify.js`, `scripts/*-linter.js`). `template-update` neither reports them as "removed upstream" nor
+  touches them on `--apply`. If a glob also covers a file the upstream ships (listed in `scripts/ship-manifest.json`), **sync
+  wins** and the report warns — narrow the glob. Scripts not listed in the manifest are local by default, so most adopters need
+  no `localOwned` at all; upstream-only scripts (eval, adopter-arm, census, …) are no longer delivered and leftover copies
+  are listed as removable.
 - Documents without a `status:` line are counted as *nothing* by every tool. List them with
   `node scripts/frontmatter-backfill.js` (dry-run: estimate from a body marker such as `Status: Done`,
   then from an `archived/` directory, else left blank and reported) and apply with `--apply` — it inserts

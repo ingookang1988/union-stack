@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // scripts/e6-workspace.js
+// @ship upstream-only — E6 결함 주입 워크스페이스 — 상류 평가([PRO-24] ①(c))
 // E6 과제 워크스페이스 빌더/검증기 — `eval/e6-suite/defects.js`의 실결함을 **히스토리 없는** 사본에
 // 주입해 팔이 돌 작업 공간을 만들고, 팔 종료 후 **숨은 오라클**로 정답 여부를 판정한다.
 //

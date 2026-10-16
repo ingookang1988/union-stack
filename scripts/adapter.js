@@ -21,6 +21,8 @@
 //   · `evidenceFields` → 상류 필드(evidence·closed_by) 의 로컬 별칭 배열. 상류 필드가 있으면 그것이 우선, 없으면 별칭 순서대로.
 //   · `checks[]`    → 어답터의 제품 검사 선언([PRO-22] §3-1): name · cmd · blocking · runs_on · covers · kind(정적·동작·재현·측정·수용·메타) ·
 //                     env · cost(push·nightly·manual-paid) · expected_zero_unless(diff·env) · scope · runner · known_failures. ci.js 가 돌리고 영수증을 쓴다.
+//   · `localOwned`  → 어답터 고유 파일 글롭([PRO-24] ①(b)). template-update 가 이 파일들을 템플릿 소유로 보지 않는다("상류에서 사라진 파일" 오보 0,
+//                     `--apply` 가 건드리지 않음). 상류 매니페스트가 열거한 파일과 글롭이 겹치면 sync 가 우선이다(경고).
 //   · `retro`       → 회고 트리거 임계([PRO-25] ①): issuance·archiveDebt·staleDays·staleCount·gcPlans·planeLagDays·distill·ledgerKb(숫자) + off(지표 끄기 배열).
 //   · `lineage.arithmeticFrom` → 그 번호부터만 ID 산술 상속([PRO-27] ③). 레거시 독립 채번 구간(같은 번호가 도메인마다 다른 문서)은
 //                     frontmatter 부모만 본다. 기본 0 = 전부 산술(상류 자신의 형상).
@@ -31,8 +33,8 @@ const fs = require('fs');
 const path = require('path');
 
 const CONFIG_PATH = '.union-stack/adapter.json';
-const DEFAULTS = { private: false, zfsIgnored: [], statusMap: {}, evidenceFields: {}, lineage: { arithmeticFrom: 0 }, checks: [], retro: {} };
-const KNOWN_KEYS = new Set(['private', 'zfsIgnored', 'statusMap', 'evidenceFields', 'lineage', 'checks', 'retro', '$schema']);
+const DEFAULTS = { private: false, zfsIgnored: [], statusMap: {}, evidenceFields: {}, lineage: { arithmeticFrom: 0 }, checks: [], retro: {}, localOwned: [] };
+const KNOWN_KEYS = new Set(['private', 'zfsIgnored', 'statusMap', 'evidenceFields', 'lineage', 'checks', 'retro', 'localOwned', '$schema']);
 const RETRO_KEYS = new Set(['issuance', 'archiveDebt', 'staleDays', 'staleCount', 'gcPlans', 'planeLagDays', 'distill', 'ledgerKb', 'off']);
 // 검사 선언의 닫힌 어휘([PRO-22] v1.0) — 6분류·3비용·0건 조건 2종.
 const CHECK_KINDS = new Set(['정적', '동작', '재현', '측정', '수용', '메타']);
@@ -41,7 +43,7 @@ const ZERO_CONDS = new Set(['diff', 'env']);
 const LINEAGE_KEYS = new Set(['arithmeticFrom']);
 // evidenceFields 가 별칭을 달 수 있는 상류 필드 — work-close 의 닫힘 계약이 읽는 둘뿐이다.
 const ALIASABLE_FIELDS = new Set(['evidence', 'closed_by']);
-const fresh = present => ({ ...DEFAULTS, zfsIgnored: [], statusMap: {}, evidenceFields: {}, lineage: { arithmeticFrom: 0 }, checks: [], retro: {}, warnings: [], present });
+const fresh = present => ({ ...DEFAULTS, zfsIgnored: [], statusMap: {}, evidenceFields: {}, lineage: { arithmeticFrom: 0 }, checks: [], retro: {}, localOwned: [], warnings: [], present });
 
 /**
  * JSON 텍스트 → 정규화된 설정(순수 — FS 비의존).
@@ -116,6 +118,11 @@ function parseConfig(txt) {
         out.checks.push(chk);
       });
     } else out.warnings.push(`${CONFIG_PATH}: 'checks' 는 배열이어야 함 — 무시됨`);
+  }
+  if ('localOwned' in j) {
+    if (Array.isArray(j.localOwned) && j.localOwned.every(x => typeof x === 'string' && x.trim())) {
+      out.localOwned = j.localOwned.map(x => x.trim().replace(/\\/g, '/').replace(/^\.\//, ''));
+    } else out.warnings.push(`${CONFIG_PATH}: 'localOwned' 는 글롭 문자열 배열 — 무시됨`);
   }
   if ('retro' in j) {
     const r = j.retro;

@@ -12,6 +12,14 @@ design, see [`DESIGN_RATIONALE.md`](./DESIGN_RATIONALE.md). Entries marked **⚠
 action in already-adopted projects.
 
 ## [Unreleased]
+- **PRO-24 ① — delivery narrowed to a whitelist; adopter-owned files declared, not guessed.** `scripts/ship-manifest.json`
+  (**TOOL-34**, generated from `// @ship upstream-only|optional` tags) lists the scripts upstream ships; `template-update` reads
+  the local and the upstream manifest separately, so upstream-only tooling (eval, eval-arm, fetch-eval, scenario-rubric,
+  token-accounting, hook-replay, check-prereqs, adopter-arm, e6-workspace, adopter-census) is no longer delivered or reported,
+  leftover copies are listed as removable, and scripts outside the manifest are local by default (no more "removed upstream"
+  noise for your own files). `adapter.json localOwned` (globs) declares adopter-owned files explicitly; where a glob overlaps a
+  shipped file, sync wins and the report warns. The 3-way "modified" class is now reported as **localForked**. No migration —
+  without a manifest the previous rules apply.
 - **PRO-26 ④ — derived labels next to bare IDs; `mnemonic:` as an optional override.** Where an ID stands alone
   (`sprint/next.md` worktable, MCP `list_docs`) it now reads `[WO-27a-1 · prereq_upstream]`: the label is derived from the
   document's own slug (first 1–2 tokens), else its direct parent's, with a frontmatter `mnemonic:` overriding and being

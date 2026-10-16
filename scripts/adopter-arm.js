@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // scripts/adopter-arm.js
+// @ship upstream-only — 어답터 팔 — 상류가 어답터 형상을 돈다([PRO-24] ①(c))
 // 어답터 팔([PRO-17]) — **상류가 자기 형상만 도는 것**을 구조로 닫는다([LSN-17]).
 //
 // 새 게이트가 아니라 **기존 게이트를 다른 형상에서 한 번 더 돌리는 것**이다(로직 1벌 원칙).
@@ -197,6 +198,18 @@ function envArm(ws) {
     try { reach = noJsReachable(fs.readFileSync(path.join(ws, 'probe.html'), 'utf8')); } catch (e) { reach = { ok: false, why: e.message }; }
   }
   bars.push({ name: '무JS 도달성', ok: reach.ok, detail: reach.why });
+  // [PRO-24] ①(c) — init 뒤 사본에서 상류 전용 스크립트가 배송 계획(buildPlan)에 들어가지 않는다(§6 성공 바). 네트워크 없이 합성 상류 맵으로.
+  const plan = run(ws, ['-e', [
+    "const t=require('./scripts/template-update');const lo=t.localCtx('.');",
+    "const up={'scripts/eval.js':'x1','scripts/adopter-arm.js':'x2','scripts/adopter-census.js':'x3','scripts/health.js':'y1'};",
+    "const p=t.buildPlan(t.localTemplateFiles('.',lo),up,{local:lo,upstream:{manifest:lo.manifest,localOwned:lo.localOwned}});",
+    "console.log(JSON.stringify({ns:p.newSync,cs:p.changedSync,uol:p.upstreamOnlyLocal.length,manifest:!!lo.manifest}));",
+  ].join('')]);
+  let pj = null;
+  try { pj = JSON.parse(plan.stdout.trim().split('\n').pop()); } catch { /* null */ }
+  const leaked = pj ? [...pj.ns, ...pj.cs].filter(f => /eval|adopter-arm|adopter-census/.test(f)) : null;
+  bars.push({ name: '상류 전용 스크립트가 배송 계획(buildPlan)에서 빠진다 · 로컬 사본은 INFO', ok: !crashed(plan) && !!pj && pj.manifest && leaked.length === 0 && pj.cs.includes('scripts/health.js') && pj.uol > 0,
+    detail: pj ? `매니페스트 ${pj.manifest} · 누출 ${leaked.length} · health 갱신 ${pj.cs.includes('scripts/health.js')} · 남은 사본 ${pj.uol}` : `exit ${plan.code} · 측정 실패` });
   return bars;
 }
 

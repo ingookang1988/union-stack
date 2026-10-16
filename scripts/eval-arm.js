@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // scripts/eval-arm.js
+// @ship upstream-only — 평가 팔 — 상류 자기 측정([PRO-24] ①(c))
 // 시나리오 A/B **팔 단위 집계·비교기** — E6(`eval/PROTOCOL.md` §3-bis)의 실행 리그.
 // 두 팔의 전사 디렉터리를 받아 런별 비용을 내고, 델타 + 소표본 유의성 + 품질 비악화를 합쳐
 // **성공 바를 기계로 판정**한다(성공 바 = 턴 또는 토큰 유의미 감소 AND 품질 비악화).

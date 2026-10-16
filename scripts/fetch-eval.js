@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // scripts/fetch-eval.js
+// @ship upstream-only — E2 발견 메커니즘 평가 — 상류 전용([PRO-24] ①(c))
 // E2 — 발견 메커니즘 검증. Upward Fetching이 *규모에서도* 옳은 문서만 끌어오는가?
 //   precision: 끌어온 것 중 관련된 것의 비율(무관 계보·혼동 형제를 안 끌어오는가).
 //   recall   : 관련된 것 중 끌어온 것의 비율(진짜 조상을 빠뜨리지 않는가).

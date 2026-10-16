@@ -81,6 +81,8 @@ function chain({ range = null } = {}) {
     { name: 'handoff-linter', args: ['scripts/handoff-linter.js'], blocking: false },
     // 생성 뷰 드리프트([PRO-21] 2단계) — CLARIFY 만 내는 비차단 게이트([TOOL-28]).
     { name: 'test-catalog', args: ['scripts/test-catalog.js'], blocking: false },
+    // 배송 매니페스트 드리프트([PRO-24] ①(c), [TOOL-34]) — 태그와 목록이 어긋나면 CLARIFY.
+    { name: 'ship-manifest', args: ['scripts/ship-manifest.js'], blocking: false },
     { name: 'tests', args: ['--test', ...testFiles()] },
     { name: 'health', args: ['scripts/health.js'] },
     { name: 'adopter-arm', args: ['scripts/adopter-arm.js'] },

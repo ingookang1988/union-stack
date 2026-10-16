@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // scripts/check-prereqs.js
+// @ship upstream-only — 진입 전제 점검 — 상류 의례(어답터는 upward-fetch 만)([PRO-24] ①(c))
 // 단계 진입 전 필수 산출물 게이트(Fail-close) — [PRO-08] 2단계, Spec Kit check-prerequisites 패턴.
 // 검사:
 //   (항상)  부트스트랩 산출물 — project/IDENTITY* 존재, sprint/HANDOFF.md 존재 + 필수 5부 헤딩.

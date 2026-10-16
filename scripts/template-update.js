@@ -35,6 +35,8 @@ const crypto = require('crypto');
 const { walkFiles } = require('./fs_walk');
 const { OUTCOME } = require('./gate-contract');
 const { TEMPLATE_BITS } = require('./init');
+const { load: loadAdapter } = require('./adapter');
+const { readManifest, parseManifest, MANIFEST: SHIP_MANIFEST } = require('./ship-manifest');
 
 // 마지막 정합 앵커 매니페스트(어답터 소유 — classifyPath 가 불가침으로 분류한다).
 const ANCHOR_PATH = '.union-stack/template-sync.json';
@@ -48,6 +50,8 @@ const RAW = `https://raw.githubusercontent.com/${UPSTREAM}`;
 //   review : 규범·가이드. 어답터가 고쳤을 수 있고 상류 변경 = 규칙 변경이므로 인간이 diff를 보고 반영.
 const SYNC_RULES = [
   /^scripts\/[^/]+\.js$/,
+  // 배송 매니페스트([TOOL-34]) — 자신이 sync 여야 어답터가 다음 화이트리스트를 받는다.
+  /^scripts\/ship-manifest\.json$/,
   /^\.github\/workflows\/harness\.yml$/,
   /^\.github\/workflows\/template-guard\.yml$/,
   // 하네스 컨테이너([TOOL-27]). **이름이 어답터의 앱 파일과 겹치지 않는 것**이 sync 안전의 전제다 —
@@ -61,11 +65,46 @@ const REVIEW_RULES = [
   /^eval\/(PROTOCOL|CALIBRATION)\.md$/,
 ];
 
-/** 경로 → 'sync' | 'review' | null(템플릿 소유 아님 — 절대 안 건드림). 순수. */
-function classifyPath(p) {
+/** 글롭 → 정규식(순수): `**` 는 경로 구간 횡단, `*` 는 구간 안, `?` 는 한 글자. '/' 구분자. */
+function matchGlob(glob, p) {
+  const g = String(glob || '').replace(/\\/g, '/').replace(/^\.\//, '');
+  const re = '^' + g.split('**').map(part => part.split('*').map(seg => seg.replace(/[.+^$(){}|[\]\\]/g, '\\$&').replace(/\?/g, '[^/]')).join('[^/]*')).join('.*') + '$';
+  return new RegExp(re).test(p);
+}
+
+/**
+ * 경로 → 'sync' | 'review' | null(템플릿 소유 아님 — 절대 안 건드림). 순수.
+ * ctx([PRO-24] ①(b)(c), 없으면 규칙 폴백 = 구버전 동작):
+ *   manifest   — 배송 화이트리스트(scripts/ship-manifest.json). 매니페스트가 있으면 **스크립트는 열거된 것만 sync**, 상류 전용은 null, 나머지는 기본 로컬(null).
+ *   localOwned — 어답터 고유 파일 글롭 → null. 단 매니페스트가 열거한 파일과 겹치면 **sync 우선**(상류 파일을 글롭으로 끊어 버리는 사고 방지 — 경고는 호출부).
+ */
+function classifyPath(p, ctx = null) {
+  const m = ctx && ctx.manifest;
+  const owned = !!(ctx && Array.isArray(ctx.localOwned) && ctx.localOwned.some(g => matchGlob(g, p)));
+  if (m && /^scripts\/[^/]+\.(js|json)$/.test(p)) {
+    if ((m.upstreamOnly || []).includes(p)) return null;
+    // shipped 가 null 이면 "화이트리스트 없음 + 상류 전용만 안다"(상류가 구버전이라 매니페스트가 없을 때 로컬 매니페스트로 보강) → 규칙 폴백.
+    if (Array.isArray(m.shipped)) return m.shipped.includes(p) ? 'sync' : null; // 열거된 파일 — 글롭이 겹쳐도 sync 우선
+  }
+  if (owned) return null;
   if (SYNC_RULES.some(r => r.test(p))) return 'sync';
   if (REVIEW_RULES.some(r => r.test(p))) return 'review';
   return null;
+}
+
+/** localOwned 글롭이 매니페스트의 배송 파일을 덮는 충돌(순수) — sync 가 이기지만 어답터에게 알린다. */
+function ownedConflicts(manifest, localOwned = []) {
+  if (!manifest) return [];
+  return manifest.shipped.filter(p => localOwned.some(g => matchGlob(g, p)));
+}
+
+/** 로컬 ctx: 로컬 매니페스트 + adapter.json localOwned. 부재는 규칙 폴백. */
+function localCtx(root) {
+  const cfg = loadAdapter(root);
+  const manifest = readManifest(root);
+  // 상류 전용 스크립트의 **남은 로컬 사본**은 분류 맵(null 이라 빠짐)이 아니라 파일시스템에서 센다.
+  const presentUpstreamOnly = manifest ? manifest.upstreamOnly.filter(p => fs.existsSync(path.join(root, p))) : [];
+  return { manifest, localOwned: cfg.localOwned || [], presentUpstreamOnly };
 }
 
 /** CHANGELOG 본문 → 최신 릴리스 버전("## [x.y.z]" 첫 매칭, Unreleased 제외). 순수. */
@@ -110,10 +149,13 @@ function gitBlobShas(content) {
  * 로컬 값이 배열이면 후보 중 하나만 일치해도 동일로 본다(개행 이형 흡수 — gitBlobShas).
  * 신규 중 TEMPLATE_BITS(init --drop-template-bits 제거 대상)는 dropped로 분리 — 재추가 안 함.
  */
-function buildPlan(local, upstream) {
-  const plan = { changedSync: [], changedReview: [], newSync: [], newReview: [], removedUpstream: [], dropped: [] };
+function buildPlan(local, upstream, ctx = {}) {
+  const plan = { changedSync: [], changedReview: [], newSync: [], newReview: [], removedUpstream: [], dropped: [], upstreamOnlyLocal: [] };
+  const upCtx = ctx.upstream || null, loCtx = ctx.local || null;
+  // 상류 전용 스크립트의 로컬 사본([PRO-24] ①(c)): 배송·갱신에서 빠지며, 남은 사본은 INFO 로만 알린다(어답터가 지운다).
+  const uo = new Set([...((upCtx && upCtx.manifest && upCtx.manifest.upstreamOnly) || []), ...((loCtx && loCtx.manifest && loCtx.manifest.upstreamOnly) || [])]);
   for (const [p, sha] of Object.entries(upstream)) {
-    const cat = classifyPath(p);
+    const cat = classifyPath(p, upCtx);
     if (!cat) continue;
     if (!(p in local)) {
       if (TEMPLATE_BITS.includes(p)) { plan.dropped.push(p); continue; }
@@ -123,8 +165,11 @@ function buildPlan(local, upstream) {
     }
   }
   for (const p of Object.keys(local)) {
-    if (classifyPath(p) && !(p in upstream)) plan.removedUpstream.push(p);
+    if (uo.has(p)) { plan.upstreamOnlyLocal.push(p); continue; }
+    if (classifyPath(p, loCtx) && !(p in upstream)) plan.removedUpstream.push(p);
   }
+  for (const p of (loCtx && loCtx.presentUpstreamOnly) || []) if (!plan.upstreamOnlyLocal.includes(p)) plan.upstreamOnlyLocal.push(p);
+  plan.upstreamOnlyLocal.sort();
   return plan;
 }
 
@@ -166,10 +211,10 @@ function migrationActions(changelogTxt, fromVer, toVer) {
 }
 
 // --- 로컬/네트워크 어댑터 (얇음) ---
-function localTemplateFiles(root) {
+function localTemplateFiles(root, ctx = localCtx(root)) {
   const out = {};
   const record = rel => {
-    const cat = classifyPath(rel);
+    const cat = classifyPath(rel, ctx);
     if (!cat) return;
     try { out[rel] = gitBlobShas(fs.readFileSync(path.join(root, rel), 'utf8')); } catch { /* 바이너리/삭제 경합 무시 */ }
   };
@@ -258,14 +303,22 @@ async function main(argv = process.argv.slice(2)) {
     return OUTCOME.REJECT;
   }
   const upstreamVer = parseChangelogVersion(upstreamChangelog);
-  const localFiles = localTemplateFiles(root);
-  const plan = buildPlan(localFiles, upstreamMap);
+  // 배송 ctx([PRO-24] ①): 로컬·상류 매니페스트를 각각 읽는다 — 옛 로컬 매니페스트로 상류 신규를 거르지 않게. 상류 매니페스트 부재(구버전 상류)는 규칙 폴백.
+  const lo = localCtx(root);
+  let upManifest = null;
+  if (upstreamMap[SHIP_MANIFEST]) { try { upManifest = parseManifest(await fetchText(`${RAW}/${encodeURIComponent(ref)}/${SHIP_MANIFEST}`)); } catch { upManifest = null; } }
+  // 상류에 매니페스트가 없으면(구버전 상류) 로컬 매니페스트의 상류 전용 목록만 보강해 "상류 신규"로 둔갑하는 것을 막는다(실측: 로컬이 앞선 상류 개발 레포).
+  const upCtxManifest = upManifest || (lo.manifest ? { shipped: null, upstreamOnly: lo.manifest.upstreamOnly, optional: [] } : null);
+  const ctx = { local: lo, upstream: { manifest: upCtxManifest, localOwned: lo.localOwned } };
+  const conflicts = ownedConflicts(upManifest || lo.manifest, lo.localOwned);
+  const localFiles = localTemplateFiles(root, lo);
+  const plan = buildPlan(localFiles, upstreamMap, ctx);
   const guard = classifySyncTargets([...plan.changedSync, ...plan.newSync], localFiles, readAnchor(root));
   const drift = plan.changedSync.length + plan.changedReview.length + plan.newSync.length + plan.newReview.length;
   const migrations = migrationActions(upstreamChangelog, localVer, upstreamVer);
 
   if (json) {
-    console.log(JSON.stringify({ ref, localVer, upstreamVer, plan, guard, migrations, applied: false }, null, 2));
+    console.log(JSON.stringify({ ref, localVer, upstreamVer, plan, guard, migrations, localOwned: lo.localOwned, ownedConflicts: conflicts, shipManifest: !!upManifest, applied: false }, null, 2));
     return drift ? OUTCOME.CLARIFY : OUTCOME.PASS;
   }
 
@@ -282,8 +335,14 @@ async function main(argv = process.argv.slice(2)) {
   list('변경된 review 파일(규범 — diff를 보고 인간이 반영)', plan.changedReview);
   list('상류 신규 review 파일', plan.newReview);
   list('상류에서 사라진 파일(수동 정리 검토)', plan.removedUpstream);
+  list('상류 전용 스크립트의 로컬 사본(배송 제외 — 지워도 된다, [TOOL-34])', plan.upstreamOnlyLocal);
+  if (lo.localOwned.length) console.log(`\n  localOwned 글롭 ${lo.localOwned.length}건 적용(어답터 고유 파일 — 보고·갱신 제외)${upManifest ? '' : ' · 상류 매니페스트 없음(규칙 폴백)'}`);
+  if (conflicts.length) {
+    console.log('\n  ⚠ localOwned 글롭이 상류 배송 파일과 겹친다 — sync 가 우선한다(글롭을 좁혀라):');
+    conflicts.forEach(p => console.log(`    ! ${p}`));
+  }
   if (guard.modified.length) {
-    console.log('\n  ⚠ 로컬 개조 감지 — 덮어쓰면 소실(--apply 가 건너뜀):');
+    console.log('\n  ⚠ 로컬 분기(localForked) — 동명 파일이 상류와 갈라졌다. 덮어쓰면 소실(--apply 가 건너뜀):');
     guard.modified.forEach(p => console.log(`    ! ${p}`));
     console.log('    → 개조를 유지하려면 설정으로 흡수하라(MIGRATION.md §"Adopter configuration").');
   }
@@ -315,6 +374,6 @@ async function main(argv = process.argv.slice(2)) {
   return OUTCOME.CLARIFY;
 }
 
-module.exports = { classifyPath, parseChangelogVersion, cmpVersions, gitBlobSha, gitBlobShas, buildPlan, classifySyncTargets, readAnchor, writeAnchor, seedAnchor, localTemplateFiles, migrationActions, UPSTREAM, ANCHOR_PATH };
+module.exports = { classifyPath, matchGlob, ownedConflicts, localCtx, parseChangelogVersion, cmpVersions, gitBlobSha, gitBlobShas, buildPlan, classifySyncTargets, readAnchor, writeAnchor, seedAnchor, localTemplateFiles, migrationActions, UPSTREAM, ANCHOR_PATH, SHIP_MANIFEST };
 
 if (require.main === module) main().then(c => process.exit(c), e => { console.error(e); process.exit(OUTCOME.REJECT); });

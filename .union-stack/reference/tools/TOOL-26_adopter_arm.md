@@ -18,7 +18,7 @@ version: 1.0
 
 | 축 | 사본에 하는 일 | 성공 바 | 근거 |
 |---|---|---|---|
-| `env` | `init --apply --drop-template-bits` | init 적용 · **상류 ADR 잔존 0** · 스위트 실패 0 · health exit 0 · **무JS 도달성** | [ADR-26]·[ADR-27]·[ADR-28]·[ADR-30]·[ADR-36]① |
+| `env` | `init --apply --drop-template-bits` | init 적용 · **상류 ADR 잔존 0** · 스위트 실패 0 · health exit 0 · **무JS 도달성** · **상류 전용 스크립트가 buildPlan 에서 빠진다**([TOOL-34]) | [ADR-26]·[ADR-27]·[ADR-28]·[ADR-30]·[ADR-36]① · [PRO-24] ①(c) |
 | `data` | 평면 **내용의 모양**만 교체(표 13개·한국어 헤더·`**제목 — 부제**`·헤딩형 HISTORY) | 도구 3종 크래시 0 · **렌더 본문 원문 마커 0** · live 계수 정확 · HISTORY 분기점 계수 정확 | [ADR-31]·[ADR-35]·[ADR-37] |
 | `legacy` | **독립 채번 레거시** — 같은 번호·다른 도메인(PLAN-36 ≠ PRO-36) · 같은 도메인 중복 파일 · `[up:…]` 를 담은 실콘텐츠 · `lineage.arithmeticFrom: 36` 아래 WO | 중복 ID → zfs-linter REJECT · **`[up:…]` strict 참조 린터 통과** · 상류 참조 INFO 계수 · **`health --root` 가 사본을 측정** · **arithmeticFrom 아래 WO 는 무관한 PLAN 상속 안 함 + 선언 부모 수집** · 파생 라벨([TOOL-33]): 선언 부모 mnemonic 상속 · 무관한 루트 mnemonic 금지 | [PRO-27] ①③⑤ · [PRO-26] ④ (SURVEY-02 어답터 실측) |
 | `serial` | **전역 일련번호 WO** — 산술 조상 0, 계보는 `plan:` frontmatter 에만 + 부모 없는 고아 WO | **`plan:` 부모 수집 · exit 0** · 고아 WO 는 **CLARIFY(3)** · `health --root <없는 경로>` REJECT · `health --root <사본>` 크래시 0 | [PRO-27] ③④ (SURVEY-02 어답터 실측) |

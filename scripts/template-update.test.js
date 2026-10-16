@@ -118,5 +118,41 @@ check('from 버전 자체는 제외', migrationActions(CL, '6.0.0', '6.0.0'), []
 check('from 없음(신규 채택) → 전 구간', migrationActions(CL, null, '6.1.0').length, 2);
 check('Unreleased는 제외', migrationActions(CL, '6.1.0', '6.1.0'), []);
 
+// --- [PRO-24] ①(b)(c) 글롭 · ctx 분류 · 매니페스트 화이트리스트 · buildPlan ctx ---
+const { matchGlob, ownedConflicts } = require('./template-update');
+check('glob: * 는 구간 안', [matchGlob('scripts/*-linter.js', 'scripts/zfs-linter.js'), matchGlob('scripts/*-linter.js', 'scripts/sub/x-linter.js')], [true, false]);
+check('glob: ** 는 횡단 · ? 한 글자 · 역슬래시 정규화', [matchGlob('scripts/docker-ci/**', 'scripts/docker-ci/a/b.sh'), matchGlob('scripts/v?.js', 'scripts/v1.js'), matchGlob('scripts\\verify.sh', 'scripts/verify.sh')], [true, true, true]);
+check('glob: 점은 리터럴', matchGlob('scripts/verify.sh', 'scripts/verifyXsh'), false);
+const MF = { shipped: ['scripts/health.js', 'scripts/zfs-linter.js', 'scripts/ship-manifest.json'], upstreamOnly: ['scripts/eval.js', 'scripts/adopter-arm.js'], optional: [] };
+const CTX = { manifest: MF, localOwned: ['scripts/verify.sh', 'scripts/*-linter.js'] };
+check('ctx 없음 = 규칙 폴백(구버전)', classifyPath('scripts/eval.js'), 'sync');
+check('상류 전용 → null(배송 제외)', classifyPath('scripts/eval.js', CTX), null);
+check('매니페스트 밖 로컬 스크립트 → null(기본 로컬)', classifyPath('scripts/their-tool.js', CTX), null);
+check('열거된 파일 → sync', classifyPath('scripts/health.js', CTX), 'sync');
+check('localOwned 글롭 → null(어답터 소유)', classifyPath('scripts/verify.sh', CTX), null);
+check('글롭이 열거 파일과 겹치면 sync 우선', classifyPath('scripts/zfs-linter.js', CTX), 'sync');
+check('충돌 목록', ownedConflicts(MF, CTX.localOwned), ['scripts/zfs-linter.js']);
+check('비스크립트는 규칙대로(글롭 없으면)', [classifyPath('AGENTS.md', CTX), classifyPath('ci/Dockerfile', CTX)], ['review', 'sync']);
+const localCtxT = { manifest: { shipped: ['scripts/health.js', 'scripts/ship-manifest.json'], upstreamOnly: ['scripts/eval.js'], optional: [] }, localOwned: ['scripts/verify.sh'] };
+const upCtxT = { manifest: { shipped: ['scripts/health.js', 'scripts/new-tool.js', 'scripts/ship-manifest.json'], upstreamOnly: ['scripts/eval.js', 'scripts/adopter-arm.js'], optional: [] }, localOwned: ['scripts/verify.sh'] };
+const planC = buildPlan(
+  { 'scripts/health.js': 'a', 'scripts/eval.js': 'e', 'scripts/verify.sh': 'v', 'scripts/their-tool.js': 't' },
+  { 'scripts/health.js': 'b', 'scripts/eval.js': 'e2', 'scripts/adopter-arm.js': 'n', 'scripts/new-tool.js': 'z', 'scripts/ship-manifest.json': 'm' },
+  { local: localCtxT, upstream: upCtxT });
+check('상류 신규 중 전용(adopter-arm)은 제외 · 열거된 신규(new-tool · 매니페스트)는 배송', planC.newSync, ['scripts/new-tool.js', 'scripts/ship-manifest.json']);
+check('상류 전용 변경(eval)은 갱신 안 함 · 열거 변경(health)은 갱신', planC.changedSync, ['scripts/health.js']);
+check('로컬 사본(eval)은 upstreamOnlyLocal 로', planC.upstreamOnlyLocal, ['scripts/eval.js']);
+check('localOwned·매니페스트 밖 로컬은 "사라진 파일" 오보 없음', planC.removedUpstream, []);
+check('옛 로컬 매니페스트로 상류 신규를 거르지 않는다(상류 ctx 로 분류)', planC.newSync.includes('scripts/new-tool.js'), true);
+
+// --- 상류 매니페스트 부재(구버전 상류): shipped null = 규칙 폴백 + 상류 전용 제외 · 남은 사본은 FS 기준 ---
+const FB = { manifest: { shipped: null, upstreamOnly: ['scripts/eval.js', 'scripts/adopter-arm.js'], optional: [] }, localOwned: [] };
+check('shipped null: 상류 전용은 제외', classifyPath('scripts/eval.js', FB), null);
+check('shipped null: 그 외 스크립트는 규칙 폴백(sync)', classifyPath('scripts/anything.js', FB), 'sync');
+const planFb = buildPlan({ 'scripts/health.js': 'a' }, { 'scripts/health.js': 'b', 'scripts/eval.js': 'e', 'scripts/adopter-arm.js': 'n' },
+  { local: { manifest: { shipped: ['scripts/health.js'], upstreamOnly: ['scripts/eval.js', 'scripts/adopter-arm.js'], optional: [] }, localOwned: [], presentUpstreamOnly: ['scripts/eval.js'] }, upstream: FB });
+check('구버전 상류에서도 전용 스크립트는 신규로 둔갑하지 않는다', planFb.newSync, []);
+check('남은 사본은 FS(presentUpstreamOnly) 기준으로 보고', planFb.upstreamOnlyLocal, ['scripts/eval.js']);
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

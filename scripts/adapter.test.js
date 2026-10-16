@@ -130,5 +130,11 @@ check('retro 알 수 없는 키·비숫자 → 경고', rc.warnings.some(w => w.
 check('retro 객체 아님 → 경고', parseConfig('{"retro": 3}').warnings.some(w => w.includes('retro')));
 check('load 기본값에 retro {}', typeof load(require('os').tmpdir()).retro === 'object');
 
+// --- [PRO-24] ①(b) localOwned 글롭 ---
+const lo = parseConfig('{"localOwned": [" scripts\\\\verify.sh ", "./scripts/*-linter.js"]}');
+check('localOwned 파싱 + 정규화(역슬래시·./·공백)', JSON.stringify(lo.localOwned) === '["scripts/verify.sh","scripts/*-linter.js"]' && lo.warnings.length === 0);
+check('localOwned 배열 아님 → 경고 + 빈 목록', parseConfig('{"localOwned": "scripts/x"}').warnings.some(w => w.includes('localOwned')) && parseConfig('{"localOwned": "x"}').localOwned.length === 0);
+check('load 기본값에 localOwned []', Array.isArray(load(require('os').tmpdir()).localOwned));
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

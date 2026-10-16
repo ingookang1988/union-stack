@@ -5,7 +5,7 @@ title: 템플릿 업데이트 (어답터 ↔ 상류 버전·드리프트 계측)
 kind: cli
 impl: scripts/template-update.js
 status: Active
-version: 1.1
+version: 1.2
 ---
 
 # [TOOL-21] 템플릿 업데이트
@@ -20,6 +20,11 @@ version: 1.1
 > 앵커는 `.union-stack/template-sync.json` — `--apply` 가 쓴 파일의 상류 sha 를 기록하고 `init.js`
 > 가 클론 시점에 시딩한다. **개조를 없애는 정공법은 설정 흡수다**: `.union-stack/adapter.json` 의
 > `private`·`zfsIgnored`·`statusMap`·`evidenceFields`(MIGRATION.md §"Adopter configuration").
+
+> **배송 범주([PRO-24] ①, 2026-10-17).** 스크립트는 상류가 `scripts/ship-manifest.json`([TOOL-34], `@ship` 태그에서 생성)으로 **열거한 것만** sync 다.
+> 상류 전용(eval·eval-arm·fetch-eval·scenario-rubric·token-accounting·hook-replay·check-prereqs·adopter-arm·e6-workspace·adopter-census)은 배송·보고에서
+> 빠지고, 남은 로컬 사본은 INFO 로만 알린다. 매니페스트 밖의 로컬 스크립트는 **기본 로컬**(오보 0). 어답터 고유 파일은 `adapter.json localOwned`(글롭)로
+> 선언한다 — 상류가 열거한 파일과 겹치면 **sync 우선**(경고). 3-way 의 `modified` 는 **localForked**(동명 파일의 로컬 분기)로 안내한다.
 
 ## 언제 쓰나
 - 주기 점검 또는 상류 릴리스 공지 후. `--apply` 전에 보고를 먼저 읽는다.

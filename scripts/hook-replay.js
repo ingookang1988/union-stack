@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // scripts/hook-replay.js
+// @ship upstream-only — 훅 재생 — 상류 진단([PRO-24] ①(c))
 // enforce 모드 경제성 사전 측정 — [E3]. 과거 *실제* 편집을 PreToolUse 결정 함수(hooks.decideEdit)에
 // 재생해 "훅을 켰다면 무엇이 몇 번 막혔을까"를 훅 설치 없이 잰다.
 //   차단 유형: schema(Schema-tier 편집) / lock(Blast-Radius Verifying 자손).

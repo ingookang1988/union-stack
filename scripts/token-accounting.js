@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // scripts/token-accounting.js
+// @ship upstream-only — 토큰 회계 — 상류 평가 계층([PRO-24] ①(c))
 // E1-H3 — 토큰 순이득. 하네스는 *품질*(효능 델타)뿐 아니라 *토큰*으로도 이득인가?
 //   on-arm 비용 = 주입 토큰(하네스 맥락 선주입, 측정됨).
 //   off-arm 비용 = 틀린 산출물을 *탐지+수정*하는 재작업(+탈출 시 사고). on이 못 내는 비용.

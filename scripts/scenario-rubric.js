@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // scripts/scenario-rubric.js
+// @ship upstream-only — 시나리오 채점 — 상류 평가 계층([PRO-24] ①(c))
 // 시나리오 A/B의 **품질 비악화 기계 루브릭** — E6(`eval/PROTOCOL.md` §3-bis)의 성공 바 AND 절반.
 // 성공 바는 "턴/토큰 유의미 감소 AND 품질 비악화"인데, 후자를 판정할 계측기가 없었다(그래서 이것).
 //
