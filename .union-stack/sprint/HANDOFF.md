@@ -1,10 +1,10 @@
 <!-- [Wiki] 세션 이어달리기. 세션을 마치는 에이전트가 덮어쓴다. 최신 하나만 유효.
      다음 세션 부트스트랩 시 가장 먼저 읽힘. -->
 ---
-session_id: canary-b-first-apply-2026-10-17
-date: 2026-10-18T05:00:00Z
+session_id: canary-b-second-apply-census2-2026-10-17
+date: 2026-10-18T08:00:00Z
 author: agent
-verification: "스위트 47 중 45 통과(실패 2 = leakage·ref 테스트, 미커밋 fdt spike 귀속 — 이전과 동일) · 어답터 모드 흉내 사본에서 가드 4 스위트 녹색 · lint 체인 18종 중 leakage 외 전부 exit 0 · ship-manifest 동기화 · handoff-linter 통과 · context budget 예산 내"
+verification: "스위트 47 중 45 통과(실패 2 = leakage·ref 테스트, 미커밋 fdt spike 귀속 — 이전과 동일) · 어답터 B 자체 스위트 48 중 47(남은 1 = B 의 dashboard 포크, B 결정) · lint 체인 18종 중 leakage 외 전부 exit 0 · 센서스 2회차 기록 · handoff-linter 통과 · context budget 예산 내"
 version: 1.0
 ---
 
@@ -16,8 +16,9 @@ version: 1.0
   [PRO-25] 회고 트리거(`retro.js` · [ANL-00a] 첫 회차 = PO 판정 묶음) · [PRO-26] ④ 파생 라벨. 설문 WO 둘 Closed · 어답터 spike 폐기.
 - **[PRO-24] ①(b)(c) 배송층 최소분 — [WO-24c-1] Closed(인간 승인 2026-10-17).** `adapter.json localOwned` · `scripts/ship-manifest.json`([TOOL-34], @ship 태그 — 상류 전용 10종
   배송 제외) · template-update 가 로컬·상류 매니페스트를 각각 읽고 localForked 를 명명. 카나리아(B) 전 위험 둘(로컬 파일 오보·상류 전용 배송)을 닫았다.
-- **카나리아 1차(어답터 B, 2026-10-17)**: 옛 template-update 로 `--apply` → 59 갱신 · localForked 7 보존 · 상류 전용이 한 번 더 배송 · 매니페스트 미배송(2차에서).
-  B 자체 health exit 0 · 스위트 48 중 2 실패 = ① 상류 테스트의 상류 픽스처 의존(→ 가드 4건으로 수리) ② B 의 dashboard 포크 vs 새 테스트(B 결정).
+- **카나리아(어답터 B) 1·2차 완료(2026-10-17)**: 1차(옛 도구) 59 갱신 · 2차(새 도구) 10 갱신 — 매니페스트·Dockerfile·compose 수신, 로컬 스크립트 15 의 "사라진 파일"
+  오보 **소멸**, 상류 전용 사본 20 INFO, localForked 7 보존. B 스위트 48 중 47(남은 1 = dashboard 포크, B 결정). 1차가 잡은 상류 결함 2(픽스처 의존 테스트 4 · --force 전무)
+  + 2차가 잡은 1(어답터에서 ship-manifest 드리프트 영구 소음 → 어답터 모드 INFO PASS) 수리. **센서스 2회차** 기록 — B Δ: 계측기 8→10 · 앵커 08-20→10-16.
   상류는 **retro due WARN**(평면 지연 50d = evidence 평면이 CI 미실행 기간) — push 가 접는다.
 
 ## 2. 변경 위치 (ID 목록 — Upward Fetching 진입점)
@@ -29,7 +30,7 @@ version: 1.0
   [TOOL-27] [TOOL-29]~[TOOL-34] · plan/analytics/_GUIDE(회고 템플릿) · [CON-00] 블록 · AGENTS.md tools/blocks 블록 · MIGRATION · CHANGELOG(⚠ init 이 receipts.md 리셋) · harness.yml.
 
 ## 3. 다음 작업 (단일 진입점)
-→ **카나리아 2차(사람 몫, [WO-24c-1] 후속)**: ① **push**(가드·--force 경로 수정 포함, fast-forward) ② B 에서 `template-update --apply`(매니페스트·Dockerfile·compose + 수정된 테스트 수신) ③ B 의 dashboard 포크는 `--apply --force scripts/dashboard.js` 로 상류 수용 여부 결정 ④ B 스위트 녹색 확인 → 상류 세션이 센서스 2회차(`adopter-census --write`)로 Δ — CI 가 체인을 돌려 evidence·receipts 를 쌓고(`retro due` 접힘),
+→ **[WO-24c-2] 발행·착수** — [PRO-24] ①(a) 키트(A·C 용 사후 입장권): 의존 0 단일 파일 · `scripts/union-stack/` 하위 옵션 · 앵커 `clone@6.0.0(추정)` · **첫 실행은 dry-run** · 드롭 목록 JSON 분리 · `--seed` CLI. 카나리아 B 의 잔여는 사람 몫(dashboard 포크 `--apply --force scripts/dashboard.js` 여부 · review 12건 · 상류 전용 사본 20 정리). PRO-28 질문 3개는 A·C 키트 접촉에 얹는다 — CI 가 체인을 돌려 evidence·receipts 를 쌓고(`retro due` 접힘),
   상류 main 에 매니페스트가 올라 하류가 당길 원본이 생긴다. 그 뒤 **카나리아(어답터 B)**: B 에서 `template-update`(dry-run 보고 — localForked·상류 전용 사본·충돌) →
   사람 승인 → `--apply` → 센서스 2회차로 Δ. 그 뒤 [WO-24c-2](①(a) 키트: 의존 0 단일 파일 · 첫 실행 dry-run — A·C 용; ci 체인의 `adopter-arm` 단계를
   파일 없으면 건너뜀은 **완료**) · PRO-28(절 계약·부분 인출) 질문 3개는 카나리아 접촉에 얹는다. 상류 세션은 B 레포에 쓰지 않는다(읽기·실행 검증만).

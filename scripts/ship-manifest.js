@@ -15,6 +15,7 @@
 const fs = require('fs');
 const path = require('path');
 const { withContract, OUTCOME } = require('./gate-contract');
+const { isTemplateRepo } = require('./adapter');
 
 const MANIFEST = 'scripts/ship-manifest.json';
 const TAG_RE = /^\/\/\s*@ship\s+(upstream-only|optional)\b\s*(?:—|-|:)?\s*(.*)$/m;
@@ -23,7 +24,7 @@ const CONTRACT = {
   gate: 'Ship Manifest Gate (ship-manifest)',
   input: 'scripts/*.js 의 선두 @ship 태그 + 기존 scripts/ship-manifest.json',
   predicate: '생성 매니페스트 == 커밋된 매니페스트. 다르면(태그 변경·새 스크립트) CLARIFY — --write 후 커밋에 포함',
-  scope: '태그와 파일 목록만 본다 — 스크립트가 실제로 어답터에서 동작하는지, 의존이 닫혀 있는지는 판정하지 않는다(어답터 팔 env 형상이 본다)',
+  scope: '태그와 파일 목록만 본다 — 스크립트가 실제로 어답터에서 동작하는지, 의존이 닫혀 있는지는 판정하지 않는다(어답터 팔 env 형상이 본다). 매니페스트는 상류 소유라 드리프트 검사는 템플릿 모드에서만 — 어답터에선 INFO PASS(카나리아 실측: 자기 스캔 vs 상류 파일은 늘 다르다)',
   outcomes: ['PASS', 'CLARIFY'],
   failure_mode: '드리프트·부재 → CLARIFY(3, 비차단) + --write 안내',
 };
@@ -81,6 +82,12 @@ function run(argv = process.argv.slice(2), root = path.resolve(__dirname, '..'))
   const m = scan(root);
   const expected = render(m);
   if (argv.includes('--json')) { console.log(JSON.stringify(m, null, 2)); return OUTCOME.PASS; }
+  // 어답터([ADR-30] 모드 판별): 매니페스트는 상류가 생성해 배송한다 — 어답터의 자기 스캔(로컬 스크립트·남은 상류 전용 사본)과 비교하면 영구 드리프트가 된다.
+  if (!isTemplateRepo(root)) {
+    const have = readManifest(root);
+    console.log(`ship-manifest: 어답터 모드 — 상류 매니페스트 ${have ? `수신(배송 ${have.shipped.length} · 상류 전용 ${have.upstreamOnly.length})` : '미수신(template-update --apply 로 받는다)'} · 드리프트 검사는 상류 몫(INFO).`);
+    return OUTCOME.PASS;
+  }
   const abs = path.join(root, MANIFEST);
   let current = null;
   try { current = fs.readFileSync(abs, 'utf8'); } catch { current = null; }

@@ -40,6 +40,7 @@ if (require('./adapter').isTemplateRepo()) {
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'ship-'));
 try {
   fs.mkdirSync(path.join(tmp, 'scripts'));
+  fs.writeFileSync(path.join(tmp, 'package.json'), JSON.stringify({ name: 'union-stack' })); // 템플릿 모드(드리프트 검사는 상류 몫)
   fs.writeFileSync(path.join(tmp, 'scripts/a.js'), '// a\n');
   fs.writeFileSync(path.join(tmp, 'scripts/b.js'), '// b\n// @ship upstream-only — x\n');
   const cli = args => spawnSync(process.execPath, [path.resolve(__dirname, 'ship-manifest.js'), ...args], { cwd: tmp, encoding: 'utf8' });
@@ -53,6 +54,19 @@ try {
   check('태그 변경 → 드리프트 CLARIFY', silent(() => run([], tmp)) === 3);
   check('CLI 바이너리는 상류를 본다(동기화 상태)', [0, 3].includes(cli([]).status));
 } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
+
+// --- 어답터 모드: 매니페스트는 상류 소유 — 자기 스캔과 비교하지 않고 INFO PASS(카나리아 실측: 영구 드리프트 소음) ---
+const tmpA = fs.mkdtempSync(path.join(os.tmpdir(), 'ship-adopter-'));
+try {
+  fs.mkdirSync(path.join(tmpA, 'scripts'));
+  fs.writeFileSync(path.join(tmpA, 'package.json'), JSON.stringify({ name: 'probe-adopter' }));
+  fs.writeFileSync(path.join(tmpA, 'scripts/their-tool.js'), '// theirs\n');
+  const { run: runA } = require('./ship-manifest');
+  const quiet = (fn) => { const c = console.log, e = console.error; console.log = () => {}; console.error = () => {}; try { return fn(); } finally { console.log = c; console.error = e; } };
+  check('어답터: 매니페스트 없어도 PASS(상류가 배송)', quiet(() => runA([], tmpA)) === 0);
+  fs.writeFileSync(path.join(tmpA, MANIFEST), render(build(['scripts/health.js'], {})));
+  check('어답터: 자기 스캔과 달라도 PASS(드리프트는 상류 몫)', quiet(() => runA([], tmpA)) === 0);
+} finally { fs.rmSync(tmpA, { recursive: true, force: true }); }
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

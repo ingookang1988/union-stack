@@ -13,6 +13,15 @@
 
 <!-- census:rows -->
 
+### 2026-10-16 — 상류 6.0.0 @ 703470a · 레포 3
+
+| 레포 | 버전 / 앵커 | 계측기 | 문서 | WO · 상태(첫 토큰) | evidence | 백필 대상 | 중복 ID | 상류 ID 충돌 | arithmeticFrom | upward-fetch | upstream_candidate | adapter.json | health | ADR | 평면 KB |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| A | CHANGELOG 없음 / 앵커 없음 | 2/10 — 없음: health · work-close · template-update · ci · frontmatter-backfill · transcript-stats · session-friction · adopter-arm | 435 (WO 179 · ANL 98 · PRO 43 · MTG 34 · PLAN 32 · LSN 18) | 179 · frontmatter 없음 99 · Done 57 · Active 13 · Planned 6 · Verifying 3 · Review 1 | 값 0 · none 0 · 없음 80 · closed_by 0 | 101 (추정 가능 9) | 2 (네이밍 위반 2) | 21 | 0 → 제안 67 (PLAN·PRO 동번호 5구간) | 3/16 공백 | 0 | 없음 | FAIL 2 (naming gate · leakage gate) | 0 | 6052 |
+| B | 6.0.0 / 앵커 main @ 2026-10-16 | 10/10 | 450 (WO 229 · PLAN 83 · ANL 41 · MTG 36 · TOOL 22 · PRO 17) | 229 · frontmatter 없음 0 · Closed 147 · Verifying 49 · Active 15 · Draft 13 · Done 5 | 값 215 · none 14 · 없음 0 · closed_by 158 | 17 (추정 가능 9) | 0 (네이밍 위반 0) | 45 | 0 → 제안 19 (PLAN·PRO 동번호 17구간) | 0/77 공백 | 0 | statusMap 0 · evidenceFields 없음 · private | FAIL 0 | 165 | 6974 |
+| C | CHANGELOG 없음 / 앵커 없음 | 3/10 — 없음: work-close · template-update · ci · frontmatter-backfill · transcript-stats · session-friction · adopter-arm | 642 (WO 438 · ANL 69 · PRO 47 · EVD 35 · PLAN 21 · MTG 15) | 438 · frontmatter 없음 0 · Complete 75 · Verified-local 59 · Verified 40 · Published 27 · Proposed 19 · Closed 19 · (없음) 18 · Implemented 17 · 외 48종 164건 | 값 0 · none 0 · 없음 438 · closed_by 0 | 18 (추정 가능 0) | 1 (네이밍 위반 0) | 26 | 0 → 제안 22 (PLAN·PRO 동번호 18구간) | 0/2 공백 | 0 | 없음 | FAIL 2 (naming gate · leakage gate) | 1 | 5301 |
+
+
 ### 2026-10-16 — 상류 6.0.0 @ 4bfaf4f · 레포 3
 
 | 레포 | 버전 / 앵커 | 계측기 | 문서 | WO · 상태(첫 토큰) | evidence | 백필 대상 | 중복 ID | 상류 ID 충돌 | arithmeticFrom | upward-fetch | upstream_candidate | adapter.json | health | ADR | 평면 KB |
