@@ -154,5 +154,12 @@ const planFb = buildPlan({ 'scripts/health.js': 'a' }, { 'scripts/health.js': 'b
 check('구버전 상류에서도 전용 스크립트는 신규로 둔갑하지 않는다', planFb.newSync, []);
 check('남은 사본은 FS(presentUpstreamOnly) 기준으로 보고', planFb.upstreamOnlyLocal, ['scripts/eval.js']);
 
+// --- --force 경로 지정: 그 파일만 보호 해제, 나머지 개조는 보존(카나리아 실측 — localForked 7건 중 1건만 상류 수용) ---
+const { forceTargets } = require('./template-update');
+const G = { clean: ['a.js'], modified: ['dash.js', 'hist.js'], unknown: ['q.js'] };
+check('force 없음: clean 만', forceTargets(G, false), { targets: ['a.js'], skipped: ['dash.js', 'hist.js', 'q.js'], unmatched: [] });
+check('force 전부', forceTargets(G, true).targets, ['a.js', 'dash.js', 'hist.js', 'q.js']);
+check('force 경로 1건: 그것만 + 나머지 보존 + 대상 아님 표기', forceTargets(G, ['dash.js', 'nope.js']), { targets: ['a.js', 'dash.js'], skipped: ['hist.js', 'q.js'], unmatched: ['nope.js'] });
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

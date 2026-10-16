@@ -33,9 +33,11 @@ try {
   check('이름 규약 자체는 통과(중복만 잡힘)', v.every(x => /중복/.test(x.hint)));
 } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
 
-// --- 상류 자신 도그푸딩: 위반 0 ---
-const upstream = lint(path.resolve(__dirname, '..'));
-check('상류: 네이밍·중복 위반 0', upstream.length === 0);
+// --- 상류 자신 도그푸딩: 위반 0 — 어답터의 위반은 그 레포의 게이트가 말한다(템플릿 모드에서만, [ADR-30]) ---
+if (require('./adapter').isTemplateRepo()) {
+  const upstream = lint(path.resolve(__dirname, '..'));
+  check('상류: 네이밍·중복 위반 0', upstream.length === 0);
+} else console.log('(어답터: 상류 청결도 단언 건너뜀)');
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

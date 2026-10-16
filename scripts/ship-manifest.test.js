@@ -27,12 +27,14 @@ check('optional 은 배송에 포함되고 따로도 열거', m.shipped.includes
 check('왕복: render → parseManifest', JSON.stringify(parseManifest(render(m)).upstreamOnly) === JSON.stringify(m.upstreamOnly));
 check('깨진 매니페스트는 null(규칙 폴백)', parseManifest('{ nope') === null && parseManifest('{"x":1}') === null);
 
-// --- scan(상류): 상류 전용 9+1 이 전부 태그돼 있고 테스트가 따라간다 ---
-const up = scan(path.resolve(__dirname, '..'));
-const expectUpstreamOnly = ['eval', 'eval-arm', 'fetch-eval', 'scenario-rubric', 'token-accounting', 'hook-replay', 'check-prereqs', 'adopter-arm', 'e6-workspace', 'adopter-census'];
-check('상류 전용 10종 태그', expectUpstreamOnly.every(n => up.upstreamOnly.includes(`scripts/${n}.js`)));
-check('상류 전용의 테스트도 상류 전용', up.upstreamOnly.includes('scripts/adopter-arm.test.js') && !up.shipped.includes('scripts/eval.test.js'));
-check('핵심 도구는 배송', ['scripts/health.js', 'scripts/zfs-linter.js', 'scripts/template-update.js', 'scripts/work-close.js', 'scripts/upward-fetch.js', MANIFEST].every(f => up.shipped.includes(f)));
+// --- scan(상류): 상류 전용 9+1 이 전부 태그돼 있고 테스트가 따라간다 — 상류 트리 의존이라 템플릿 모드에서만([ADR-30]) ---
+if (require('./adapter').isTemplateRepo()) {
+  const up = scan(path.resolve(__dirname, '..'));
+  const expectUpstreamOnly = ['eval', 'eval-arm', 'fetch-eval', 'scenario-rubric', 'token-accounting', 'hook-replay', 'check-prereqs', 'adopter-arm', 'e6-workspace', 'adopter-census'];
+  check('상류 전용 10종 태그', expectUpstreamOnly.every(n => up.upstreamOnly.includes(`scripts/${n}.js`)));
+  check('상류 전용의 테스트도 상류 전용', up.upstreamOnly.includes('scripts/adopter-arm.test.js') && !up.shipped.includes('scripts/eval.test.js'));
+  check('핵심 도구는 배송', ['scripts/health.js', 'scripts/zfs-linter.js', 'scripts/template-update.js', 'scripts/work-close.js', 'scripts/upward-fetch.js', MANIFEST].every(f => up.shipped.includes(f)));
+} else console.log('(어답터: 상류 트리 태그 검사 건너뜀 — 어답터의 scan 은 자기 스크립트를 본다)');
 
 // --- CLI: 임시 루트에서 부재 → CLARIFY · --write → PASS · 재검사 PASS · 태그 바꾸면 드리프트 ---
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'ship-'));

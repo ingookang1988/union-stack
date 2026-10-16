@@ -188,10 +188,12 @@ check('산술 차단 문서는 산술 자손으로 안 잡힌다', blastRadius('
 const rwS = roadmapWiring(linIndex);
 check('plan: 으로 PHASE 에 닿은 WO 는 unanchored 아님', rwS.unanchored.includes('WO-345'), false);
 check('PHASE-01 은 stale 아님(선언 경로로 활성 계보가 내려온다)', rwS.stale, []);
-// CLI: 상류 PRO-부모 WO 가 더는 CLARIFY 가 아니다
-const realUf = cli(['WO-27a-2']);
-check('CLI: upward-fetch WO-27a-2 → exit 0', realUf.status, 0);
-check('CLI: PRO-27 이 frontmatter 부모로 실린다', /\[PRO-27\].*frontmatter/.test(realUf.stdout), true);
+// CLI: 상류 PRO-부모 WO 가 더는 CLARIFY 가 아니다 — 상류 픽스처(PRO-27·WO-27a-2) 의존이라 템플릿 모드에서만([ADR-30]; 카나리아 어답터에서 거짓 실패 실측).
+if (require('./adapter').isTemplateRepo()) {
+  const realUf = cli(['WO-27a-2']);
+  check('CLI: upward-fetch WO-27a-2 → exit 0', realUf.status, 0);
+  check('CLI: PRO-27 이 frontmatter 부모로 실린다', /\[PRO-27\].*frontmatter/.test(realUf.stdout), true);
+} else console.log('(어답터: 상류 픽스처 CLI 검사 건너뜀)');
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -41,5 +41,6 @@ version: 1.2
 node scripts/template-update.js              # 확인만: exit 0(최신) / 3(업데이트 있음, 비차단)
 node scripts/template-update.js --apply      # sync 파일 갱신(개조·판별불가는 보존, review는 보고만)
 node scripts/template-update.js --apply --force  # 보존 해제 — 개조·판별불가까지 덮어씀
+node scripts/template-update.js --apply --force scripts/dashboard.js,scripts/x.js  # 그 파일만 보호 해제(나머지 개조 보존)
 node scripts/template-update.js --ref v6.1.0 # 특정 태그 기준 (--json 지원, guard 목록 포함)
 ```

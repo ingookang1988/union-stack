@@ -23,7 +23,9 @@ try {
   check('없는 스크립트(adopter-arm)는 건너뛴다', missingScript({ name: 'adopter-arm', args: ['scripts/adopter-arm.js'] }, tmp) === true);
   check('--test 단계는 파일 검사 아님', missingScript({ name: 'tests', args: ['--test', 'scripts/a.test.js'] }, tmp) === false);
 } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
-check('상류 자신: 체인 스크립트 전부 실존', chain().every(s => !missingScript(s)));
+// 상류 전용 단계(adopter-arm)는 어답터에 없는 것이 정상 — 실존 단언은 템플릿 모드에서만([ADR-30]).
+if (require('./adapter').isTemplateRepo()) check('상류 자신: 체인 스크립트 전부 실존', chain().every(s => !missingScript(s)));
+else console.log('(어답터: 체인 스크립트 실존 단언 건너뜀 — 없는 단계는 건너뛴다)');
 
 // 영수증 줄(하네스 단계): tests 는 targets 를 읽고, 다른 단계는 비움
 const git = { sha: 'abc1234', dirty: false };

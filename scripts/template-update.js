@@ -98,6 +98,20 @@ function ownedConflicts(manifest, localOwned = []) {
   return manifest.shipped.filter(p => localOwned.some(g => matchGlob(g, p)));
 }
 
+/**
+ * --force 의 적용 대상(순수). force === true 면 전부(개조·판별불가 포함), 경로 배열이면 **그 파일만** 보호를 풀고 나머지 개조는 보존한다.
+ * 카나리아 실측: 어답터 B 의 localForked 7건 중 1건(dashboard)만 상류를 받고 싶었는데 전부-아니면-전무였다.
+ */
+function forceTargets(guard, force = false) {
+  const protectedAll = [...guard.modified, ...guard.unknown];
+  if (force === true) return { targets: [...guard.clean, ...protectedAll], skipped: [], unmatched: [] };
+  if (Array.isArray(force)) {
+    const set = new Set(force);
+    return { targets: [...guard.clean, ...protectedAll.filter(p => set.has(p))], skipped: protectedAll.filter(p => !set.has(p)), unmatched: force.filter(p => !protectedAll.includes(p)) };
+  }
+  return { targets: guard.clean, skipped: protectedAll, unmatched: [] };
+}
+
 /** 로컬 ctx: 로컬 매니페스트 + adapter.json localOwned. 부재는 규칙 폴백. */
 function localCtx(root) {
   const cfg = loadAdapter(root);
@@ -283,7 +297,9 @@ async function applyPlan(root, ref, targets, upstreamMap) {
 async function main(argv = process.argv.slice(2)) {
   const root = path.resolve(__dirname, '..');
   const apply = argv.includes('--apply');
-  const force = argv.includes('--force');
+  // --force [경로,경로] — 값이 없으면 전부, 있으면 그 파일만 보호 해제([TOOL-21]).
+  const fi = argv.indexOf('--force');
+  const force = fi < 0 ? false : (argv[fi + 1] && !argv[fi + 1].startsWith('--') ? argv[fi + 1].split(',').map(x => x.trim()).filter(Boolean) : true);
   const json = argv.includes('--json');
   const ri = argv.indexOf('--ref');
   const ref = ri >= 0 ? argv[ri + 1] : 'main';
@@ -361,9 +377,9 @@ async function main(argv = process.argv.slice(2)) {
 
   if (!drift) { console.log('\n최신 상태 — 드리프트 없음.'); return OUTCOME.PASS; }
   if (apply) {
-    const targets = force ? [...guard.clean, ...guard.modified, ...guard.unknown] : guard.clean;
-    const skipped = force ? [] : [...guard.modified, ...guard.unknown];
-    console.log(`\n적용(sync만 — review·.union-stack 콘텐츠는 건드리지 않음)${force ? ' [--force: 개조 보호 해제]' : ''}:`);
+    const { targets, skipped, unmatched } = forceTargets(guard, force);
+    console.log(`\n적용(sync만 — review·.union-stack 콘텐츠는 건드리지 않음)${force === true ? ' [--force: 개조 보호 전부 해제]' : Array.isArray(force) ? ` [--force: ${force.length}건만 보호 해제]` : ''}:`);
+    if (unmatched.length) console.log(`  (--force 대상이 아님 — 개조·판별불가 목록에 없음: ${unmatched.join(' ')})`);
     if (!targets.length) console.log('  (갱신 대상 없음)');
     const n = await applyPlan(root, ref, targets, upstreamMap);
     if (skipped.length) console.log(`\n보존(덮어쓰지 않음) ${skipped.length}건: ${skipped.join(' ')}`);
@@ -374,6 +390,6 @@ async function main(argv = process.argv.slice(2)) {
   return OUTCOME.CLARIFY;
 }
 
-module.exports = { classifyPath, matchGlob, ownedConflicts, localCtx, parseChangelogVersion, cmpVersions, gitBlobSha, gitBlobShas, buildPlan, classifySyncTargets, readAnchor, writeAnchor, seedAnchor, localTemplateFiles, migrationActions, UPSTREAM, ANCHOR_PATH, SHIP_MANIFEST };
+module.exports = { classifyPath, matchGlob, ownedConflicts, localCtx, forceTargets, parseChangelogVersion, cmpVersions, gitBlobSha, gitBlobShas, buildPlan, classifySyncTargets, readAnchor, writeAnchor, seedAnchor, localTemplateFiles, migrationActions, UPSTREAM, ANCHOR_PATH, SHIP_MANIFEST };
 
 if (require.main === module) main().then(c => process.exit(c), e => { console.error(e); process.exit(OUTCOME.REJECT); });

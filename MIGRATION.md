@@ -112,7 +112,8 @@ This file is adopter-owned — upstream never touches it.
 - `localOwned: [...]` — globs (`*`, `**`, `?`, '/' separators) of files that are **yours** although they sit where template files
   sit (e.g. `scripts/verify.js`, `scripts/*-linter.js`). `template-update` neither reports them as "removed upstream" nor
   touches them on `--apply`. If a glob also covers a file the upstream ships (listed in `scripts/ship-manifest.json`), **sync
-  wins** and the report warns — narrow the glob. Scripts not listed in the manifest are local by default, so most adopters need
+  wins** and the report warns — narrow the glob. To accept upstream for *one* forked file while keeping the other
+  forks, pass paths: `node scripts/template-update.js --apply --force scripts/dashboard.js`. Scripts not listed in the manifest are local by default, so most adopters need
   no `localOwned` at all; upstream-only scripts (eval, adopter-arm, census, …) are no longer delivered and leftover copies
   are listed as removable.
 - Documents without a `status:` line are counted as *nothing* by every tool. List them with
