@@ -2,9 +2,9 @@
 ---
 id: WO-28a-6
 title: 상시 주입 위생 — AGENTS.md 계측 + injects 대조 — [PRO-28] ⑤ 판정 후속
-status: Verifying
+status: Closed
 parent: PRO-28
-evidence: "구현 완료(2026-10-18, 테스트 먼저): context-budget advisory {agents: measureAgents, injects: gatherInjects} — 총합·over·exit 밖. rcpt:n/a — context-budget.test 25(+10). 실측: AGENTS.md 5925 tok 중 생성 마커 블록 2개 2853 tok(48%) · injects 신고 0건"
+evidence: "구현 완료(2026-10-18, 테스트 먼저): context-budget advisory {agents: measureAgents, injects: gatherInjects} — 총합·over·exit 밖. rcpt:n/a — context-budget.test 25(+10). 실측: AGENTS.md 5925 tok 중 생성 마커 블록 2개 2853 tok(48%) · injects 신고 0건 · Closed 판정 2026-10-18(인간 승인)"
 closed_by: [.union-stack/proposals/PRO-28_section_contract.md, .union-stack/proposals/_GUIDE.md]
 version: 1.0
 ---
