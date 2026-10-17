@@ -12,6 +12,11 @@ design, see [`DESIGN_RATIONALE.md`](./DESIGN_RATIONALE.md). Entries marked **⚠
 action in already-adopted projects.
 
 ## [Unreleased]
+- **PRO-28 ⑤ — `context-budget` measures `AGENTS.md` and reads `injects:` declarations (advisory).** The largest always-injected
+  surface was not counted. It is now reported beside the bootstrap total, with the share taken by generated marker blocks, but kept
+  **outside** the total, the OVER count and the exit code (no budget is set for it yet). A PRO that grows an always-injected surface
+  declares frontmatter `injects: "+N tok — reason"`; the declarations are summed and a malformed value is a CLARIFY. Output without
+  `AGENTS.md` or declarations is unchanged. No migration.
 - **PRO-28 §6 — `adopter-census` measures required-section resolution on active WOs.** New column
   "필수 절 매칭(활성 WO)": active count, per-section resolution (목표 · 수용 기준 · 증거, through each adopter's `sections` map and
   frontmatter `evidence:`), and WOs with all three. Read-only, as before. A **잔여 원인** column classifies what is still unresolved:

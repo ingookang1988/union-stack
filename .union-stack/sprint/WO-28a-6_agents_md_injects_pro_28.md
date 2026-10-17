@@ -2,10 +2,10 @@
 ---
 id: WO-28a-6
 title: 상시 주입 위생 — AGENTS.md 계측 + injects 대조 — [PRO-28] ⑤ 판정 후속
-status: Draft
+status: Verifying
 parent: PRO-28
-evidence: "none — 착수 전"
-closed_by: []
+evidence: "구현 완료(2026-10-18, 테스트 먼저): context-budget advisory {agents: measureAgents, injects: gatherInjects} — 총합·over·exit 밖. rcpt:n/a — context-budget.test 25(+10). 실측: AGENTS.md 5925 tok 중 생성 마커 블록 2개 2853 tok(48%) · injects 신고 0건"
+closed_by: [.union-stack/proposals/PRO-28_section_contract.md, .union-stack/proposals/_GUIDE.md]
 version: 1.0
 ---
 # [WO-28a-6] 상시 주입 위생 — AGENTS.md 계측 + injects 대조 — [PRO-28] ⑤ 판정 후속
@@ -22,4 +22,6 @@ version: 1.0
 - 카드 [TOOL-*] context-budget · CHANGELOG · 실측 수치를 HANDOFF 에 넘겨 §4-4 판정 재료로.
 
 ## 증거
-- 닫을 때 frontmatter `evidence:` 에 값 또는 `none — 이유`(선언 검사가 있으면 `rcpt:<name>@<sha>`). 상위 축 흔적은 `closed_by:`.
+- 테스트: context-budget.test +10(injects 파싱 정상·오류·빈 값 · 마커 블록 분리 · 없음 = 현행 동일 · advisory 는 총합 밖 · 합산 · CLARIFY).
+- 실측: AGENTS.md **5,925 tok**(휴리스틱) — 총 상한 4000 단독 초과. 그중 생성 마커 블록(blocks-index·tools-index) **2,853 tok(48%)** — 손 문단이 아니라 생성 색인이 절반. §4-4 판정 재료.
+- 카드: context-budget 전용 TOOL 카드는 없다(health [TOOL-04] 의 차원) — 신설하지 않았다. 신고 규칙은 proposals/_GUIDE 에.

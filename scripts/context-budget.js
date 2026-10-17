@@ -64,16 +64,55 @@ function readDir(root, rel, match) {
   return txt;
 }
 
+// --- advisory: AGENTS.md 계측 + PRO `injects:` 대조([PRO-28] ⑤ 판정 2026-10-18, [WO-28a-6]) ---
+// AGENTS.md 는 가장 큰 상시 주입 표면이지만 예산(게이트·상한)은 [PRO-13] §4-4 인간 판정 전이다.
+// 그래서 총합·over·exit code 에 넣지 않고 수치만 보인다(회귀 0).
+const MARKER_RE = /<!--\s*([\w-]+):begin[\s\S]*?<!--\s*\1:end\s*-->/g;
+
+/** 순수: AGENTS.md 텍스트 → {tokens, markers(생성 블록 토큰), blocks} | null(없음). */
+function measureAgents(text) {
+  if (!text) return null;
+  const blocks = text.match(MARKER_RE) || [];
+  return { tokens: estimateTokens(text), markers: blocks.reduce((a, b) => a + estimateTokens(b), 0), blocks: blocks.length };
+}
+
+/** 순수: frontmatter `injects:` 값 → {tok, reason} | {error}. 형식: "+N tok — 이유". */
+function parseInjects(raw) {
+  const v = String(raw || '').trim().replace(/^["']|["']$/g, '').trim();
+  if (!v) return { error: '빈 값' };
+  const m = v.match(/^\+?(\d+)\s*tok\s*[—–-]\s*(\S.*)$/);
+  return m ? { tok: Number(m[1]), reason: m[2].trim() } : { error: `형식 오류 — "+N tok — 이유" 가 아니다: ${v}` };
+}
+
+/** proposals/PRO-*.md 의 `injects:` 를 모은다. 필드 없음 = 신고 0(소급 없음). */
+function gatherInjects(root = path.resolve(__dirname, '..')) {
+  const rel = '.union-stack/proposals';
+  const declared = [], clarify = [];
+  let files = [];
+  try { files = fs.readdirSync(path.join(root, rel)).filter(e => /^PRO-.*\.md$/.test(e)); } catch { /* 없음 */ }
+  for (const f of files) {
+    const fm = (readIf(root, `${rel}/${f}`).match(/^[\s\S]*?^---\r?\n([\s\S]*?)\r?\n---/m) || [])[1] || '';
+    const line = fm.match(/^injects:[ \t]*(.*)$/m);
+    if (!line) continue;
+    const id = (f.match(/^(PRO-\d+[a-z]?)/) || [])[1] || f;
+    const p = parseInjects(line[1]);
+    (p.error ? clarify : declared).push({ id, ...p });
+  }
+  return { declared, clarify, sum: declared.reduce((a, d) => a + d.tok, 0) };
+}
+
 function gather(root = path.resolve(__dirname, '..')) {
   const projectTxt = readDir(root, '.union-stack/project', /^IDENTITY.*\.md$/) + readIf(root, '.union-stack/project/HISTORY.md');
   const profileTxt = readDir(root, '.union-stack/profile/human', /^(user|team|org)/) + readDir(root, '.union-stack/profile/agent', /^agent/);
   const handoffTxt = readIf(root, '.union-stack/sprint/HANDOFF.md');
   const b = budgetsFor(root);
-  return computeBudget([
+  const r = computeBudget([
     { name: 'project', tokens: estimateTokens(projectTxt), budget: b.project },
     { name: 'profile', tokens: estimateTokens(profileTxt), budget: b.profile },
     { name: 'handoff', tokens: estimateTokens(handoffTxt), budget: b.handoff },
   ], b.total);
+  r.advisory = { agents: measureAgents(readIf(root, 'AGENTS.md')), injects: gatherInjects(root) };
+  return r;
 }
 
 function run(root) {
@@ -89,9 +128,17 @@ function run(root) {
   console.log(r.healthy
     ? '\n예산 내. (작업별 Upward Fetching 증분은 별도 — 계보 깊이에 비례)'
     : '\n초과 — 분할/요약/링크-위임(extreme compression)으로 고신호만 남겨라.');
+  const { agents, injects } = r.advisory;
+  console.log('\n# advisory (총합·판정 밖 — 예산은 [PRO-13] §4-4 인간 판정)\n');
+  console.log(agents
+    ? `  · AGENTS.md   ${String(agents.tokens).padStart(5)} tok  (생성 마커 블록 ${agents.blocks}개 ${agents.markers} tok)`
+    : '  · AGENTS.md   없음');
+  console.log(`  · injects 신고 ${injects.declared.length}건 합 +${injects.sum} tok`);
+  for (const d of injects.declared) console.log(`      ${d.id}  +${d.tok} tok — ${d.reason}`);
+  for (const c of injects.clarify) console.log(`  ? ${c.id} injects: ${c.error}`);
   return r.over ? 1 : 0;
 }
 
-module.exports = { estimateTokens, computeBudget, gather, budgetsFor, BUDGETS, TOTAL_CAP, CHARS_PER_TOKEN };
+module.exports = { estimateTokens, computeBudget, gather, budgetsFor, measureAgents, parseInjects, gatherInjects, BUDGETS, TOTAL_CAP, CHARS_PER_TOKEN };
 
 if (require.main === module) process.exit(run());

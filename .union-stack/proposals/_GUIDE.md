@@ -18,6 +18,9 @@
 
 ## Publishing strategy: an external community's issues/PRs *are* the externalized proposal tier.
 ## Files: PRO-* . status: Proposed | Approved | Rejected (rationale required)
+## ΔC declaration ([PRO-28] ⑤): a PRO that grows an always-injected surface (AGENTS.md marker blocks, bootstrap) adds
+##   frontmatter `injects: "+N tok — 이유"`. `node scripts/context-budget.js` sums them beside the measured AGENTS.md (advisory).
+##   No field = 0 declared (no backfill); a malformed value is a CLARIFY.
 
 ## ⚖️ New-pillar / new-domain proposals MUST carry a split-principle justification (anti-bloat self-discipline).
 ##   A pillar accretes only if it passes BOTH tests (DESIGN_RATIONALE §1.5, §8.3):
