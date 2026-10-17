@@ -1,7 +1,7 @@
 <!-- [Wiki] 세션 이어달리기. 세션을 마치는 에이전트가 덮어쓴다. 최신 하나만 유효.
      다음 세션 부트스트랩 시 가장 먼저 읽힘. -->
 ---
-session_id: close-wo28a4-2026-10-17
+session_id: wo28a5-2026-10-17
 date: 2026-10-19T06:00:00Z
 author: agent
 verification: "스위트 50 중 48 통과(실패 2 = leakage·ref 테스트, 미커밋 fdt spike 귀속 — 이전과 동일) · kit 19 · template-update 82 · adapter 83 · scaffold 43 · section-fetch 27 · adapter 77 · work-close 63 · dashboard 186 · 어답터 팔 7 형상 충족 · weakening-guard PASS · work-close --table 동기화 · lint 체인 leakage 외 exit 0 · handoff-linter 통과"
@@ -17,7 +17,9 @@ version: 1.0
   상류 어휘 머리 status 첫 토큰(괄호·대시 직결 포함) · gate-contract.test 상류 전용 require · 대시보드 산문·CLARIFY 문구 마커.
 - 실측(활성 WO 기준): A 목표 14/16 · 수용 기준 14/16 · 증거 12/16(잔여는 규칙 밖) · C anatomy-missing 123→71/150(해소율 목표 65% · 수용 기준 43% · 증거 63%). C 는 statusMap 49키 선언.
   보류: A ⑥ `budgets.historyPerEntry`.
-- **[WO-28a-4] Closed**(인간 승인 2026-10-17, archived) — 센서스에 "필수 절 매칭(활성 WO)" 열 + **4회차 기록**: A 16 → 88/88/75% · B 77 → 82/86/100% · C 153 → 73/78/81%. [PRO-28] §6 바 90% 는 A·C 미달(잔여는 규칙 밖·별칭·문서) — 판정은 사람.
+- **[WO-28a-4] Closed**(인간 승인 2026-10-17, archived) — 센서스에 "필수 절 매칭(활성 WO)" 열 + **4회차 기록**: A 16 → 88/88/75% · B 77 → 82/86/100% · C 153 → 73/78/81%. [PRO-28] §6 바 90% 는 A·C 미달 → **판정(2026-10-17): 바 유지 + 잔여 원인 열**.
+- **[WO-28a-5] Verifying** — 센서스 "잔여 원인" 열(H2 없음·절 부재 = 규칙 밖 / 별칭 후보(미해소 헤딩 병기) / evidence 소급). dry-run: A 1·0·2·4 · B 별칭 후보 15(상류 선택 절) · C 4·0·53·29
+  (미해소 헤딩이 전부 서사 → 사실상 절 부재). 5회차 기록은 어답터가 별칭·exclude 를 반영한 뒤.
 
 ## 2. 변경 위치 (ID 목록 — Upward Fetching 진입점)
 - 승인·원장: [PRO-28] v1.0 · [ADR-55] · 이전 [ADR-53] [ADR-54]. 오더(archived): [WO-28a-1]~[WO-28a-3] · [WO-27a-1]~[WO-24c-2] 10건.
@@ -25,9 +27,9 @@ version: 1.0
   앞 세션 신설: section-fetch · scaffold · upward-fetch `--sections` · mcp-server `sections`. 카드 [TOOL-02] [TOOL-23] [TOOL-35] [TOOL-36] · MIGRATION · CHANGELOG · `eval/CENSUS.md` 3회차.
 
 ## 3. 다음 작업 (단일 진입점)
-→ **사람 몫**: ① push ② **[PRO-28] §6 판정** — 센서스 4회차 실측으로 성공 바(90%) 미달을 어떻게 볼지(바 유지 + 잔여 원인 열 추가 / 바 조정 / 문서 측 안내).
-  ③ [PRO-28] ⑤(ΔC 신고 · 압축 보존)와 AGENTS.md 예산 이월을 함께 [PRO-13] §4-4 판정. 그 뒤 에이전트 몫([WO-28a-4] 후속): 판정에 따라 센서스 "잔여 원인" 열 또는 ⑤ WO.
-  어답터 잔여는 각자(A: evidence 소급·중복 ID · C: status 없는 WO 18 backfill·no-parent 35 · B: dashboard 포크·review). 상류 세션은 어답터 레포를 쓰지 않는다.
+→ **사람 몫**: ① push ② **[WO-28a-5] 닫기 승인** ③ **[PRO-28] ⑤ 판정**(ΔC 신고 · 압축 보존)을 AGENTS.md 예산 이월 9회+ 와 함께 [PRO-13] §4-4 로.
+  그 뒤 에이전트 몫([WO-28a-5] 후속): 승인 시 ⑤ WO(PRO frontmatter `injects:` + context-budget 대조 — AGENTS.md 문단은 사람이 쓴다) → 어답터 접촉은 센서스 5회차 때(별칭·exclude 반영 뒤 잔여 원인 이동 관측).
+  어답터 잔여는 각자(A: evidence 소급·중복 ID · C: status 없는 WO 18 backfill·no-parent 35·서사 절만 있는 활성 WO · B: dashboard 포크·review). 상류 세션은 어답터 레포를 쓰지 않는다.
 
 ## 4. 미해결 / 주의
 - **AGENTS.md 예산 계측 이월 9회+** — 미착수. [PRO-13] §4-4 인간 판정 — [PRO-28] ⑤ 압축 보존 문단(Schema)과 함께.

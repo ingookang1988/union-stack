@@ -21,6 +21,7 @@ frontmatter-backfill·zfs-linter·upward-fetch)를 `root` 인자로 돌린다 �
 - **WO H2 헤딩 분포**(상위 8 + 나머지 종·건수): 절 계약·별칭 맵([PRO-28])의 재료 — 어답터 답변("한 의미에 표기 3~5종")을 기계로 센다.
 - **필수 절 매칭(활성 WO)**: [PRO-28] §6 성공 바(맵 적용 뒤 ≥90%)를 `work-close.parseWo` 의 `missingSections`(별칭 맵·evidence 충족 반영)로 센다 — 활성 WO(statusMap 적용 뒤
   Draft/Active/Verifying)만 대상, 레거시 종결분은 밖. 판정은 사람([ADR-12]).
+- **잔여 원인**([PRO-28] §6 판정): 미해소 절을 **H2 없음 · 절 부재**(규칙 밖) / **별칭 후보**(미해소 헤딩이 있다 — 상위 8 헤딩을 함께) / **evidence 소급**(frontmatter 없음)으로 센다.
   헤딩 줄만 읽고 본문은 읽지 않는다. 계측기 열은 **배송 도구만**(상류 전용 adopter-arm 은 3회차에 제외 — 사본 없는 어답터가 9/10 으로 오보됐다).
 
 ## 언제 쓰지 않나

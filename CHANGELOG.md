@@ -14,7 +14,9 @@ action in already-adopted projects.
 ## [Unreleased]
 - **PRO-28 §6 — `adopter-census` measures required-section resolution on active WOs.** New column
   "필수 절 매칭(활성 WO)": active count, per-section resolution (목표 · 수용 기준 · 증거, through each adopter's `sections` map and
-  frontmatter `evidence:`), and WOs with all three. Read-only, as before.
+  frontmatter `evidence:`), and WOs with all three. Read-only, as before. A **잔여 원인** column classifies what is still unresolved:
+  no H2 at all / section absent (outside any rule), alias candidate (a heading exists but no alias matches — the top unresolved
+  headings are listed), or evidence to backfill in frontmatter.
 - **Fixes from the third adopter's apply report (PRO-24 ① follow-up).** `work-close --table` no longer crashes when
   `sprint/next.md` is absent (hand-ported repos): the check is a CLARIFY and `--write` creates the view with its marker block.
   A prose `status:` that starts with an upstream word (`Active — core production green…`) is read as that word even without a

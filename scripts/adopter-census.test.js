@@ -55,6 +55,17 @@ try {
   check('WO H2 헤딩 분포', raw.headings && raw.headings['목표'] === 2 && raw.headings['수용 기준'] === 2 && raw.headings['증거'] === 2 && Object.keys(raw.headings).length === 3);
   // [PRO-28] §6 성공 바 — 필수 절 매칭률은 **활성 WO 기준**(statusMap 적용 뒤 Draft/Active/Verifying; 레거시 종결분은 대상 밖). 픽스처: 345 는 Done→Closed, 346 만 활성·3절 완비.
   check('필수 절 매칭률: 활성 1 · 3절 100% · 완비 1', JSON.stringify(raw.sections) === JSON.stringify({ active: 1, goal: 1, accept: 1, evidence: 1, complete: 1 }));
+  // [PRO-28] §6 판정(2026-10-17): 바 유지 + 잔여 원인 — 미해소 절을 규칙 밖(H2 없음 · 절 부재)/별칭 후보(미해소 헤딩 있음)/evidence 소급 으로 분류
+  check('잔여 원인: 완비 레포는 전부 0', JSON.stringify(raw.residual) === JSON.stringify({ noH2: 0, absent: 0, alias: 0, evidence: 0, unresolved: [] }));
+  // 활성 WO 셋: H2 없음 · 헤딩은 있으나 맵에 안 걸림(별칭 후보) · evidence 없음
+  w('.union-stack/sprint/WO-348_noh2.md', '---\nstatus: Active\nevidence: "x"\n---\n본문만\n');
+  w('.union-stack/sprint/WO-349_alias.md', '---\nstatus: Active\nevidence: "x"\n---\n## 목적·진입 조건\n## 완료 기준\n');
+  w('.union-stack/sprint/WO-350_noev.md', '---\nstatus: Active\n---\n## 목표\n## 수용 기준\n');
+  const raw2 = measure(tmp, 'T');
+  check('잔여 원인 분류: H2 없음 1 · 별칭 후보 1(헤딩 2) · evidence 소급 1 · 절 부재 0', JSON.stringify({ ...raw2.residual, unresolved: raw2.residual.unresolved.map(u => u.heading) }) === JSON.stringify({ noH2: 1, absent: 0, alias: 1, evidence: 1, unresolved: ['목적·진입 조건', '완료 기준'] }));
+  const row2 = anonymize(raw2);
+  check('익명 행: 잔여 원인 열', /H2 없음 1 · 절 부재 0 · 별칭 후보 1 · evidence 소급 1 — 미해소 헤딩: 목적·진입 조건\(1\) · 완료 기준\(1\)/.test(row2.residual));
+  for (const f of ['WO-348_noh2.md', 'WO-349_alias.md', 'WO-350_noev.md']) fs.rmSync(path.join(tmp, '.union-stack/sprint', f));
   check('WO 상태 첫 토큰 + statusMap 매핑(Done → Closed)', raw.wo.statusDist.Closed === 1 && raw.wo.statusDist.Active === 1 && raw.wo.malformed === 1);
   check('evidence 별칭 읽힘 + none 구별', raw.wo.evidence.value === 1 && raw.wo.evidence.none === 1 && raw.wo.evidence.missing === 0);
   check('백필 대상 1(추정 가능)', raw.backfill.targets === 1 && raw.backfill.estimable === 1);

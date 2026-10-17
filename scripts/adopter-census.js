@@ -25,7 +25,7 @@ const { gather: gatherWos } = require('./work-close');
 const { plan: backfillPlan } = require('./frontmatter-backfill');
 const { lint } = require('./zfs-linter');
 const { upwardFetch, fetchOutcome } = require('./query');
-const { load: loadAdapter } = require('./adapter');
+const { load: loadAdapter, resolveSection } = require('./adapter');
 const { parseChangelogVersion } = require('./template-update');
 const ledger = require('./ledger');
 const { withContract, OUTCOME } = require('./gate-contract');
@@ -113,6 +113,23 @@ function measure(root, label, upstreamKeys = new Set()) {
   const act = wos.filter(w => !w.malformed && ACTIVE.has(w.status));
   const miss = k => act.filter(w => !(w.missingSections || []).includes(k)).length;
   raw.sections = { active: act.length, goal: miss('목표'), accept: miss('수용 기준'), evidence: miss('증거'), complete: act.filter(w => !(w.missingSections || []).length).length };
+  // [PRO-28] §6 판정(바 유지 + 잔여 원인): 미해소 절의 원인 — 규칙 밖(H2 없음 · 절 부재) / 별칭 후보(미해소 헤딩이 있다) / evidence 소급(frontmatter 없음). 헤딩 줄만 읽는다.
+  const residual = { noH2: 0, absent: 0, alias: 0, evidence: 0, unresolved: {} };
+  for (const w of act) {
+    const ms = w.missingSections || [];
+    if (!ms.length) continue;
+    const txt = readSafe(path.join(root, w.file)) || '';
+    const heads = [...txt.matchAll(/^##\s+(.+?)\s*$/gm)].map(m => m[1].replace(/^\d+[.)]\s*/, '').replace(/\s+/g, ' '));
+    const unresolved = heads.filter(h => !resolveSection(adapter, h));
+    if (ms.includes('증거')) residual.evidence++;
+    const structural = ms.filter(k => k !== '증거');
+    if (structural.length) {
+      if (!heads.length) residual.noH2++;
+      else if (unresolved.length) { residual.alias++; for (const h of unresolved) residual.unresolved[h] = (residual.unresolved[h] || 0) + 1; }
+      else residual.absent++;
+    }
+  }
+  raw.residual = { ...residual, unresolved: Object.entries(residual.unresolved).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([heading, n]) => ({ heading, n })) };
   const ok = wos.filter(w => !w.malformed);
   const dist = {};
   for (const w of ok) { const h = statusHead(w.status) || '(없음)'; dist[h] = (dist[h] || 0) + 1; }
@@ -165,12 +182,13 @@ function anonymize(raw) {
     candidates: raw.candidates.length ? `${raw.candidates.length} (${raw.candidates.join(', ')})` : '0',
     adapter: raw.adapter.present ? `statusMap ${raw.adapter.statusMapKeys} · evidenceFields ${raw.adapter.evidenceFields.join('/') || '없음'}${raw.adapter.private ? ' · private' : ''}` : '없음',
     sections: raw.sections ? (raw.sections.active ? `활성 ${raw.sections.active} · 목표 ${Math.round(100 * raw.sections.goal / raw.sections.active)}% · 수용 기준 ${Math.round(100 * raw.sections.accept / raw.sections.active)}% · 증거 ${Math.round(100 * raw.sections.evidence / raw.sections.active)}% · 3절 충족 ${raw.sections.complete}` : '활성 0') : '—',
+    residual: raw.residual ? `H2 없음 ${raw.residual.noH2} · 절 부재 ${raw.residual.absent} · 별칭 후보 ${raw.residual.alias} · evidence 소급 ${raw.residual.evidence}${raw.residual.unresolved.length ? ' — 미해소 헤딩: ' + raw.residual.unresolved.slice(0, DIST_CAP).map(u => `${u.heading}(${u.n})`).join(' · ') + (raw.residual.unresolved.length > DIST_CAP ? ` · 외 ${raw.residual.unresolved.length - DIST_CAP}종` : '') : ''}` : '—',
     headings, health, adrs: String(raw.ledger.adrs), planeKb: raw.health.planeKb != null ? String(raw.health.planeKb) : '—',
   };
 }
 
 const COLS = [
-  ['label', '레포'], ['version', '버전 / 앵커'], ['instruments', '계측기'], ['docs', '문서'], ['wo', 'WO · 상태(첫 토큰)'], ['headings', 'WO H2 헤딩(상위 8)'], ['sections', '필수 절 매칭(활성 WO)'], ['evidence', 'evidence'],
+  ['label', '레포'], ['version', '버전 / 앵커'], ['instruments', '계측기'], ['docs', '문서'], ['wo', 'WO · 상태(첫 토큰)'], ['headings', 'WO H2 헤딩(상위 8)'], ['sections', '필수 절 매칭(활성 WO)'], ['residual', '잔여 원인'], ['evidence', 'evidence'],
   ['backfill', '백필 대상'], ['duplicates', '중복 ID'], ['collisions', '상류 ID 충돌'], ['arithmeticFrom', 'arithmeticFrom'], ['fetch', 'upward-fetch'],
   ['candidates', 'upstream_candidate'], ['adapter', 'adapter.json'], ['health', 'health'], ['adrs', 'ADR'], ['planeKb', '평면 KB'],
 ];
