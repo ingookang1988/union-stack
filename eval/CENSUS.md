@@ -13,6 +13,15 @@
 
 <!-- census:rows -->
 
+### 2026-10-17 — 상류 6.0.0 @ b08d93f · 레포 3
+
+| 레포 | 버전 / 앵커 | 계측기 | 문서 | WO · 상태(첫 토큰) | WO H2 헤딩(상위 8) | 필수 절 매칭(활성 WO) | evidence | 백필 대상 | 중복 ID | 상류 ID 충돌 | arithmeticFrom | upward-fetch | upstream_candidate | adapter.json | health | ADR | 평면 KB |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| A | 6.0.0 / 앵커 main @ 2026-10-16 | 9/9 | 436 (WO 180 · ANL 98 · PRO 43 · MTG 34 · PLAN 32 · LSN 18) | 180 · frontmatter 없음 100 · Closed 57 · Active 13 · Planned 6 · Verifying 3 · Review 1 | 검증 31 · 실행 기록 20 · 실행 체크리스트 18 · 목적·진입 조건 14 · 검증·실행 출발점 13 · 변경 owner·재사용 출발점 13 · 수행 범위 13 · 완료 기준 13 · 외 739종 1037건 | 활성 16 · 목표 88% · 수용 기준 88% · 증거 75% · 3절 충족 10 | 값 0 · none 0 · 없음 80 · closed_by 0 | 102 (추정 가능 9) | 2 (네이밍 위반 2) | 21 | 0 → 제안 67 (PLAN·PRO 동번호 5구간) | 3/16 공백 | 0 | statusMap 1 · evidenceFields 없음 | FAIL 2 (naming gate · leakage gate) | 0 | 6054 |
+| B | 6.0.0 / 앵커 main @ 2026-10-17 | 9/9 | 468 (WO 244 · PLAN 85 · ANL 41 · MTG 37 · TOOL 22 · PRO 17) | 244 · frontmatter 없음 0 · Closed 162 · Verifying 49 · Active 15 · Draft 13 · Done 5 | 증거 211 · 수용 기준 208 · 목표 196 · 계보 81 · 범위 49 · 판단 기록 27 · 범위 밖 20 · 상위 축 (닫을 때 되쓸 곳) 15 · 외 121종 235건 | 활성 77 · 목표 82% · 수용 기준 86% · 증거 100% · 3절 충족 62 | 값 230 · none 14 · 없음 0 · closed_by 169 | 17 (추정 가능 9) | 0 (네이밍 위반 0) | 45 | 0 → 제안 19 (PLAN·PRO 동번호 17구간) | 0/77 공백 | 0 | statusMap 0 · evidenceFields 없음 · private | FAIL 0 | 165 | 7069 |
+| C | 6.0.0 / 앵커 main @ 2026-10-17 | 9/9 | 644 (WO 440 · ANL 69 · PRO 47 · EVD 35 · PLAN 21 · MTG 15) | 440 · frontmatter 없음 0 · Closed 269 · Verifying 97 · Active 30 · Draft 26 · (없음) 18 | 수용 기준 203 · 비목표 133 · 진행 97 · 문제 56 · 검증 51 · 진행 기록 51 · 목적 49 · 상태 43 · 외 1292종 2165건 | 활성 153 · 목표 73% · 수용 기준 78% · 증거 81% · 3절 충족 80 | 값 247 · none 0 · 없음 193 · closed_by 0 | 18 (추정 가능 0) | 0 (네이밍 위반 0) | 27 | 999 → 제안 22 (PLAN·PRO 동번호 18구간) | 22/92 공백 | 0 | statusMap 49 · evidenceFields evidence · private | FAIL 0 | 1 | 5342 |
+
+
 ### 2026-10-16 — 상류 6.0.0 @ da9cf67 · 레포 3
 
 | 레포 | 버전 / 앵커 | 계측기 | 문서 | WO · 상태(첫 토큰) | WO H2 헤딩(상위 8) | evidence | 백필 대상 | 중복 ID | 상류 ID 충돌 | arithmeticFrom | upward-fetch | upstream_candidate | adapter.json | health | ADR | 평면 KB |

@@ -1,7 +1,7 @@
 <!-- [Wiki] 세션 이어달리기. 세션을 마치는 에이전트가 덮어쓴다. 최신 하나만 유효.
      다음 세션 부트스트랩 시 가장 먼저 읽힘. -->
 ---
-session_id: canary-a2-2026-10-17
+session_id: wo28a4-2026-10-17
 date: 2026-10-19T06:00:00Z
 author: agent
 verification: "스위트 50 중 48 통과(실패 2 = leakage·ref 테스트, 미커밋 fdt spike 귀속 — 이전과 동일) · kit 19 · template-update 82 · adapter 83 · scaffold 43 · section-fetch 27 · adapter 77 · work-close 63 · dashboard 186 · 어답터 팔 7 형상 충족 · weakening-guard PASS · work-close --table 동기화 · lint 체인 leakage 외 exit 0 · handoff-linter 통과"
@@ -16,18 +16,18 @@ version: 1.0
   의존 불일치(동기화 파일 포함 → 심볼 수준 → --apply HOLD) · 절 해소(토큰 경계 접두 → 토큰 연속 → 조사 제거 → sectionsExclude) · scaffold 글자 계열 · work-close next.md 부재 ·
   상류 어휘 머리 status 첫 토큰(괄호·대시 직결 포함) · gate-contract.test 상류 전용 require · 대시보드 산문·CLARIFY 문구 마커.
 - 실측(활성 WO 기준): A 목표 14/16 · 수용 기준 14/16 · 증거 12/16(잔여는 규칙 밖) · C anatomy-missing 123→71/150(해소율 목표 65% · 수용 기준 43% · 증거 63%). C 는 statusMap 49키 선언.
-  보류: A ⑥ `budgets.historyPerEntry`. 다음 = **센서스 4회차**(활성 WO 기준 필수 절 매칭률 열).
+  보류: A ⑥ `budgets.historyPerEntry`.
+- **[WO-28a-4] Verifying** — 센서스에 "필수 절 매칭(활성 WO)" 열 + **4회차 기록**: A 16 → 88/88/75% · B 77 → 82/86/100% · C 153 → 73/78/81%. [PRO-28] §6 바 90% 는 A·C 미달(잔여는 규칙 밖·별칭·문서) — 판정은 사람.
 
 ## 2. 변경 위치 (ID 목록 — Upward Fetching 진입점)
 - 승인·원장: [PRO-28] v1.0 · [ADR-55] · 이전 [ADR-53] [ADR-54]. 오더(archived): [WO-28a-1]~[WO-28a-3] · [WO-27a-1]~[WO-24c-2] 10건.
-- 이 세션 스크립트: union-stack-kit(앵커 sha) · template-update(로컬 걷기 `ci/`·compose · 디렉터리 기준 사라짐) · adapter(`resolveSection` 토큰) · scaffold(글자 계열).
+- 이 세션 스크립트: adopter-census(`sections` 열) · union-stack-kit(앵커 sha) · template-update(로컬 걷기 `ci/`·compose · 디렉터리 기준 사라짐) · adapter(`resolveSection` 토큰) · scaffold(글자 계열).
   앞 세션 신설: section-fetch · scaffold · upward-fetch `--sections` · mcp-server `sections`. 카드 [TOOL-02] [TOOL-23] [TOOL-35] [TOOL-36] · MIGRATION · CHANGELOG · `eval/CENSUS.md` 3회차.
 
 ## 3. 다음 작업 (단일 진입점)
-→ **사람 몫**: ① push ② **어답터 접촉**: 세 레포에 `template-update --apply`(da9cf67~이번 커밋 수신) + `adapter.json sections` 맵 선언 + `scaffold`·`--sections` 사용 안내
-  (A: 목적·진입 조건/완료 기준/검증 · C: 목적/수용 게이트·완료 기준/검증 — 각자 선언, 상류는 안 쓴다) ③ [PRO-28] ⑤(ΔC 신고 · 압축 보존) 와 AGENTS.md 예산 이월을 함께 [PRO-13] §4-4 판정.
-  그 뒤 에이전트 몫([WO-28a-3] 후속): **센서스 4회차 WO**(발행 ID WO-28a-4 예정 — 센서스에 "필수 절 매칭률" 열(맵 적용 뒤, 읽기 전용) 추가 → 회차 기록 · A·C ≥90% 가 성공 바 ·
-  미달이면 맵 보강 안내, 가드 먼저).
+→ **사람 몫**: ① push ② **[WO-28a-4] 닫기 승인** ③ **[PRO-28] §6 판정** — 센서스 4회차 실측으로 성공 바(90%) 미달을 어떻게 볼지(바 유지 + 잔여 원인 열 추가 / 바 조정 / 문서 측 안내).
+  ④ [PRO-28] ⑤(ΔC 신고 · 압축 보존)와 AGENTS.md 예산 이월을 함께 [PRO-13] §4-4 판정. 그 뒤 에이전트 몫([WO-28a-4] 후속): 판정에 따라 센서스 "잔여 원인" 열 또는 ⑤ WO.
+  어답터 잔여는 각자(A: evidence 소급·중복 ID · C: status 없는 WO 18 backfill·no-parent 35 · B: dashboard 포크·review). 상류 세션은 어답터 레포를 쓰지 않는다.
 
 ## 4. 미해결 / 주의
 - **AGENTS.md 예산 계측 이월 9회+** — 미착수. [PRO-13] §4-4 인간 판정 — [PRO-28] ⑤ 압축 보존 문단(Schema)과 함께.

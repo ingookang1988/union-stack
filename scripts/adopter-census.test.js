@@ -53,6 +53,8 @@ try {
   check('headingDist: 선두 번호는 표기 변형(합산) · 공백 정규화', JSON.stringify(require('./adopter-census').headingDist(['## 1. 목표\n## 목표  \n## 2) 수용  기준'])) === JSON.stringify({ '목표': 2, '수용 기준': 1 }));
   // WO H2 헤딩 분포([PRO-28] 재료 — 어답터 답변: 한 의미에 표기 3~5종). 본문은 헤딩 줄만 센다.
   check('WO H2 헤딩 분포', raw.headings && raw.headings['목표'] === 2 && raw.headings['수용 기준'] === 2 && raw.headings['증거'] === 2 && Object.keys(raw.headings).length === 3);
+  // [PRO-28] §6 성공 바 — 필수 절 매칭률은 **활성 WO 기준**(statusMap 적용 뒤 Draft/Active/Verifying; 레거시 종결분은 대상 밖). 픽스처: 345 는 Done→Closed, 346 만 활성·3절 완비.
+  check('필수 절 매칭률: 활성 1 · 3절 100% · 완비 1', JSON.stringify(raw.sections) === JSON.stringify({ active: 1, goal: 1, accept: 1, evidence: 1, complete: 1 }));
   check('WO 상태 첫 토큰 + statusMap 매핑(Done → Closed)', raw.wo.statusDist.Closed === 1 && raw.wo.statusDist.Active === 1 && raw.wo.malformed === 1);
   check('evidence 별칭 읽힘 + none 구별', raw.wo.evidence.value === 1 && raw.wo.evidence.none === 1 && raw.wo.evidence.missing === 0);
   check('백필 대상 1(추정 가능)', raw.backfill.targets === 1 && raw.backfill.estimable === 1);
@@ -66,6 +68,7 @@ try {
   check('익명 행: 경로 없음', !flat.includes(tmp) && !flat.includes(path.basename(tmp)));
   check('익명 행: 제목·파일명 없음', !flat.includes('secret_product_name') && !flat.includes('비밀 제품명') && !flat.includes('.md'));
   check('익명 행: 라벨·집계만', row.label === 'T' && /Closed 1/.test(row.wo) && row.collisions === '1' && /제안 13/.test(row.arithmeticFrom));
+  check('익명 행: 필수 절 매칭률 열(활성 N · 절별 % · 3절 충족)', /활성 1 · 목표 100% · 수용 기준 100% · 증거 100% · 3절 충족 1/.test(row.sections));
   check('익명 행: 헤딩 분포(빈도순 · 상위 캡)', /목표 2 · 수용 기준 2 · 증거 2/.test(row.headings) || /^(목표|수용 기준|증거) 2 · (목표|수용 기준|증거) 2 · (목표|수용 기준|증거) 2$/.test(row.headings));
   const md = render([row, { label: 'X', measured: '2026-10-16', error: '.union-stack 없음' }], { date: '2026-10-16', upstreamVersion: '6.0.0', sha: 'abc1234' });
   check('렌더: 헤딩 + 표 + 측정 실패 행', md.startsWith('### 2026-10-16 — 상류 6.0.0 @ abc1234 · 레포 2') && md.includes('| T |') && md.includes('측정 실패'));

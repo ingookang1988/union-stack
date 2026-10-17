@@ -12,6 +12,9 @@ design, see [`DESIGN_RATIONALE.md`](./DESIGN_RATIONALE.md). Entries marked **⚠
 action in already-adopted projects.
 
 ## [Unreleased]
+- **PRO-28 §6 — `adopter-census` measures required-section resolution on active WOs.** New column
+  "필수 절 매칭(활성 WO)": active count, per-section resolution (목표 · 수용 기준 · 증거, through each adopter's `sections` map and
+  frontmatter `evidence:`), and WOs with all three. Read-only, as before.
 - **Fixes from the third adopter's apply report (PRO-24 ① follow-up).** `work-close --table` no longer crashes when
   `sprint/next.md` is absent (hand-ported repos): the check is a CLARIFY and `--write` creates the view with its marker block.
   A prose `status:` that starts with an upstream word (`Active — core production green…`) is read as that word even without a
