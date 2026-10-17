@@ -25,7 +25,7 @@ version: 1.0
 ## 3. 다음 작업 (단일 진입점)
 → **사람 몫**: ① push(로컬 커밋 3개 앞섬) ② **[PRO-13] §4-4 판정** — AGENTS.md 를 상시 주입 상한에 넣을지/별도 예산을 줄지. 재료 = 5,925 tok, 그중 48% 가 생성 색인.
   색인 블록을 링크-위임(on-demand fetch)으로 줄이는 선택지가 손 문단 압축보다 먼저다. 압축 보존 문단 재판정은 이 결과 뒤 첫 압축 때(대안 = 압축 절차 쪽 규칙, 상시 비용 0).
-  그 뒤 에이전트 몫: 판정에 따른 WO(예산 행 승격 또는 색인 위임) · 어답터 접촉은 센서스 5회차 때(별칭·exclude 반영 뒤 잔여 원인 이동 관측).
+  그 뒤 에이전트 몫([WO-28a-6] 후속, 발행 ID WO-28a-7 예정): 판정에 따른 WO(예산 행 승격 또는 색인 위임) · 어답터 접촉은 센서스 5회차 때(별칭·exclude 반영 뒤 잔여 원인 이동 관측).
 
 ## 4. 미해결 / 주의
 - AGENTS.md 본문(Schema)은 사람이 쓴다 — 에이전트는 생성 마커 블록 재생성 외 손대지 않는다.
@@ -34,7 +34,7 @@ version: 1.0
   permission-guard 포크 CONTRACT · WO-31 중복 · status 없는 WO 18; B = dashboard 포크 · review 12. 셋 다 `template-update --apply` 로 최신을 받는다.
 - 키트 미지원 둘: `scripts/union-stack/` 하위 설치 · `init --drop-template-bits` 상류 전용 삭제.
 - `receipts.md`: 로컬 suite 줄 REJECT(fdt 귀속), CI 줄 PASS — 미화하지 않는다.
-- 공개 평면: 하류 이름·내부 사실·커밋·경로 금지. 설문 원문은 `eval/private/pro28/`, 결과는 익명 집계만.
+- 공개 평면: 하류 이름·내부 사실·커밋·경로 금지. 설문 대상은 예시가 아니라 실어답터 — 원문은 `eval/private/pro28/`, 결과는 익명 집계만.
 - **미커밋 유지**: `ref/` · `spike/SPIKE-fdt_canon_import_utility_analysis.md` → 로컬 누설·ref 테스트 상시 red. 목록 대조로 새 위반 확인([ADR-39]).
 - 이월: [PRO-22] §5 훅 재제안 금지([ADR-08]) · [WO-10a-1] 인간 대기 · [LSN-17]. 재제안 금지 목록은 AGENTS.md blocks 블록 소유 — 복제 금지.
 
