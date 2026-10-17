@@ -63,6 +63,7 @@ const fp = filterHtml([
 ]);
 check('필터: 산문 status 는 첫 토큰으로 묶인다(Done 2)', /data-st="Done">\s*Done <span class="fn">2<\/span>/.test(fp) && (fp.match(/<label/g) || []).length === 2);
 check('필터: 라벨에 원문 마커 0', !/\*\*|`/.test(fp));
+check('statusHead: 괄호·대시 직결도 첫 토큰', require('./lineage-tree').statusHead('Diagnosed(정정) — x') === 'Diagnosed' && require('./lineage-tree').statusHead('Done—x') === 'Done', true);
 check('문서 data-st 도 첫 토큰(필터와 같은 키)', /data-st="Done"/.test(render([{ domain: 'A', id: '1', file: 'a', status: 'Done (2026-01-01) — **x**' }], { title: 't' })));
 // 문서 행의 상태 표시도 산문이면 샌다 — 보이는 텍스트는 첫 토큰, 전문은 title 속성(대시보드 '원문 마커 0' 회귀의 두 번째 지점).
 const prose = render([{ domain: 'A', id: '1', file: 'a', slug: 's', status: 'Reflected — ARCH `rev1.1` 반영 **완료**' }], { title: 't' });

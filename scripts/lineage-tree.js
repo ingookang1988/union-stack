@@ -97,7 +97,7 @@ function nodeHtml(node, colors) {
 /** 평면에 실존하는 status → 필터 행(순수). status가 하나도 없으면 빈 문자열(무가정). */
 /** status 의 첫 토큰(어답터 실측: "Done (2026-01-01, **사유**)" 같은 산문 status 60종 — 센서스·mapStatus 와 같은 규약). 마커는 뗀다. */
 function statusHead(s) {
-  const head = String(s == null ? '' : s).trim().split(/\s+/)[0] || '';
+  const head = String(s == null ? '' : s).trim().split(/[\s(（—:：]/)[0] || '';
   return head.replace(/\*\*|`/g, '');
 }
 

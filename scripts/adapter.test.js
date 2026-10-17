@@ -185,5 +185,10 @@ check('제외 헤딩은 별칭에 걸려도 null(정확·접두)', resolveSectio
 check('제외되지 않은 별칭은 그대로', resolveSection(ex, '진행') === '증거');
 check('sectionsExclude 배열 아님 → 경고', parseConfig('{"sectionsExclude": "x"}').warnings.some(w => w.includes('sectionsExclude')));
 
+// --- 어답터 C 3차 실측: 첫 토큰에 괄호·대시가 바로 붙은 status("Diagnosed(정정)"·"In-progress(TDD)"·"보류(human …)") 6건이 미매핑 — 공백 외에 ( — : 에서도 끊는다 ---
+check('첫 토큰: 괄호 직결', mapStatus({ statusMap: { Diagnosed: 'Closed', '보류': 'Draft' } }, 'Diagnosed(정정)') === 'Closed' && mapStatus({ statusMap: { Diagnosed: 'Closed', '보류': 'Draft' } }, '보류(human 확인 대기)') === 'Draft');
+check('첫 토큰: 상류 어휘 + 괄호 직결은 맵 없이도', mapStatus(null, 'Verifying(TDD)') === 'Verifying' && mapStatus(null, 'Active—core') === 'Active');
+check('첫 토큰: 하이픈은 토큰의 일부(In-progress)', mapStatus({ statusMap: { 'In-progress': 'Active' } }, 'In-progress(TDD)') === 'Active');
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -59,7 +59,7 @@ const ACTIVE = new Set(['Draft', 'Active', 'Verifying']);
 const DIST_CAP = 8;
 
 /** 상태 문자열의 첫 토큰(순수) — 어답터의 산문 status(`Done (2026-01-01)`)를 어휘 하나로 접는다. */
-function statusHead(s) { return s == null ? null : String(s).trim().split(/\s+/)[0] || null; }
+function statusHead(s) { return s == null ? null : String(s).trim().split(/[\s(（—:：]/)[0] || null; } // 공백·괄호·대시·콜론 앞(어답터 실측 "Diagnosed(정정)")
 
 /**
  * arithmeticFrom 추정(순수, [PRO-27] §7-3): 같은 숫자 머리에 PLAN 과 PRO 가 **둘 다** 있는 구간은 독립 채번의 징후다.

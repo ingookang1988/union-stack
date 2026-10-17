@@ -15,6 +15,7 @@ check('계약에 REJECT 없음(관측)', !CONTRACT.outcomes.includes('REJECT'));
 // --- 순수 ---
 check('statusHead: 첫 토큰', statusHead('Done (2026-01-01, 배포됨)') === 'Done' && statusHead('  Review  ') === 'Review');
 check('statusHead: null 은 null', statusHead(null) === null && statusHead('') === null);
+check('statusHead: 괄호·대시 직결도 첫 토큰(어답터 C 실측 6건)', statusHead('Diagnosed(정정)') === 'Diagnosed' && statusHead('완료(로컬 검증)') === '완료' && statusHead('Active—x') === 'Active');
 const { DIST_CAP } = require('./adopter-census');
 const many = anonymize({ label: 'M', measured: 'd', version: { changelog: null }, anchor: { present: false }, instruments: { present: [], missing: [] }, docs: { total: 0, byDomain: {} },
   wo: { total: 20, malformed: 0, statusDist: Object.fromEntries(Array.from({ length: 12 }, (_, i) => [`S${i}`, 12 - i])), evidence: { value: 0, none: 0, missing: 0 }, closedBy: 0 },

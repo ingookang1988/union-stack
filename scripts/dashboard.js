@@ -311,9 +311,9 @@ function sprintView(sprint, today) {
       <span class="pill">부모<b>${esc(w.parent || '미기입')}</b></span>${evPill(w)}</div>
     <div class="frow"><span class="flabel">상위 흔적</span><span class="fvals">${traces}</span></div>
     ${issues.length
-      ? `<div class="frow"><span class="flabel scope">닫힘 미충족</span><span class="fvals t">${issues.map(i => esc(i.msg)).join('<br>')}</span></div>`
+      ? `<div class="frow"><span class="flabel scope">닫힘 미충족</span><span class="fvals t">${issues.map(i => proseInline(esc(i.msg))).join('<br>')}</span></div>`
       : `<div class="frow"><span class="flabel">닫힘 조건</span><span class="fvals t"><span class="ok">충족</span> — 지금 닫아도 종료 의례를 통과한다</span></div>`}
-    ${infos.length ? `<div class="frow"><span class="flabel">참고</span><span class="fvals t">${infos.map(esc).join('<br>')}</span></div>` : ''}
+    ${infos.length ? `<div class="frow"><span class="flabel">참고</span><span class="fvals t">${infos.map(x => proseInline(esc(x))).join('<br>')}</span></div>` : ''}
   </section>`;
   };
   const hoCard = handoff

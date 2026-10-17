@@ -12,15 +12,11 @@ version: 1.0
 
 ## 1. 세션 요약 (1~3줄)
 - [PRO-22]·[PRO-24]~[PRO-27] 구현 10건 + **[PRO-28] ①~④ 3건 전부 Closed**(archived). 카나리아 A·B·C 완료, 센서스 3회차, PRO-β 는 [PRO-28] ⑤ 로 흡수(별도 승인).
-- **어답터 A 전면 적용 회신** → 상류 수리 4(가드 먼저): 키트 앵커가 추정 태그 일치 파일에 main sha 를 적어 localForked 오판(→ 일치한 쪽 sha) · template-update 가 `ci/`·
-  `docker-compose.harness.yml` 을 안 걷어 매번 "신규"(→ 걷는다) · 어답터 하위 디렉터리 `_GUIDE.md` 를 "사라진 파일"로 오보(→ 상류에 없는 디렉터리 제외) ·
-  절 해소에 **토큰 연속 일치**(접두는 토큰 경계, 가장 긴 별칭 승 — A 실측 "수용 기준 0%" 원인) · scaffold 글자 자식 계열(66a…66t → 다음 글자).
-- A 재적용 회신: ①②④⑧ 확인 · 절 해소 수용 기준 0→50% · anatomy-missing 16→13 · `statusMap` 선언으로 retro due 3지표가 깨어남([PRO-25] 실측). 추가 수리 2: 의존 불일치 검사에
-  **이미 동기화된 파일** 포함 · 토큰 매칭에 조사 제거("목표와"). 3차: 경고가 41쌍(실제 1) 소음 → **심볼 수준** 대조로 좁힘. A 최종 절 해소(별칭 9 추가): 목표 14/16 · 수용 기준 14/16 ·
-  증거 12/16 · anatomy-missing 16→6 — 성공 바 90% 에 각 1건 부족, 잔여는 규칙 밖(헤딩 겸용 1 · 절 부재 1 · H2 없음 1 · evidence 소급 4). ⑥ 보류.
-- **어답터 C 2차 회신** → 확인 4(앵커·의존 블록·sections·lineage-tree) + 수리 5: `work-close --table` next.md 부재 ENOENT → CLARIFY/--write 생성 · 상류 어휘 머리 산문 status 첫 토큰
-  (정확 일치로 440 중 2 활성) · `sectionsExclude` · --apply **HOLD**(없는 심볼 require 갱신 보류) · gate-contract.test 의 adopter-census require. ④ ci/compose "영구 신규"는 현재
-  코드로 C 트리 재현 0(갱신 전 측정). C 절 해소(440 전체): 목표 44% · 수용 기준 23% · 증거 60% — 레거시 `진행`만 있는 60여 건은 닫히지 않는다 → 센서스 4회차 매칭률은 **활성 WO 기준**.
+- **어답터 A·C 전면 적용 왕복 종료**(A 4회·C 3회, 원문 비공개 `eval/private/pro28/`): 상류 결함 16건 수리 — 키트 앵커 sha · template-update 로컬 걷기(ci/compose)·디렉터리 기준 사라짐·
+  의존 불일치(동기화 파일 포함 → 심볼 수준 → --apply HOLD) · 절 해소(토큰 경계 접두 → 토큰 연속 → 조사 제거 → sectionsExclude) · scaffold 글자 계열 · work-close next.md 부재 ·
+  상류 어휘 머리 status 첫 토큰(괄호·대시 직결 포함) · gate-contract.test 상류 전용 require · 대시보드 산문·CLARIFY 문구 마커.
+- 실측(활성 WO 기준): A 목표 14/16 · 수용 기준 14/16 · 증거 12/16(잔여는 규칙 밖) · C anatomy-missing 123→71/150(해소율 목표 65% · 수용 기준 43% · 증거 63%). C 는 statusMap 49키 선언.
+  보류: A ⑥ `budgets.historyPerEntry`. 다음 = **센서스 4회차**(활성 WO 기준 필수 절 매칭률 열).
 
 ## 2. 변경 위치 (ID 목록 — Upward Fetching 진입점)
 - 승인·원장: [PRO-28] v1.0 · [ADR-55] · 이전 [ADR-53] [ADR-54]. 오더(archived): [WO-28a-1]~[WO-28a-3] · [WO-27a-1]~[WO-24c-2] 10건.

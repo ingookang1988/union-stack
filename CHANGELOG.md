@@ -18,7 +18,10 @@ action in already-adopted projects.
   `statusMap` (exact match counted 2 of 440 WOs as active); local words (`Done`, `Complete`) still need the map.
   `adapter.json sectionsExclude` pushes headings out of the alias match (`진행 기록`, `비목표`). `template-update --apply` now
   **holds** an update that would require a symbol the preserved file does not export (it would crash on load) until the preserved file
-  is updated with `--force <path>`. The shipped `gate-contract.test` no longer requires the upstream-only `adopter-census`. No migration.
+  is updated with `--force <path>`. The shipped `gate-contract.test` no longer requires the upstream-only `adopter-census`.
+  Follow-up: the first status token now ends at a parenthesis, dash or colon as well as whitespace (`Diagnosed(정정)` → Diagnosed), and
+  the dashboard renders work-close CLARIFY messages as inline prose (their own `none — 이유` backticks leaked into the page once an
+  adopter mapped 150 active WOs). No migration.
 - **Fixes from the first adopter's full apply report (PRO-24 ① follow-up).** `union-stack-kit` now anchors a file that matches
   the guessed clone tag with *that tag's* sha (it wrote the `main` sha, so byte-identical files were later reported as localForked
   and needed `--force`). `template-update` walks `ci/` and `docker-compose.harness.yml` locally (they re-appeared as "new" on

@@ -248,7 +248,8 @@ function mapStatus(cfg, raw) {
   const m = (cfg && cfg.statusMap) || {};
   const has = k => Object.prototype.hasOwnProperty.call(m, k);
   if (has(raw)) return m[raw];
-  const head = String(raw).trim().split(/\s+/)[0];
+  // 첫 토큰 = 공백·괄호·대시·콜론 앞(어답터 C 실측: "Diagnosed(정정)"·"보류(human …)" 6건이 공백만으로는 안 끊겼다). 하이픈은 토큰의 일부(In-progress).
+  const head = String(raw).trim().split(/[\s(（—:：]/)[0];
   if (head && has(head)) return m[head];
   // 상류 어휘로 시작하는 산문 status("Active — core production green…")는 첫 토큰(어답터 C 실측: 정확 일치로는 440 중 2). 로컬 어휘는 맵 없이 원문.
   return head && UPSTREAM_STATUS.has(head) ? head : raw;

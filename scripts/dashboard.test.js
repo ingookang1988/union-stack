@@ -191,6 +191,10 @@ const spFix = {
   archived: 3,
 };
 const sp = sprintView(spFix, '2026-08-19');
+// 어답터 C 실측: work-close CLARIFY 문구 자체가 `none — 이유` 백틱을 담아, 활성 WO 150 에서 마커 160 이 본문에 남았다 — 이슈·참고 문구도 인라인 산문으로 렌더.
+const spMsg = sprintView({ ...spFix, wos: [{ ...spFix.wos[0], closure: { issues: [{ code: 'no-evidence', outcome: 'CLARIFY', msg: '증거가 비었다 — `none — 이유` 로 **명시**하라' }], info: ['부모 `전이` 후보'] } }] }, '2026-08-19');
+check('sprint: 닫힘 이슈·참고 문구의 코드 스팬·볼드가 렌더된다', spMsg.includes('<code>none — 이유</code>') && spMsg.includes('<b>명시</b>') && spMsg.includes('<code>전이</code>'), true);
+check('sprint: 이슈·참고 문구에 원문 마커가 남지 않는다', !/`|\*\*/.test(spMsg.replace(/title="[^"]*"/g, '').replace(/<[^>]*>/g, '')), true);
 // 제목도 평면 산문이다 — 코드 스팬·볼드가 원문 마커로 새면 안 된다(실측: WO 제목의 `sections` 가 대시보드 본문에 백틱으로 남음).
 const spTitle = sprintView({ ...spFix, wos: [{ ...spFix.wos[0], title: 'adapter.json `sections` **별칭** 맵' }] }, '2026-08-19');
 check('sprint: 제목의 코드 스팬·볼드가 렌더된다', spTitle.includes('<code>sections</code>') && spTitle.includes('<b>별칭</b>'));
