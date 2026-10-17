@@ -9,6 +9,7 @@
 **WO·상태**: 첫 토큰 분포(어답터 `statusMap` 적용 후). **백필 대상**: `status:` 없는 WO·PRO([TOOL-29]). **상류 ID 충돌**: 상류 색인과 같은 `DOMAIN-ID`
 수([PRO-27] ① — `up:` 접두가 필요한 이유). **arithmeticFrom**: 현재 설정 → 제안(같은 번호에 PLAN·PRO 가 둘 다 있는 구간의 최댓값+1, [PRO-27] §7-3).
 **upward-fetch**: 활성 WO 중 계보 맥락 0건(CLARIFY). **upstream_candidate**: `upstream_candidate: true` PRO 의 ID·개수만([PRO-24] ③(a)).
+**필수 절 매칭(활성 WO)**: 활성 WO(statusMap 적용 뒤 Draft/Active/Verifying) 중 목표·수용 기준·증거가 별칭 맵·frontmatter evidence 로 해소된 비율과 3절 충족 수([WO-28a-4], [PRO-28] §6 성공 바 재료). 레거시 종결분은 대상 밖.
 판정·점수 없음 — 다음 회차와의 Δ 가 신호다.
 
 <!-- census:rows -->
