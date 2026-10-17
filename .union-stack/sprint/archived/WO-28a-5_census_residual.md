@@ -2,9 +2,9 @@
 ---
 id: WO-28a-5
 title: 절 계약 — 센서스 잔여 원인 열(활성 WO 의 미해소 절을 규칙 밖·별칭 후보·evidence 소급으로 분류) — [PRO-28] §6 판정 후속
-status: Verifying
+status: Closed
 parent: PRO-28
-evidence: "구현 완료(2026-10-17, 가드 먼저): adopter-census measure.residual {noH2, absent, alias, evidence, unresolved[]} — 활성 WO 의 missingSections 를 H2 없음/절 부재(규칙 밖) · 별칭 후보(미해소 헤딩 병기, 상위 8) · evidence 소급 으로 분류(헤딩 줄만 읽음) · 익명 열 '잔여 원인'. rcpt:n/a — 하네스 스위트(adopter-census 36) · 스위트 50 중 48(실패 2 = fdt spike 귀속) · 팔 7 형상 충족. dry-run 실측: A H2 없음 1 · 별칭 후보 2 · evidence 소급 4 | B 별칭 후보 15(계보·범위·판단 기록 — 상류 선택 절) | C H2 없음 4 · 별칭 후보 53 · evidence 소급 29"
+evidence: "구현 완료(2026-10-17, 가드 먼저): adopter-census measure.residual {noH2, absent, alias, evidence, unresolved[]} — 활성 WO 의 missingSections 를 H2 없음/절 부재(규칙 밖) · 별칭 후보(미해소 헤딩 병기, 상위 8) · evidence 소급 으로 분류(헤딩 줄만 읽음) · 익명 열 '잔여 원인'. rcpt:n/a — 하네스 스위트(adopter-census 36) · 스위트 50 중 48(실패 2 = fdt spike 귀속) · 팔 7 형상 충족. dry-run 실측: A H2 없음 1 · 별칭 후보 2 · evidence 소급 4 | B 별칭 후보 15(계보·범위·판단 기록 — 상류 선택 절) | C H2 없음 4 · 별칭 후보 53 · evidence 소급 29 · Closed 판정 2026-10-17(인간 승인)"
 closed_by: [.union-stack/reference/tools/TOOL-30_adopter_census.md, .union-stack/proposals/PRO-28_section_contract.md]
 version: 1.0
 ---

@@ -7,5 +7,4 @@
 |---|---|---|---|---|
 | [WO-01a-1 · auth_wiring] | (예시) 인증 게이트웨이 배선 | PLAN-01 | Draft | 해당없음 |
 | [WO-10a-1 · e6_scenario] | E6 시나리오 A/B 1사이클 (팔 2개 × 5런) | PRO-10 | Draft | 해당없음 |
-| [WO-28a-5 · census_residual] | 절 계약 — 센서스 잔여 원인 열(활성 WO 의 미해소 절을 규칙 밖·별칭 후보·evidence 소급으로 분류) — [PRO-28] §6 판정 후속 | PRO-28 | Verifying | 있음 |
 <!-- worktable:end -->
