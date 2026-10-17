@@ -7,5 +7,4 @@
 |---|---|---|---|---|
 | [WO-01a-1 · auth_wiring] | (예시) 인증 게이트웨이 배선 | PLAN-01 | Draft | 해당없음 |
 | [WO-10a-1 · e6_scenario] | E6 시나리오 A/B 1사이클 (팔 2개 × 5런) | PRO-10 | Draft | 해당없음 |
-| [WO-28a-4 · census_round4] | 절 계약 — 센서스 4회차: 필수 절 매칭률 열(활성 WO 기준, 읽기 전용) + 회차 기록 — [PRO-28] §6 성공 바 | PRO-28 | Verifying | 있음 |
 <!-- worktable:end -->

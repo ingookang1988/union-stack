@@ -2,9 +2,9 @@
 ---
 id: WO-28a-4
 title: 절 계약 — 센서스 4회차: 필수 절 매칭률 열(활성 WO 기준, 읽기 전용) + 회차 기록 — [PRO-28] §6 성공 바
-status: Verifying
+status: Closed
 parent: PRO-28
-evidence: "구현 완료(2026-10-17, 가드 먼저): adopter-census measure.sections {active, goal, accept, evidence, complete}(work-close.parseWo 의 missingSections — 별칭 맵·evidence 충족 반영, 활성 WO = statusMap 적용 뒤 Draft/Active/Verifying) · 익명 열 '필수 절 매칭(활성 WO)' · 4회차 기록(eval/CENSUS.md). rcpt:n/a — 하네스 스위트(adopter-census 33) · 스위트 50 중 48(실패 2 = fdt spike 귀속) · 팔 7 형상 충족. 실측: A 활성 16 → 목표 88% · 수용 기준 88% · 증거 75% · B 활성 77 → 82/86/100% · C 활성 153 → 73/78/81%. 성공 바 90% 는 A·C 미달 — 판정은 사람"
+evidence: "구현 완료(2026-10-17, 가드 먼저): adopter-census measure.sections {active, goal, accept, evidence, complete}(work-close.parseWo 의 missingSections — 별칭 맵·evidence 충족 반영, 활성 WO = statusMap 적용 뒤 Draft/Active/Verifying) · 익명 열 '필수 절 매칭(활성 WO)' · 4회차 기록(eval/CENSUS.md). rcpt:n/a — 하네스 스위트(adopter-census 33) · 스위트 50 중 48(실패 2 = fdt spike 귀속) · 팔 7 형상 충족. 실측: A 활성 16 → 목표 88% · 수용 기준 88% · 증거 75% · B 활성 77 → 82/86/100% · C 활성 153 → 73/78/81%. 성공 바 90% 는 A·C 미달 — 판정은 사람 · Closed 판정 2026-10-17(인간 승인)"
 closed_by: [.union-stack/reference/tools/TOOL-30_adopter_census.md, eval/CENSUS.md]
 version: 1.0
 ---
