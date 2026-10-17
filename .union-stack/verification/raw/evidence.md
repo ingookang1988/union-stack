@@ -47,3 +47,4 @@
 - [2026-10-17][EVD-ci] gates green @ df10583 (run 39000516237) — ci.js chain in container ([TOOL-27])
 - [2026-10-17][EVD-ci] gates green @ 1e1d144 (run 39000825912) — ci.js chain in container ([TOOL-27])
 - [2026-10-17][EVD-ci] gates green @ 358d694 (run 39005189172) — ci.js chain in container ([TOOL-27])
+- [2026-10-17][EVD-ci] gates green @ 808f30f (run 39006408857) — ci.js chain in container ([TOOL-27])
