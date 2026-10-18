@@ -7,4 +7,5 @@
 |---|---|---|---|---|
 | [WO-01a-1 · auth_wiring] | (예시) 인증 게이트웨이 배선 | PLAN-01 | Draft | 해당없음 |
 | [WO-10a-1 · e6_scenario] | E6 시나리오 A/B 1사이클 (팔 2개 × 5런) | PRO-10 | Draft | 해당없음 |
+| [WO-29a-1 · health_upstream] | 하류 제안 고리 — health upstream 차원 + template-update 제안문 — [PRO-29] ①(a)(b) | PRO-29 | Draft | 해당없음 |
 <!-- worktable:end -->
