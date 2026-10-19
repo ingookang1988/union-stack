@@ -2,9 +2,9 @@
 ---
 id: WO-29a-1
 title: 하류 제안 고리 — health upstream 차원 + template-update 제안문 — [PRO-29] ①(a)(b)
-status: Verifying
+status: Closed
 parent: PRO-29
-evidence: "구현 완료(2026-10-19, 테스트 먼저): template-update checkSummary·lastCheck 캐시(앵커 보존)·isFresh(24h, 실패 시각 포함)·changelogSince(미릴리스 포함 옵션)·renderProposal · --proposal(쓰기 0)·--refresh-cache / health upstream 차원(INFO 전용) · gatherUpstream 기본 읽기 전용(CLI 자기 레포만 갱신). rcpt:n/a — template-update.test 111(+19) · health.test 75(+13) · 스위트 50 중 48(실패 2 = fdt spike 귀속) · 팔 7 형상 충족 · 실네트워크 스모크(어답터 형상 사본): 1회차 갱신 → 2회차 캐시 1.9s · 제안문 쓰기 0"
+evidence: "구현 완료(2026-10-19, 테스트 먼저): template-update checkSummary·lastCheck 캐시(앵커 보존)·isFresh(24h, 실패 시각 포함)·changelogSince(미릴리스 포함 옵션)·renderProposal · --proposal(쓰기 0)·--refresh-cache / health upstream 차원(INFO 전용) · gatherUpstream 기본 읽기 전용(CLI 자기 레포만 갱신). rcpt:n/a — template-update.test 111(+19) · health.test 75(+13) · 스위트 50 중 48(실패 2 = fdt spike 귀속) · 팔 7 형상 충족 · 실네트워크 스모크(어답터 형상 사본): 1회차 갱신 → 2회차 캐시 1.9s · 제안문 쓰기 0 · Closed 판정 2026-10-19(인간 승인)"
 closed_by: [.union-stack/reference/tools/TOOL-21_template_update.md, .union-stack/reference/tools/TOOL-04_health.md]
 version: 1.0
 ---
