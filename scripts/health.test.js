@@ -177,6 +177,12 @@ check('gatherRetro(상류): 지표 7', (() => { const { gatherRetro } = require(
   const upd = dimOf({ last: { at: '2026-10-19T00:00:00Z', updates: true, localVer: '6.0.0', upstreamVer: '6.1.0', sync: 2, review: 1, held: 0, forked: 1, migrations: 1 } });
   check('업데이트 있음 → INFO + --proposal', upd.status === 'INFO' && /6\.0\.0/.test(upd.value) && /6\.1\.0/.test(upd.value) && /--proposal/.test(upd.note));
   check('최신 → INFO 최신', /최신/.test(dimOf({ last: { at: '2026-10-19T00:00:00Z', updates: false, localVer: '6.1.0', upstreamVer: '6.1.0' } }).value));
+  // [WO-29a-4] 실행 가능 항목 표기 — 보존 포크·확인된 review 만이면 "업데이트 있음"이 아니다
+  const idle = dimOf({ last: { at: '2026-10-19T00:00:00Z', updates: false, auto: 0, localVer: '6.0.0', upstreamVer: '6.0.0', sync: 4, forked: 2, unknown: 2, review: 27, reviewNew: 0 } });
+  check('실행할 것 없음 → "업데이트 있음" 아님 · 보존 포크·앵커 없음·확인된 review 를 숫자로', !/업데이트 있음/.test(idle.value) && /실행할 것 없음/.test(idle.value) && /보존 포크 2/.test(idle.value) && /앵커 없음 2/.test(idle.value) && /review 27 확인됨/.test(idle.value));
+  const act = dimOf({ last: { at: '2026-10-19T00:00:00Z', updates: true, auto: 3, reviewNew: 1, migrations: 1, localVer: '6.0.0', upstreamVer: '6.0.0', forked: 2 } });
+  check('실행 가능 → 자동 적용 · 새 review · ⚠ 를 앞에', /업데이트 있음 — 자동 적용 3 · 새 review 1 · ⚠ 마이그레이션 1/.test(act.value) && /--proposal/.test(act.note));
+  check('구 캐시(auto 없음)도 읽는다', /업데이트 있음/.test(dimOf({ last: { at: '2026-10-19T00:00:00Z', updates: true, sync: 2, review: 1 } }).value));
   check('실패 → INFO(판정 아님)', dimOf({ last: { error: 'offline', errorAt: '2026-10-19T00:00:00Z' } }).status === 'INFO');
   check('upstream 차원은 fails·warns 를 바꾸지 않는다', computeHealth({ ...base, upstream: { last: { updates: true } } }).fails === computeHealth(base).fails && computeHealth({ ...base, upstream: { last: { updates: true } } }).warns === computeHealth(base).warns);
   // gatherUpstream: 상류 자신은 갱신을 시도하지 않는다 · 어답터는 만료 시 1회 refresh(주입)

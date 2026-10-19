@@ -223,13 +223,23 @@ function upstreamDim(up) {
   if (last.error && !last.at) return { name, status: 'INFO', value: `확인 실패(오프라인?) — ${last.error}`, note: `재시도: ${cmd}` };
   const when = last.at ? last.at.slice(0, 10) : '?';
   const err = last.error ? ` · 최근 재확인 실패(${last.error})` : '';
-  if (!last.updates) return { name, status: 'INFO', value: `최신(${last.localVer || '?'}, 확인 ${when})${err}` };
-  const bits = [`상류 ${last.upstreamVer || '?'} · 로컬 ${last.localVer || '?'}`, `sync ${last.sync || 0}`, `review ${last.review || 0}`];
-  if (last.held) bits.push(`HOLD ${last.held}`);
-  if (last.forked) bits.push(`분기 ${last.forked}`);
-  if (last.migrations) bits.push(`⚠ 마이그레이션 ${last.migrations}`);
-  return { name, status: 'INFO', value: `업데이트 있음 — ${bits.join(' · ')} (확인 ${when})${err}`,
-    note: `제안문을 사람에게 보이고 승인 뒤 --apply: ${cmd}` };
+  // [WO-29a-4] 실행 가능 항목(auto · 새 review · ⚠)만 "업데이트 있음"을 켠다. 보존 포크·앵커 없음·HOLD·확인된 review 는 숫자로만. 구 캐시(auto 없음)는 전 표기.
+  const fresh = last.auto !== undefined;
+  const kept = [];
+  if (last.forked) kept.push(`보존 포크 ${last.forked}`);
+  if (last.unknown) kept.push(`앵커 없음 ${last.unknown}`);
+  if (last.held) kept.push(`HOLD ${last.held}`);
+  if (fresh && last.review) kept.push(`review ${last.review - (last.reviewNew || 0)} 확인됨`);
+  if (!last.updates) {
+    if (!fresh) return { name, status: 'INFO', value: `최신(${last.localVer || '?'}, 확인 ${when})${err}` };
+    return { name, status: 'INFO', value: `실행할 것 없음(${last.localVer || '?'}${kept.length ? ' · ' + kept.join(' · ') : ''}, 확인 ${when})${err}` };
+  }
+  const bits = fresh
+    ? [last.auto ? `자동 적용 ${last.auto}` : null, last.reviewNew ? `새 review ${last.reviewNew}` : null, last.migrations ? `⚠ 마이그레이션 ${last.migrations}` : null,
+      last.localVer && last.upstreamVer && last.localVer !== last.upstreamVer ? `상류 ${last.upstreamVer} · 로컬 ${last.localVer}` : null].filter(Boolean)
+    : [`상류 ${last.upstreamVer || '?'} · 로컬 ${last.localVer || '?'}`, `sync ${last.sync || 0}`, `review ${last.review || 0}`, last.migrations ? `⚠ 마이그레이션 ${last.migrations}` : null].filter(Boolean);
+  return { name, status: 'INFO', value: `업데이트 있음 — ${bits.join(' · ')}${fresh && kept.length ? ` (그 밖 ${kept.join(' · ')})` : ''} (확인 ${when})${err}`,
+    note: `제안문을 사람에게 보이고 승인 뒤 --apply(반영 없이 review 만 봤다면 --ack-review): ${cmd}` };
 }
 
 /**

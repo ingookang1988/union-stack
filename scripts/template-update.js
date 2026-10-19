@@ -28,6 +28,7 @@
 //   node scripts/template-update.js --apply      # sync 카테고리 갱신(review는 보고만)
 //   node scripts/template-update.js --ref v6.1.0 # 특정 태그/브랜치 기준(기본 main)
 //   node scripts/template-update.js --proposal   # 사람용 제안문(stdout, 파일 쓰기 0 — [PRO-29] ①(b))
+//   node scripts/template-update.js --ack-review   # review 변화를 "봤다"로 기록(반영 없이 알림만 끈다 — 상류에서 다시 바뀌면 다시 알림)
 //   node scripts/template-update.js --refresh-cache  # 확인 캐시만 갱신(health 가 24h 만료 시 부른다) — 요약 JSON 1줄
 //   node scripts/template-update.js --force     # 로컬 개조·판별 불가 파일도 덮어씀(--apply 와 함께)
 //   node scripts/template-update.js --json
@@ -335,9 +336,9 @@ function writeSyncFile(root, obj) {
 }
 
 function writeAnchorRaw(root, ref, blobs) {
-  // 확인 캐시(lastCheck)는 앵커와 같은 파일의 별도 키다 — 앵커를 다시 써도 지우지 않는다.
-  const prev = readSyncFile(root);
-  writeSyncFile(root, { upstream: UPSTREAM, ref, blobs, ...(prev.lastCheck ? { lastCheck: prev.lastCheck } : {}) });
+  // 확인 캐시(lastCheck)·본 review(reviewSeen)는 앵커와 같은 파일의 별도 키다 — 앵커를 다시 써도 지우지 않는다.
+  const { upstream: _u, ref: _r, blobs: _b, ...rest } = readSyncFile(root);
+  writeSyncFile(root, { upstream: UPSTREAM, ref, blobs, ...rest });
 }
 
 // --- 확인 캐시 · 제안문([PRO-29] ①(a)(b), [WO-29a-1]) ---
@@ -346,15 +347,39 @@ const CHECK_TTL_MS = 24 * 3600 * 1000;
 const PROPOSAL_ITEMS_CAP = 15; // 버전별 항목 상한 — 제안문은 결정 재료지 CHANGELOG 사본이 아니다
 
 /** 순수: 확인 결과 → 캐시 요약. updates = 버전이 뒤처졌거나 sync/review 드리프트가 있다. */
-function checkSummary({ ref, localVer, upstreamVer, plan, guard, held = [], migrations = [] }, now = Date.now()) {
-  const sync = plan.changedSync.length + plan.newSync.length;
-  const review = plan.changedReview.length + plan.newReview.length;
+/**
+ * updates = **실행 가능 항목이 있을 때만**([WO-29a-4] — 5회차 실측: 3곳 모두 실행할 것 없이 상시 "업데이트 있음"):
+ *   자동 적용 대상(sync − 분기 − 앵커 없음 − HOLD) > 0 · 아직 안 본 review 변화 > 0 · ⚠ 마이그레이션 > 0 · 릴리스 버전 뒤처짐.
+ * 보존 포크·앵커 없음·HOLD·이미 본 review 는 숫자로만 남는다(INFO). "본" = reviewSeen(path → 상류 sha, --apply·--ack-review 가 기록).
+ */
+function checkSummary({ ref, localVer, upstreamVer, plan, guard, held = [], migrations = [], upstreamMap = {}, reviewSeen = {} }, now = Date.now()) {
+  const syncPaths = [...plan.changedSync, ...plan.newSync];
+  const reviewPaths = [...plan.changedReview, ...plan.newReview];
+  const skip = new Set([...guard.modified, ...guard.unknown, ...held.map(h => h.file)]);
+  const auto = syncPaths.filter(p => !skip.has(p)).length;
+  const reviewNew = reviewPaths.filter(p => !upstreamMap[p] || reviewSeen[p] !== upstreamMap[p]).length;
   const behind = !!(localVer && upstreamVer && cmpVersions(localVer, upstreamVer) < 0);
   return {
     at: new Date(now).toISOString(), ref, localVer: localVer || null, upstreamVer: upstreamVer || null,
-    updates: behind || sync + review > 0, sync, review, held: held.length,
+    updates: behind || auto > 0 || reviewNew > 0 || migrations.length > 0,
+    auto, sync: syncPaths.length, review: reviewPaths.length, reviewNew, held: held.length,
     forked: guard.modified.length, unknown: guard.unknown.length, migrations: migrations.length,
   };
+}
+
+/** 순수: 이번 확인의 review 경로 → 상류 sha("본 것"으로 기록할 값). */
+function reviewSeenFrom(plan, upstreamMap) {
+  const out = {};
+  for (const p of [...plan.changedReview, ...plan.newReview]) if (upstreamMap[p]) out[p] = upstreamMap[p];
+  return out;
+}
+
+function readReviewSeen(root) { const r = readSyncFile(root).reviewSeen; return r && typeof r === 'object' ? r : {}; }
+
+/** 본 review 기록 — 앵커·lastCheck 보존. 사람이 보고서를 본 시점(--apply·--ack-review)에만 부른다. */
+function writeReviewSeen(root, seen) {
+  const prev = readSyncFile(root);
+  writeSyncFile(root, { ...prev, reviewSeen: { ...(prev.reviewSeen || {}), ...seen } });
 }
 
 function readLastCheck(root) { return readSyncFile(root).lastCheck || null; }
@@ -439,6 +464,7 @@ function renderProposal({ localVer, upstreamVer, changelog, plan, guard, held = 
   if (review.length) L.push(`- 사람이 diff 를 보고 반영(review — 자동 적용 안 됨) ${review.length}건: ${review.join(' ')}`);
   if (!auto.length && guard.unknown.length) L.push(`- ⚠ 지금 \`--apply\` 는 아무 파일도 바꾸지 않는다(전부 앵커 없음). 개조가 없다고 확신하면 \`--apply --force\`, 아니면 키트([TOOL-35])로 동일 파일만 앵커를 심는다.`);
   L.push('', '## 결정', '- 승인하면: `node scripts/template-update.js --apply` → `node scripts/health.js` · 테스트.',
+    '- 적용하지 않고 review 변화만 봤다면: `node scripts/template-update.js --ack-review` — 같은 변화는 다시 알리지 않는다(상류에서 또 바뀌면 다시 알린다).',
     '- 이 제안문은 결정 재료다. 에이전트는 사람의 승인 없이 `--apply` 하지 않는다.');
   return L.join('\n') + '\n';
 }
@@ -513,7 +539,15 @@ async function main(argv = process.argv.slice(2)) {
   const stale = staleDeps(p => { try { return fs.readFileSync(path.join(root, p), 'utf8'); } catch { return null; } }, [...new Set([...ft.targets, ...syncedPaths(localFiles, upstreamMap)])], ft.skipped);
 
   const held = holdTargets(ft.targets, stale, force).held;
-  const summary = checkSummary({ ref, localVer, upstreamVer, plan, guard, held, migrations });
+  const summary = checkSummary({ ref, localVer, upstreamVer, plan, guard, held, migrations, upstreamMap, reviewSeen: readReviewSeen(root) });
+  // --ack-review: "review 변화를 봤다, 반영은 안 한다" — 다음 확인부터 이 상류 sha 의 review 는 알리지 않는다(상류에서 또 바뀌면 다시 알린다).
+  if (argv.includes('--ack-review') && !isTemplateRepo(root)) {
+    writeReviewSeen(root, reviewSeenFrom(plan, upstreamMap));
+    const acked = checkSummary({ ref, localVer, upstreamVer, plan, guard, held, migrations, upstreamMap, reviewSeen: readReviewSeen(root) });
+    try { writeLastCheck(root, acked); } catch { /* 캐시 실패는 무시 */ }
+    console.log(`review ${summary.reviewNew}건을 본 것으로 기록(${ANCHOR_PATH} reviewSeen) — 상류에서 다시 바뀌면 다시 알린다. updates=${acked.updates}`);
+    return acked.updates ? OUTCOME.CLARIFY : OUTCOME.PASS;
+  }
   if (cacheOk) { try { writeLastCheck(root, summary); } catch { /* 캐시 실패는 무시 */ } }
   if (refreshCache) { console.log(JSON.stringify(summary)); return summary.updates ? OUTCOME.CLARIFY : OUTCOME.PASS; }
   if (proposal) { process.stdout.write(renderProposal({ localVer, upstreamVer, changelog: upstreamChangelog, plan, guard, held, migrations })); return summary.updates ? OUTCOME.CLARIFY : OUTCOME.PASS; }
@@ -585,6 +619,8 @@ async function main(argv = process.argv.slice(2)) {
     if (unmatched.length) console.log(`  (--force 대상이 아님 — 개조·판별불가 목록에 없음: ${unmatched.join(' ')})`);
     if (!targets.length) console.log('  (갱신 대상 없음)');
     const n = await applyPlan(root, ref, targets, upstreamMap);
+    // 사람이 보고서를 보고 승인해 적용했다 — 이번 review 변화는 "본 것"이다(반영은 사람이 diff 로). 다음 확인은 새 변화만 알린다.
+    if (!isTemplateRepo(root)) { try { writeReviewSeen(root, reviewSeenFrom(plan, upstreamMap)); } catch { /* 캐시 실패는 무시 */ } }
     if (skipped.length) console.log(`\n보존(덮어쓰지 않음) ${skipped.length}건: ${skipped.join(' ')}`);
     console.log(`\n${n}개 파일 갱신. 검증: node scripts/health.js && 테스트 실행. review ${plan.changedReview.length + plan.newReview.length}건은 수동 반영.`);
     return OUTCOME.CLARIFY;
@@ -593,6 +629,6 @@ async function main(argv = process.argv.slice(2)) {
   return OUTCOME.CLARIFY;
 }
 
-module.exports = { classifyPath, matchGlob, ownedConflicts, localCtx, forceTargets, parseChangelogVersion, cmpVersions, gitBlobSha, gitBlobShas, buildPlan, classifySyncTargets, staleDeps, syncedPaths, holdTargets, readAnchor, writeAnchor, seedAnchor, checkSummary, readLastCheck, writeLastCheck, isFresh, changelogSince, renderProposal, CHECK_TTL_MS, localTemplateFiles, migrationActions, UPSTREAM, ANCHOR_PATH, SHIP_MANIFEST };
+module.exports = { classifyPath, matchGlob, ownedConflicts, localCtx, forceTargets, parseChangelogVersion, cmpVersions, gitBlobSha, gitBlobShas, buildPlan, classifySyncTargets, staleDeps, syncedPaths, holdTargets, readAnchor, writeAnchor, seedAnchor, checkSummary, reviewSeenFrom, readReviewSeen, writeReviewSeen, readLastCheck, writeLastCheck, isFresh, changelogSince, renderProposal, CHECK_TTL_MS, localTemplateFiles, migrationActions, UPSTREAM, ANCHOR_PATH, SHIP_MANIFEST };
 
 if (require.main === module) main().then(c => process.exit(c), e => { console.error(e); process.exit(OUTCOME.REJECT); });

@@ -2,10 +2,10 @@
 ---
 id: WO-29a-4
 title: census 지연 분류 + health upstream 실행 가능 항목만 — [PRO-29] ① 5회차 보정
-status: Active
+status: Verifying
 parent: PRO-29
-evidence: "none — 착수 전"
-closed_by: []
+evidence: "구현 완료(2026-10-19, 테스트 먼저): template-update updates = 실행 가능 항목만(auto · 안 본 review · ⚠ · 릴리스) + reviewSeen(--apply·--ack-review 만 기록) · health upstream 실행할 것 없음 표기 · census 지연 5분류(적용 가능·보존 포크·review·상류 전용·거부, 로컬은 해시만). rcpt:n/a — template-update.test 125 · health.test 78 · adopter-census.test 58 · 스위트 50 중 48(실패 2 = fdt spike) · 팔 7 형상. 5회차 재계산: 적용 가능 A 0 · B 0 · C 0"
+closed_by: [.union-stack/reference/tools/TOOL-30_adopter_census.md, .union-stack/reference/tools/TOOL-21_template_update.md, .union-stack/proposals/PRO-29_connection_closure.md]
 version: 1.0
 ---
 # [WO-29a-4] census 지연 분류 + health upstream 실행 가능 항목만 — [PRO-29] ① 5회차 보정
@@ -28,4 +28,9 @@ version: 1.0
 - 팔 7 형상 · 스위트 회귀 0 · 카드 [TOOL-21]·[TOOL-04]·[TOOL-30] · CHANGELOG · MIGRATION("upstream 줄 읽는 법" 갱신).
 
 ## 증거
-- 닫을 때 frontmatter `evidence:` 에 값 또는 `none — 이유`(선언 검사가 있으면 `rcpt:<name>@<sha>`). 상위 축 흔적은 `closed_by:`.
+- 테스트: template-update +14(포크만·앵커 없음만·HOLD 만 = false · 자동 1 = true · review 안 봄/봄/다시 바뀜 · ⚠ · 릴리스 · reviewSeenFrom · 보존 3종) · health +3(실행할 것 없음 표기 · 실행 가능 순서 · 구 캐시) ·
+  census +5(5분류 각 1 · 로컬 없음 = 적용 가능 · ctx 없음 회귀 0 · 익명 열 2).
+- **5회차 원자료 재계산(origin/main, 2026-10-19)**: 적용 가능 **A 0 · B 0 · C 0** ✓ — 나머지 A 보존 포크 2 · B 보존 포크 6 · review 4 · 상류 전용 2(+ review 이력 밖 5, 무해) · C 0.
+- health 상시 알림: 어답터의 현 캐시는 구 코드가 쓴 것이라 아직 "업데이트 있음". 새 코드는 첫 확인에서 **안 본 review 를 한 번** 알린다(reviewSeen 이 아직 없다 — 설계상 1회).
+  `--apply` 또는 `--ack-review` 한 번 뒤 조용해진다 — 다음 적용 회차에서 3곳 확인(자기 확인 열이 "최신"/"실행할 것 없음"으로 바뀌어야 한다).
+- 설계 판단: "본 review"는 백그라운드 확인이 아니라 **사람이 보고서를 본 시점**(`--apply` · `--ack-review`)에만 기록 — 확인만으로 표시하면 아무도 안 본 변화가 조용히 사라진다.

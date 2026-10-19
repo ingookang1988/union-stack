@@ -282,6 +282,37 @@ const propUnknown = renderProposal({ localVer: '6.0.0', upstreamVer: '6.2.0', ch
 check('제안문: 자동 갱신 0 + 앵커 없음 → --apply 는 아무것도 안 한다고 말하고 --force 를 안내', /--force/.test(propUnknown) && /자동 갱신\(sync\) 0건/.test(propUnknown), true);
 const CLBIG = '## [Unreleased]\n' + Array.from({ length: 20 }, (_, i) => `- **항목 ${i}.** x`).join('\n') + '\n## [6.2.0]\n- **a.** x\n';
 check('제안문: 버전별 15건 상한 + 외 N건', (() => { const p = renderProposal({ localVer: '6.2.0', upstreamVer: '6.2.0', changelog: CLBIG, plan: planU, guard: guardU, held: [], migrations: [] }); return /항목 14\./.test(p) && !/항목 15\./.test(p) && /외 5건/.test(p); })(), true);
+// --- [WO-29a-4] updates = 실행 가능 항목이 있을 때만(5회차 실측: 3곳 모두 실행할 것 없이 상시 "업데이트 있음") ---
+{
+  const { reviewSeenFrom, readReviewSeen, writeReviewSeen } = require('./template-update');
+  const P = (o = {}) => ({ changedSync: [], newSync: [], changedReview: [], newReview: [], removedUpstream: [], upstreamOnlyLocal: [], dropped: [], ...o });
+  const G = (o = {}) => ({ safe: [], modified: [], unknown: [], ...o });
+  const S = (o) => checkSummary({ ref: 'main', localVer: '6.0.0', upstreamVer: '6.0.0', plan: P(), guard: G(), held: [], migrations: [], upstreamMap: {}, reviewSeen: {}, ...o }, NOW);
+  const forkOnly = S({ plan: P({ changedSync: ['scripts/a.js'] }), guard: G({ modified: ['scripts/a.js'] }) });
+  check('보존 포크만 → updates false · auto 0 · forked 1', [forkOnly.updates, forkOnly.auto, forkOnly.forked], [false, 0, 1]);
+  check('앵커 없음만 → updates false(키트/--force 안내는 제안문 몫)', S({ plan: P({ changedSync: ['scripts/a.js'] }), guard: G({ unknown: ['scripts/a.js'] }) }).updates, false);
+  check('HOLD 만 → updates false', S({ plan: P({ changedSync: ['scripts/a.js'] }), held: [{ file: 'scripts/a.js' }] }).updates, false);
+  check('자동 적용 대상 1 → updates true · auto 1', [S({ plan: P({ changedSync: ['scripts/a.js'] }) }).updates, S({ plan: P({ changedSync: ['scripts/a.js'] }) }).auto], [true, 1]);
+  const rv = { plan: P({ changedReview: ['AGENTS.md'] }), upstreamMap: { 'AGENTS.md': 'R2' } };
+  check('review 변화 · 본 적 없음 → reviewNew 1 · true', [S(rv).reviewNew, S(rv).updates], [1, true]);
+  check('review 변화 · 이미 본 같은 상류 sha → reviewNew 0 · false', [S({ ...rv, reviewSeen: { 'AGENTS.md': 'R2' } }).reviewNew, S({ ...rv, reviewSeen: { 'AGENTS.md': 'R2' } }).updates], [0, false]);
+  check('review 가 본 뒤 상류에서 또 바뀜 → 다시 true', S({ ...rv, reviewSeen: { 'AGENTS.md': 'R1' } }).updates, true);
+  check('⚠ 마이그레이션 → true', S({ migrations: ['- ⚠ x'] }).updates, true);
+  check('상류 릴리스 버전 뒤처짐 → true(릴리스 노트를 볼 일)', S({ localVer: '5.9.0' }).updates, true);
+  check('reviewSeenFrom: review 경로 → 상류 sha 만', reviewSeenFrom(P({ changedReview: ['AGENTS.md'], newReview: ['README.md'], changedSync: ['scripts/a.js'] }), { 'AGENTS.md': 'R2', 'README.md': 'M1', 'scripts/a.js': 'X' }), { 'AGENTS.md': 'R2', 'README.md': 'M1' });
+  const tmpR = fs.mkdtempSync(path.join(os.tmpdir(), 'tu-rs-'));
+  try {
+    fs.mkdirSync(path.join(tmpR, '.union-stack'), { recursive: true });
+    fs.writeFileSync(path.join(tmpR, ANCHOR_PATH), JSON.stringify({ upstream: 'u', ref: 'clone', blobs: { 'scripts/a.js': 'abc' }, lastCheck: { at: 'x', updates: true } }));
+    writeReviewSeen(tmpR, { 'AGENTS.md': 'R2' });
+    check('reviewSeen 쓰기는 앵커·lastCheck 보존', [readAnchor(tmpR), readLastCheck(tmpR).at, readReviewSeen(tmpR)], [{ 'scripts/a.js': 'abc' }, 'x', { 'AGENTS.md': 'R2' }]);
+    seedAnchor(tmpR, 'manual');
+    check('앵커 재기록이 reviewSeen 을 지우지 않는다', readReviewSeen(tmpR), { 'AGENTS.md': 'R2' });
+    writeLastCheck(tmpR, { at: 'y', updates: false });
+    check('lastCheck 교체도 reviewSeen 보존', readReviewSeen(tmpR), { 'AGENTS.md': 'R2' });
+    check('reviewSeen 없음 → {}', readReviewSeen(fs.mkdtempSync(path.join(os.tmpdir(), 'tu-rs0-'))), {});
+  } finally { fs.rmSync(tmpR, { recursive: true, force: true }); }
+}
 check('제안문: 최신이면 한 줄', renderProposal({ localVer: '6.2.0', upstreamVer: '6.2.0', changelog: CLP, plan: { ...planU, changedSync: [], newSync: [], changedReview: [] }, guard: { safe: [], modified: [], unknown: [] }, held: [], migrations: [] }).trim().split('\n').length, 1);
 
 console.log(`\n${pass} passed, ${fail} failed`);

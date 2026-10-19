@@ -26,7 +26,7 @@ const { plan: backfillPlan } = require('./frontmatter-backfill');
 const { lint } = require('./zfs-linter');
 const { upwardFetch, fetchOutcome } = require('./query');
 const { load: loadAdapter, resolveSection } = require('./adapter');
-const { parseChangelogVersion, classifyPath } = require('./template-update');
+const { parseChangelogVersion, classifyPath, matchGlob, gitBlobShas } = require('./template-update');
 const ledger = require('./ledger');
 const { withContract, OUTCOME } = require('./gate-contract');
 
@@ -96,7 +96,7 @@ function dateOf(p) { try { return fs.statSync(p).mtime.toISOString().slice(0, 10
  * behind = 앵커에 있는 파일 중 상류가 그 뒤로 바뀐 것 · removed = 상류에서 사라진 것. 앵커 없음 = 판별 불가(0 아님, [ADR-23]).
  * lastCheck = 어답터 자기 확인 캐시(health upstream) — 병기만. upstreamBlobs(상류 전 이력 블롭 집합)가 있으면 foreign 을 가른다.
  */
-function syncLag(syncJson, upstreamTree, upstreamBlobs = null) {
+function syncLag(syncJson, upstreamTree, upstreamBlobs = null, ctx = null) {
   if (!syncJson || typeof syncJson.blobs !== 'object' || !syncJson.blobs) return { anchor: false };
   const paths = Object.keys(syncJson.blobs);
   const lc = syncJson.lastCheck || null;
@@ -106,6 +106,7 @@ function syncLag(syncJson, upstreamTree, upstreamBlobs = null) {
   // 앵커 값은 sha 문자열 또는 후보 배열(시딩 — 개행 이형 흡수, template-update gitBlobShas). 후보 중 하나라도 같으면 정합.
   const same = (a, up) => Array.isArray(a) ? a.includes(up) : a === up;
   const lagging = paths.filter(p => upstreamTree[p] && !same(syncJson.blobs[p], upstreamTree[p]));
+  let foreignSet = new Set();
   // foreign: 지연 중 앵커 값이 상류 이력 어디에도 없는 것 — 로컬 개조가 "정합"으로 시딩됐다(sync 파일이면 다음 --apply 가 개조를 덮는다). 이력 집합이 있을 때만.
   if (upstreamBlobs) {
     const foreign = lagging.filter(p => !(Array.isArray(syncJson.blobs[p]) ? syncJson.blobs[p] : [syncJson.blobs[p]]).some(x => upstreamBlobs.has(x)));
@@ -113,7 +114,26 @@ function syncLag(syncJson, upstreamTree, upstreamBlobs = null) {
     out.foreign = foreign.filter(p => classifyPath(p) === 'sync').length;
     out.foreignReview = foreign.length - out.foreign;
     out.behind = lagging.length - foreign.length;
+    foreignSet = new Set(foreign);
   } else out.behind = lagging.length;
+  // 5분류([WO-29a-4] — 바 = 적용 가능 0, [PRO-29] §6 판정): 상류 전용 · 거부 · review · 보존 포크(로컬 해시 ≠ 앵커) · 나머지 = 적용 가능.
+  // ctx.localShas = 경로 → 로컬 블롭 후보(해시만 — 본문은 결과에 나가지 않는다). 로컬 파일이 없으면 적용 가능(--apply 가 다시 받는다).
+  if (ctx) {
+    const kinds = { applicable: 0, forked: 0, review: 0, upstreamOnly: 0, refused: 0 };
+    const anchorOf = p => (Array.isArray(syncJson.blobs[p]) ? syncJson.blobs[p] : [syncJson.blobs[p]]);
+    for (const p of lagging) {
+      if (foreignSet.has(p)) continue;
+      if (ctx.upstreamOnly && ctx.upstreamOnly.has(p)) kinds.upstreamOnly++;
+      else if ((ctx.ignored || []).some(g => matchGlob(g, p))) kinds.refused++;
+      else if (classifyPath(p) === 'review') kinds.review++;
+      else {
+        const loc = (ctx.localShas || {})[p];
+        if (loc && loc.length && !loc.some(x => anchorOf(p).includes(x))) kinds.forked++;
+        else kinds.applicable++;
+      }
+    }
+    out.kinds = kinds;
+  }
   out.removed = paths.filter(p => !upstreamTree[p]).length;
   return out;
 }
@@ -154,7 +174,17 @@ function measure(root, label, upstreamKeys = new Set(), opts = {}) {
   raw.anchor = { present: !!anchor, ref, date: anchor ? dateOf(path.join(root, '.union-stack/template-sync.json')) : null };
   let syncJson = null;
   try { syncJson = anchor ? JSON.parse(anchor) : null; } catch { syncJson = null; }
-  raw.sync = syncLag(syncJson, opts.upstreamTree || null, opts.upstreamBlobs || null);
+  let syncCtx = null;
+  if (syncJson && syncJson.blobs && opts.upstreamTree) {
+    const localShas = {};
+    for (const p of Object.keys(syncJson.blobs)) {
+      if (!opts.upstreamTree[p]) continue;
+      const txt = readSafe(path.join(root, p));
+      if (txt != null) localShas[p] = gitBlobShas(txt);
+    }
+    syncCtx = { upstreamOnly: opts.upstreamOnly || new Set(), ignored: adapter.upstreamIgnored || [], localShas };
+  }
+  raw.sync = syncLag(syncJson, opts.upstreamTree || null, opts.upstreamBlobs || null, syncCtx);
   let scripts = [];
   try { scripts = fs.readdirSync(path.join(root, 'scripts')); } catch { /* 없음 */ }
   raw.instruments = { present: INSTRUMENTS.filter(f => scripts.includes(f)), missing: INSTRUMENTS.filter(f => !scripts.includes(f)),
@@ -235,7 +265,7 @@ function anonymize(raw) {
     sections: raw.sections ? (raw.sections.active ? `활성 ${raw.sections.active} · 목표 ${Math.round(100 * raw.sections.goal / raw.sections.active)}% · 수용 기준 ${Math.round(100 * raw.sections.accept / raw.sections.active)}% · 증거 ${Math.round(100 * raw.sections.evidence / raw.sections.active)}% · 3절 충족 ${raw.sections.complete}` : '활성 0') : '—',
     residual: raw.residual ? `H2 없음 ${raw.residual.noH2} · 절 부재 ${raw.residual.absent} · 별칭 후보 ${raw.residual.alias} · evidence 소급 ${raw.residual.evidence}${raw.residual.unresolved.length ? ' — 미해소 헤딩: ' + raw.residual.unresolved.slice(0, DIST_CAP).map(u => `${u.heading}(${u.n})`).join(' · ') + (raw.residual.unresolved.length > DIST_CAP ? ` · 외 ${raw.residual.unresolved.length - DIST_CAP}종` : '') : ''}` : '—',
     sync: !raw.sync ? '—' : !raw.sync.anchor ? '판별 불가(앵커 없음)'
-      : `${raw.sync.behind == null ? '지연 ?(상류 트리 없음)' : `지연 ${raw.sync.behind}`} / 앵커 ${raw.sync.files}${raw.sync.removed ? ` · 상류 삭제 ${raw.sync.removed}` : ''}${raw.sync.foreign ? ` · ⚠ 이력 밖 앵커 ${raw.sync.foreign}` : ''}${raw.sync.foreignReview ? ` · review 이력 밖 ${raw.sync.foreignReview}(덮어쓰기 없음)` : ''}${raw.sync.lastCheck ? ` · 자기 확인 ${raw.sync.lastCheck.error && !raw.sync.lastCheck.at ? '실패' : raw.sync.lastCheck.updates ? '업데이트 있음' : '최신'} @ ${String(raw.sync.lastCheck.at || '').slice(0, 10) || '?'}` : ' · 자기 확인 없음'}`,
+      : `${raw.sync.behind == null ? '지연 ?(상류 트리 없음)' : raw.sync.kinds ? `적용 가능 ${raw.sync.kinds.applicable}` : `지연 ${raw.sync.behind}`} / 앵커 ${raw.sync.files}${raw.sync.kinds ? [['forked', '보존 포크'], ['review', 'review'], ['upstreamOnly', '상류 전용'], ['refused', '거부']].filter(([k]) => raw.sync.kinds[k]).map(([k, l]) => ` · ${l} ${raw.sync.kinds[k]}`).join('') : ''}${raw.sync.removed ? ` · 상류 삭제 ${raw.sync.removed}` : ''}${raw.sync.foreign ? ` · ⚠ 이력 밖 앵커 ${raw.sync.foreign}` : ''}${raw.sync.foreignReview ? ` · review 이력 밖 ${raw.sync.foreignReview}(덮어쓰기 없음)` : ''}${raw.sync.lastCheck ? ` · 자기 확인 ${raw.sync.lastCheck.error && !raw.sync.lastCheck.at ? '실패' : raw.sync.lastCheck.updates ? '업데이트 있음' : '최신'} @ ${String(raw.sync.lastCheck.at || '').slice(0, 10) || '?'}` : ' · 자기 확인 없음'}`,
     headings, health, adrs: String(raw.ledger.adrs), planeKb: raw.health.planeKb != null ? String(raw.health.planeKb) : '—',
   };
 }
@@ -278,8 +308,10 @@ function run(argv = process.argv.slice(2), root = path.resolve(__dirname, '..'))
   const upstreamKeys = new Set(buildIndex(root).map(d => `${d.domain}-${d.id}`));
   const { tree: upstreamTree } = upstreamTreeOf(root);
   const upstreamBlobs = upstreamBlobsOf(root);
+  let upstreamOnly = new Set();
+  try { upstreamOnly = new Set(JSON.parse(readSafe(path.join(root, 'scripts/ship-manifest.json')) || '{}').upstreamOnly || []); } catch { /* 매니페스트 없음 */ }
   const raws = list.map(r => {
-    try { return measure(path.resolve(String(r.path || '')), String(r.label || '?'), upstreamKeys, { upstreamTree, upstreamBlobs }); }
+    try { return measure(path.resolve(String(r.path || '')), String(r.label || '?'), upstreamKeys, { upstreamTree, upstreamBlobs, upstreamOnly }); }
     catch (e) { return { label: String(r.label || '?'), path: r.path, measured: localDate(), error: String(e && e.message || e).split('\n')[0] }; }
   });
   const rows = raws.map(anonymize);

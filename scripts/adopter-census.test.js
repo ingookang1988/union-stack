@@ -112,6 +112,23 @@ try {
     wo: { total: 0, malformed: 0, statusDist: {}, evidence: { value: 0, none: 0, missing: 0 }, closedBy: 0 }, backfill: { targets: 0, estimable: 0 }, naming: { duplicates: 0, violations: 0 }, collisions: 0,
     arithmeticFrom: { current: 0, suggested: 0, colliding: [] }, fetch: { active: 0, vacuous: 0 }, candidates: [], adapter: { present: false }, health: { fails: 0, dims: [] }, ledger: { adrs: 0 }, sync: lagR }).sync;
   check('익명 열: review 이력 밖은 ⚠ 없이 INFO 표기', !colR.includes('⚠') && /review 이력 밖 5\(덮어쓰기 없음\)/.test(colR));
+  // [WO-29a-4] 지연 5분류 — 바 = 적용 가능 0([PRO-29] §6 판정 2026-10-19)
+  {
+    const { gitBlobShas } = require('./template-update');
+    const lagTree = { 'scripts/app.js': 'U1', 'scripts/fork.js': 'U2', 'AGENTS.md': 'U3', 'scripts/eval.js': 'U4', '.github/workflows/harness.yml': 'U5' };
+    const anchor5 = { blobs: { 'scripts/app.js': 'A1', 'scripts/fork.js': 'A2', 'AGENTS.md': 'A3', 'scripts/eval.js': 'A4', '.github/workflows/harness.yml': 'A5' } };
+    const localShas = { 'scripts/app.js': ['A1'], 'scripts/fork.js': gitBlobShas('local edit'), 'AGENTS.md': ['L3'], 'scripts/eval.js': ['A4'], '.github/workflows/harness.yml': ['A5'] };
+    const k = syncLag(anchor5, lagTree, null, { upstreamOnly: new Set(['scripts/eval.js']), ignored: ['.github/workflows/harness.yml'], localShas });
+    check('5분류: 적용 가능 1 · 보존 포크 1 · review 1 · 상류 전용 1 · 거부 1 · 합 = behind', JSON.stringify(k.kinds) === JSON.stringify({ applicable: 1, forked: 1, review: 1, upstreamOnly: 1, refused: 1 }) && k.behind === 5);
+    check('로컬 파일 없음(sha 후보 없음)은 적용 가능(--apply 가 다시 받는다)', syncLag({ blobs: { 'scripts/app.js': 'A1' } }, { 'scripts/app.js': 'U1' }, null, { localShas: {} }).kinds.applicable === 1);
+    check('ctx 없음(구 호출) → kinds 없음(회귀 0)', syncLag(anchor5, lagTree).kinds === undefined);
+    const BASE5 = { label: 'K', measured: 'd', version: { changelog: null }, anchor: { present: true }, instruments: { present: [], missing: [] }, docs: { total: 0, byDomain: {} },
+      wo: { total: 0, malformed: 0, statusDist: {}, evidence: { value: 0, none: 0, missing: 0 }, closedBy: 0 }, backfill: { targets: 0, estimable: 0 }, naming: { duplicates: 0, violations: 0 }, collisions: 0,
+      arithmeticFrom: { current: 0, suggested: 0, colliding: [] }, fetch: { active: 0, vacuous: 0 }, candidates: [], adapter: { present: false }, health: { fails: 0, dims: [] }, ledger: { adrs: 0 } };
+    const col5 = anonymize({ ...BASE5, sync: k }).sync;
+    check('익명 열: 적용 가능이 맨 앞 + 나머지 갈래', /^적용 가능 1 \/ 앵커 5 · 보존 포크 1 · review 1 · 상류 전용 1 · 거부 1/.test(col5));
+    check('익명 열: 적용 가능 0 이면 그렇게 쓴다', /^적용 가능 0 /.test(anonymize({ ...BASE5, sync: syncLag({ blobs: { 'AGENTS.md': 'A3' } }, { 'AGENTS.md': 'U3' }, null, { localShas: {} }) }).sync));
+  }
   check('상류 트리 없음 → 비교 불가(behind null)', syncLag({ blobs: { 'scripts/a.js': 'A1' } }, null).behind === null);
   const base = { label: 'S', measured: 'd', version: { changelog: '6.0.0' }, anchor: { present: true, ref: 'main', date: '2026-10-19' }, instruments: { present: [], missing: [] }, docs: { total: 0, byDomain: {} },
     wo: { total: 0, malformed: 0, statusDist: {}, evidence: { value: 0, none: 0, missing: 0 }, closedBy: 0 }, backfill: { targets: 0, estimable: 0 }, naming: { duplicates: 0, violations: 0 }, collisions: 0,

@@ -12,6 +12,12 @@ design, see [`DESIGN_RATIONALE.md`](./DESIGN_RATIONALE.md). Entries marked **⚠
 action in already-adopted projects.
 
 ## [Unreleased]
+- **PRO-29 ① — "update available" means there is something to do.** After the second adopter round, all three adopters had
+  nothing left to apply, yet `health` said *업데이트 있음* everywhere: kept forks and review files they had already looked at counted
+  as updates. Now `template-update` raises it only for files `--apply` would update, unseen review changes, ⚠ migrations or a newer
+  release. Kept forks, no-anchor and held files and seen review changes are counts under *실행할 것 없음*. Seen review changes are
+  recorded in `template-sync.json` (`reviewSeen`) by `--apply`, or by the new `--ack-review`. `adopter-census` splits sync lag five
+  ways: **applicable** (the bar is 0), kept fork, review, upstream-only copy, refused. No migration; expect one alert on first run.
 - **Fixes from the first adopter apply round (PRO-29 ①).** Files that upstream tools *write into an adopter repo* now cite
   upstream IDs with the `up:` prefix: the `sprint/next.md` skeleton (`work-close --table --write`), the `scaffold` WO header
   and the `init` reset templates. An adopter's `ref-linter --strict` failed on `[PRO-15]` in a generated file it may not hand-edit.

@@ -210,6 +210,11 @@ When it says *업데이트 있음*, run `node scripts/template-update.js --propo
 ⚠ migrations, what `--apply` would update / skip / hold, files that need a human diff). It writes nothing. **Show it to
 the human and apply only after their approval** (`--apply`, then `health` + tests). Agents never `--apply` on their own.
 `health --root <other repo>` and `--offline` never refresh (no writes, no network).
+*업데이트 있음* appears only when there is something to **do**: files `--apply` would update, review changes nobody has seen yet,
+⚠ migrations, or a newer release. Kept forks, files without an anchor, held files and already-seen review changes show as
+*실행할 것 없음(…)* with counts. A review change counts as seen after `--apply`, or after `--ack-review` when the human looked at it
+and decided not to merge. It is flagged again only if upstream changes that file again. Expect one alert the first time you run the
+new version: nothing has been marked seen yet.
 
 For the full per-version change list, see [`CHANGELOG.md`](./CHANGELOG.md) (entries marked **⚠** require a migration action). The one structural change so far:
 
