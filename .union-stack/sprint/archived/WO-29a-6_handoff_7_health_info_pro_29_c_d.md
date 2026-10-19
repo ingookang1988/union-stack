@@ -2,9 +2,9 @@
 ---
 id: WO-29a-6
 title: 상류 이탈 알림 고리 ② — 대시보드 어답터 이탈(신규) 카드 + HANDOFF 한 줄 + 7일 health INFO — [PRO-29] ②(c)(d)
-status: Verifying
+status: Closed
 parent: PRO-29
-evidence: "구현 완료(2026-10-19, 테스트 먼저): census_round 배송 헬퍼 · 대시보드 어답터 이탈(신규) 카드 · census --handoff 한 줄 · 상류 health adopter census(7일) · handoff-linter adopter-deviation-unrelayed — 전부 상류 전용(어답터 회귀 0). rcpt:n/a — census_round.test 12 · health.test 83 · handoff-linter.test 34 · dashboard.test 195 · 스위트 51 중 49(실패 2 = fdt spike) · 팔 7 형상 · 실데이터 6회차 표면 4곳 도달 · 주입 재사용 4/4"
+evidence: "구현 완료(2026-10-19, 테스트 먼저): census_round 배송 헬퍼 · 대시보드 어답터 이탈(신규) 카드 · census --handoff 한 줄 · 상류 health adopter census(7일) · handoff-linter adopter-deviation-unrelayed — 전부 상류 전용(어답터 회귀 0). rcpt:n/a — census_round.test 12 · health.test 83 · handoff-linter.test 34 · dashboard.test 195 · 스위트 51 중 49(실패 2 = fdt spike) · 팔 7 형상 · 실데이터 6회차 표면 4곳 도달 · 주입 재사용 4/4 · Closed 판정 2026-10-19(인간 승인)"
 closed_by: [.union-stack/reference/tools/TOOL-30_adopter_census.md, .union-stack/reference/tools/TOOL-04_health.md, .union-stack/proposals/PRO-29_connection_closure.md]
 version: 1.0
 ---
