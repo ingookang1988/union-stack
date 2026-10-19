@@ -2,9 +2,9 @@
 ---
 id: WO-29a-8
 title: health --root 누설 게이트 — 측정 대상에 leakage-guard 가 없으면 해당 없음 — [PRO-29] ② 6회차 오탐
-status: Verifying
+status: Closed
 parent: PRO-29
-evidence: "구현 완료(2026-10-20, 테스트 먼저): health.gather — 측정 대상에 scripts/leakage-guard.js 가 없으면 누설 게이트 해당 없음. rcpt:n/a — health.test 86(+3) · 스위트 51 중 49(실패 2 = fdt spike) · 팔 7 형상. census 재계산: A gate:leakage gate 소멸(남은 이탈 A naming·sync · B sync · C blocks-missing·sync — 전부 실제)"
+evidence: "구현 완료(2026-10-20, 테스트 먼저): health.gather — 측정 대상에 scripts/leakage-guard.js 가 없으면 누설 게이트 해당 없음. rcpt:n/a — health.test 86(+3) · 스위트 51 중 49(실패 2 = fdt spike) · 팔 7 형상. census 재계산: A gate:leakage gate 소멸(남은 이탈 A naming·sync · B sync · C blocks-missing·sync — 전부 실제) · Closed 판정 2026-10-20(인간 승인)"
 closed_by: [.union-stack/reference/tools/TOOL-04_health.md, .union-stack/proposals/PRO-29_connection_closure.md]
 version: 1.0
 ---
