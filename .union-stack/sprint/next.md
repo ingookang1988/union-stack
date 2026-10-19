@@ -7,4 +7,5 @@
 |---|---|---|---|---|
 | [WO-01a-1 · auth_wiring] | (예시) 인증 게이트웨이 배선 | PLAN-01 | Draft | 해당없음 |
 | [WO-10a-1 · e6_scenario] | E6 시나리오 A/B 1사이클 (팔 2개 × 5런) | PRO-10 | Draft | 해당없음 |
+| [WO-29a-5 · census_delta] | 상류 이탈 알림 고리 ① — census --delta(직전 회차 대비 신규/해소) + 규칙 이탈 4종 분류 — [PRO-29] ②(a)(b) | PRO-29 | Draft | 해당없음 |
 <!-- worktable:end -->
