@@ -12,6 +12,10 @@ design, see [`DESIGN_RATIONALE.md`](./DESIGN_RATIONALE.md). Entries marked **⚠
 action in already-adopted projects.
 
 ## [Unreleased]
+- **Census weakening signals count only what the adopter changed.** In the first real round, all five weakening signals were
+  false: adopters had received upstream's own test changes through `--apply`, or deleted upstream-only copies that upstream told
+  them to remove. Files whose content now equals upstream's current blob, and deletions of upstream-only scripts, are excluded,
+  and the number excluded is kept in the raw data. Recomputed: 5 → 0. No migration.
 - **PRO-29 ② — new adopter deviations reach the upstream human without a new channel.** In the upstream repo only: the
   dashboard overview gets an "어답터 이탈(신규)" card, `adopter-census --handoff` prints the one line to paste into HANDOFF §4,
   `health` gains an `adopter census` line (INFO; asks for a round after 7 days), and `handoff-linter` raises a CLARIFY when the latest

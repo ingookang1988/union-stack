@@ -197,5 +197,35 @@ try {
   } finally { fs.rmSync(tmpD, { recursive: true, force: true }); }
 }
 
+// --- [WO-29a-7] 약화 오탐 보정 — 상류 배송본·상류 전용 사본 삭제는 어답터가 만든 변화가 아니다(6회차 실측: weak 5건 전부 오탐) ---
+{
+  const { execFileSync } = require('child_process');
+  const { gitBlobSha } = require('./template-update');
+  const tmpW = fs.mkdtempSync(path.join(os.tmpdir(), 'census-weak-'));
+  try {
+    const g = (...a) => execFileSync('git', a, { cwd: tmpW, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+    const w = (p, t) => { fs.mkdirSync(path.dirname(path.join(tmpW, p)), { recursive: true }); fs.writeFileSync(path.join(tmpW, p), t); };
+    w('.union-stack/sprint/.keep', '');
+    w('scripts/a.test.js', "check('x', 1)\n");                 // 상류가 1 → 2 로 바꿨다(배송 대상)
+    w('scripts/b.test.js', 'check(1)\nassert(2)\n');            // 어답터 자체 테스트
+    w('scripts/eval.test.js', 'check(1)\n');                    // 상류 전용 사본
+    w('scripts/own.test.js', 'check(1)\n');                     // 어답터 자체 테스트
+    g('init', '-q'); g('-c', 'core.autocrlf=false', 'add', '-A'); g('-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qm', 'base');
+    const head = g('rev-parse', 'HEAD');
+    const upA = "check('x', 2)\n";
+    w('scripts/a.test.js', upA);                                // = 상류 현재본 → 제외
+    w('scripts/b.test.js', 'check(1)\n');                       // 단언 감소(어답터 변화) → 유지
+    fs.rmSync(path.join(tmpW, 'scripts/eval.test.js'));          // 상류 전용 삭제 → 제외
+    fs.rmSync(path.join(tmpW, 'scripts/own.test.js'));           // 자체 테스트 삭제 → 유지
+    const tree = { 'scripts/a.test.js': gitBlobSha(upA), 'scripts/b.test.js': gitBlobSha('check(1)\nassert(2)\nassert(3)\n') };
+    const r = measure(tmpW, 'W', new Set(), { prevHead: head, upstreamTree: tree, upstreamOnly: new Set(['scripts/eval.test.js']) });
+    const kinds = [...new Set(r.weakening.kinds)].sort();
+    check('배송본(numeric-change)·상류 전용 삭제는 빠지고 자체 변화만 남는다', JSON.stringify(kinds) === '["assert-decrease","test-deleted"]' && r.weakening.kinds.filter(k => k === 'test-deleted').length === 1);
+    check('제외 수를 원자료에 남긴다', JSON.stringify(r.weakening.excluded) === JSON.stringify({ delivered: 1, upstreamOnlyDeleted: 1 }));
+    const r0 = measure(tmpW, 'W', new Set(), { prevHead: head });
+    check('상류 트리·목록 없음 → 제외 없이 현행(numeric-change 도 남음)', r0.weakening.kinds.includes('numeric-change') && r0.weakening.kinds.filter(k => k === 'test-deleted').length === 2 && JSON.stringify(r0.weakening.excluded) === JSON.stringify({ delivered: 0, upstreamOnlyDeleted: 0 }));
+  } finally { fs.rmSync(tmpW, { recursive: true, force: true }); }
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -27,7 +27,7 @@ frontmatter-backfill·zfs-linter·upward-fetch)를 `root` 인자로 돌린다 �
   상류 삭제 · **이력 밖 앵커**(상류 어느 이력에도 없는 sha — 로컬 개조가 정합으로 시딩됨. ⚠ 는 sync 경로만 — 다음 `--apply` 가 덮는다. review 경로는 가드가 쓰지 않아 INFO) · 어답터 자기 확인(`lastCheck`). git 읽기만, 앵커 없음 = 판별 불가. 계측기 열은 **배송 도구만**(상류 전용 adopter-arm 은 3회차에 제외 — 사본 없는 어답터가 9/10 으로 오보됐다).
 
 - **규칙 이탈(신규)**([PRO-29] ②, [WO-29a-5]): 고정 4종 — `gate:<차원>`(health FAIL) · `rule:blocks-missing|blocks-stale|gate-contract-fork` · `weak:<종류>`·`weak:exceptions`
-  (직전 회차 HEAD 이후 diff 를 상류 weakening-guard 로) · `sync:applicable`. 직전 원자료와 대조해 **신규 / 지속 / 해소** — 같은 이탈은 다시 "신규"가 되지 않는다.
+  (직전 회차 HEAD 이후 diff 를 상류 weakening-guard 로 — 상류 현재본과 같은 파일·상류 전용 사본 삭제는 제외, 제외 수는 원자료에) · `sync:applicable`. 직전 원자료와 대조해 **신규 / 지속 / 해소** — 같은 이탈은 다시 "신규"가 되지 않는다.
   `--delta` 는 레포별 1줄 요약. `--raw-dir <dir>` 로 원자료 위치를 분리한다(주입 실험용). 표면([WO-29a-6], 상류만): 대시보드 "어답터 이탈(신규)" 카드 · health `adopter census`(7일) · handoff-linter.
 
 ## 언제 쓰지 않나

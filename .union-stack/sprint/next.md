@@ -7,4 +7,5 @@
 |---|---|---|---|---|
 | [WO-01a-1 · auth_wiring] | (예시) 인증 게이트웨이 배선 | PLAN-01 | Draft | 해당없음 |
 | [WO-10a-1 · e6_scenario] | E6 시나리오 A/B 1사이클 (팔 2개 × 5런) | PRO-10 | Draft | 해당없음 |
+| [WO-29a-7 · pro_29] | 약화 판별 오탐 보정 — 상류 현재본과 같은 파일·상류 전용 사본 삭제 제외 — [PRO-29] ② 6회차 | PRO-29 | Verifying | 있음 |
 <!-- worktable:end -->

@@ -192,15 +192,27 @@ function headOf(root) {
 }
 
 /** 약화 신호(읽기만): 직전 회차 HEAD(없으면 HEAD) 대비 작업 트리 diff 를 상류 weakening-guard 로 분석. 종류·예외 순증만 남긴다(경로·본문 0). */
-function weakeningOf(root, prevHead) {
+function weakeningOf(root, prevHead, ctx = {}) {
   const range = prevHead || 'HEAD';
   let txt;
   try { txt = execFileSync('git', ['diff', '-U0', '--no-color', range], { cwd: root, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, stdio: ['ignore', 'pipe', 'ignore'] }); } catch { return null; }
   // 삭제·신규 파일까지 보려면 추적 안 된 삭제도 포함해야 한다 — git diff <commit> 은 작업 트리 삭제를 이미 포함한다.
   try {
     const wg = require('./weakening-guard');
-    const a = wg.analyze(wg.parseUnifiedDiff(txt));
-    return { range, kinds: a.signals.map(x => x.kind), exceptionsNet: a.exceptions.net };
+    // [WO-29a-7] 어답터가 만든 변화만 센다(6회차 실측: weak 5건 전부 오탐). 제외 1 = 상류 현재본과 블롭이 같은 파일(--apply 로 받은 상류 변경) ·
+    // 제외 2 = 상류 전용 사본 삭제(상류가 "지워도 된다"고 한 것). 제외 수는 남긴다 — 조용히 빼지 않는다.
+    const tree = ctx.upstreamTree || null, upOnly = ctx.upstreamOnly || new Set();
+    const excluded = { delivered: 0, upstreamOnlyDeleted: 0 };
+    const files = wg.parseUnifiedDiff(txt).filter(fl => {
+      if (fl.status === 'D' && upOnly.has(fl.path)) { excluded.upstreamOnlyDeleted++; return false; }
+      if (tree && tree[fl.path] && fl.status !== 'D') {
+        const local = readSafe(path.join(root, fl.path));
+        if (local != null && gitBlobShas(local).includes(tree[fl.path])) { excluded.delivered++; return false; }
+      }
+      return true;
+    });
+    const a = wg.analyze(files);
+    return { range, kinds: a.signals.map(x => x.kind), exceptionsNet: a.exceptions.net, excluded };
   } catch { return null; }
 }
 
@@ -254,7 +266,7 @@ function measure(root, label, upstreamKeys = new Set(), opts = {}) {
   // [WO-29a-5] 규칙 이탈 재료 — git·파일 읽기만, 어답터 쓰기 0.
   raw.head = headOf(root);
   raw.rules = rulesOf(root, syncJson, opts.upstreamTree || null);
-  raw.weakening = raw.head ? weakeningOf(root, opts.prevHead || null) : null;
+  raw.weakening = raw.head ? weakeningOf(root, opts.prevHead || null, { upstreamTree: opts.upstreamTree || null, upstreamOnly: opts.upstreamOnly || null }) : null;
   let scripts = [];
   try { scripts = fs.readdirSync(path.join(root, 'scripts')); } catch { /* 없음 */ }
   raw.instruments = { present: INSTRUMENTS.filter(f => scripts.includes(f)), missing: INSTRUMENTS.filter(f => !scripts.includes(f)),
