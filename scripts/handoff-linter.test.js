@@ -105,5 +105,17 @@ check('예산 인자 주입: 보고되는 budget 값', analyze(bloated, 100000).
   check('메시지에 --proposal 안내', analyze(FULL, 100000, { upstream: UP }).findings.find(f => f.rule === 'upstream-unrelayed').msg.includes('--proposal'), true);
 }
 
+// --- [WO-29a-6] 상류 HANDOFF: 신규 어답터 이탈을 §3·§4 에 언급했는가([PRO-29] ②(d)) ---
+{
+  const R = n => ({ date: '2026-10-19', rows: [{ label: 'A', delta: { first: false, new: Array.from({ length: n }, (_, i) => `gate:g${i}`), persist: [], resolved: [] } }] });
+  const rules = (t, c) => analyze(t, 100000, { census: c }).findings.map(f => f.rule);
+  check('신규 이탈 있음 + 언급 없음 → adopter-deviation-unrelayed', rules(FULL, R(2)).includes('adopter-deviation-unrelayed'), true);
+  const told = FULL.replace(/(## 4\.[^\n]*\n)/, (m) => m + '- 어답터 이탈 신규 2 (census 2026-10-19) — 사람에게 전달\n');
+  check('§4 에 어답터 이탈 언급 → 통과', rules(told, R(2)).includes('adopter-deviation-unrelayed'), false);
+  check('신규 0 → 침묵', rules(FULL, R(0)).includes('adopter-deviation-unrelayed'), false);
+  check('회차 없음/어답터(census null) → 침묵', rules(FULL, null).includes('adopter-deviation-unrelayed'), false);
+  check('메시지에 --handoff 안내', analyze(FULL, 100000, { census: R(1) }).findings.find(f => f.rule === 'adopter-deviation-unrelayed').msg.includes('--handoff'), true);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

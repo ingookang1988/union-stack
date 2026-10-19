@@ -28,7 +28,7 @@ frontmatter-backfill·zfs-linter·upward-fetch)를 `root` 인자로 돌린다 �
 
 - **규칙 이탈(신규)**([PRO-29] ②, [WO-29a-5]): 고정 4종 — `gate:<차원>`(health FAIL) · `rule:blocks-missing|blocks-stale|gate-contract-fork` · `weak:<종류>`·`weak:exceptions`
   (직전 회차 HEAD 이후 diff 를 상류 weakening-guard 로) · `sync:applicable`. 직전 원자료와 대조해 **신규 / 지속 / 해소** — 같은 이탈은 다시 "신규"가 되지 않는다.
-  `--delta` 는 레포별 1줄 요약. `--raw-dir <dir>` 로 원자료 위치를 분리한다(주입 실험용).
+  `--delta` 는 레포별 1줄 요약. `--raw-dir <dir>` 로 원자료 위치를 분리한다(주입 실험용). 표면([WO-29a-6], 상류만): 대시보드 "어답터 이탈(신규)" 카드 · health `adopter census`(7일) · handoff-linter.
 
 ## 언제 쓰지 않나
 - **어답터 변경** — 읽기만. 백필 적용·설정은 어답터 몫([PRO-27] §5).
@@ -42,4 +42,5 @@ node scripts/adopter-census.js --write         # eval/CENSUS.md 에 회차 appen
 node scripts/adopter-census.js --repos <json>  # 목록 파일 지정: { "repos": [{ "label": "A", "path": "…" }] }
 node scripts/adopter-census.js --json          # 기계 판독 (--contract 로 계약 출력)
 node scripts/adopter-census.js --delta         # 레포별 규칙 이탈 신규·지속·해소 1줄(--write 와 함께 쓰면 회차 기록)
+node scripts/adopter-census.js --handoff       # 최신 회차 → 상류 HANDOFF §4 한 줄(측정 없음 · 쓰기 0). 미언급이면 handoff-linter 가 묻는다
 ```

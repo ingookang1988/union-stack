@@ -12,6 +12,11 @@ design, see [`DESIGN_RATIONALE.md`](./DESIGN_RATIONALE.md). Entries marked **⚠
 action in already-adopted projects.
 
 ## [Unreleased]
+- **PRO-29 ② — new adopter deviations reach the upstream human without a new channel.** In the upstream repo only: the
+  dashboard overview gets an "어답터 이탈(신규)" card, `adopter-census --handoff` prints the one line to paste into HANDOFF §4,
+  `health` gains an `adopter census` line (INFO; asks for a round after 7 days), and `handoff-linter` raises a CLARIFY when the latest
+  round has new deviations but HANDOFF §3/§4 does not mention them. A new shipped helper, `scripts/census_round.js`, reads the
+  latest private raw data; adopters have none, so nothing changes for them. No migration.
 - **PRO-29 ② — upstream sees when an adopter drifts from the rules, and only what is new.** `adopter-census` derives four fixed
   deviation kinds per adopter: a failing health gate; a missing or stale re-proposal blocks block in AGENTS.md, or a kept fork of
   `gate-contract.js`; weakening signals since the previous round's HEAD (upstream `weakening-guard` over the adopter's diff); and

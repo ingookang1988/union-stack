@@ -78,7 +78,7 @@ function partBody(text, key) {
 }
 
 /** 순수 분석: 본문 → {findings, tokens, budget}. findings는 전부 CLARIFY급. */
-function analyze(text, budget = BUDGETS.handoff, { upstream = null } = {}) {
+function analyze(text, budget = BUDGETS.handoff, { upstream = null, census = null } = {}) {
   const findings = [];
   const tokens = estimateTokens(text);
   if (tokens > budget) {
@@ -117,9 +117,27 @@ function analyze(text, budget = BUDGETS.handoff, { upstream = null } = {}) {
         `상류 업데이트 있음(${upstream.localVer || '?'} → ${upstream.upstreamVer || '?'}) — §3 또는 §4 에 언급이 없다. \`node scripts/template-update.js --proposal\` 을 사람에게 보이고 결정(적용·보류)을 적어라([PRO-29] ①)` });
     }
   }
+  // 상류 이탈 알림([PRO-29] ②(d)): 최신 census 회차에 신규 이탈이 있는데 §3·§4 에 언급이 없으면 — 상류 세션이 그것을 사람에게 넘기지 않은 채 끝난다.
+  if (census && newCountOf(census) > 0) {
+    const carry = [assigned.next, assigned.open].filter(Boolean).map(s => s.body.join('\n')).join('\n');
+    if (!CENSUS_MENTION.test(carry)) {
+      findings.push({ rule: 'adopter-deviation-unrelayed', msg:
+        `어답터 이탈 신규 ${newCountOf(census)}건(census ${census.date}) — §3 또는 §4 에 언급이 없다. \`node scripts/adopter-census.js --handoff\` 한 줄을 §4 에 붙이고 조치는 사람에게([PRO-29] ②)` });
+    }
+  }
   return { findings, tokens, budget };
 }
+const CENSUS_MENTION = /어답터 이탈|adopter-census|census/i;
+const newCountOf = round => round.rows.reduce((n, r) => n + (r.delta ? r.delta.new.length : 0), 0);
 const UPSTREAM_MENTION = /template-update|--proposal|업데이트 제안|상류 업데이트|upstream/i;
+
+/** 최신 census 회차 — 상류 자신만(어답터 = null). census_round 가 없으면(구 배송) null. */
+function readCensus(root) {
+  try {
+    if (!require('./adapter').isTemplateRepo(root)) return null;
+    return require('./census_round').latestRound(root);
+  } catch { return null; }
+}
 
 /** 상류 확인 캐시(template-sync.json lastCheck) — 네트워크 0. 상류 자신·캐시 없음·template-update 부재 = null(침묵). */
 function readUpstream(root) {
@@ -136,7 +154,7 @@ function run(argv = process.argv.slice(2)) {
     console.log('HANDOFF 린터: HANDOFF.md 없음 — 건너뜀(신규 프로젝트 보호).');
     return OUTCOME.PASS;
   }
-  const r = analyze(fs.readFileSync(p, 'utf8'), budgetsFor(root).handoff, { upstream: readUpstream(root) }); // adapter.json budgets.handoff 가 있으면 그 값([ADR-29])
+  const r = analyze(fs.readFileSync(p, 'utf8'), budgetsFor(root).handoff, { upstream: readUpstream(root), census: readCensus(root) }); // adapter.json budgets.handoff 가 있으면 그 값([ADR-29])
   if (argv.includes('--json')) { console.log(JSON.stringify(r, null, 2)); return r.findings.length ? OUTCOME.CLARIFY : OUTCOME.PASS; }
   if (r.findings.length) {
     console.error(`\n[HANDOFF 린터] CLARIFY — 표면화만, 차단하지 않는다([PRO-13]):`);
@@ -148,6 +166,6 @@ function run(argv = process.argv.slice(2)) {
   return OUTCOME.PASS;
 }
 
-module.exports = { readUpstream, UPSTREAM_MENTION, analyze, parseSections, assignParts, partBody, run, CONTRACT, PARTS, HANDOFF_PATH };
+module.exports = { readUpstream, readCensus, UPSTREAM_MENTION, CENSUS_MENTION, analyze, parseSections, assignParts, partBody, run, CONTRACT, PARTS, HANDOFF_PATH };
 
 if (require.main === module) process.exit(withContract(CONTRACT, run)());

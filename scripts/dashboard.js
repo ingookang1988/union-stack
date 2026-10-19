@@ -152,6 +152,22 @@ ${tile('부트스트랩', budget.total, `/ ${budget.totalCap} tok${budget.over ?
 }
 
 /** health.gather() 결과 → 게이트/관측 표(순수). */
+/** 어답터 이탈(신규) 카드([PRO-29] ②(c), [WO-29a-6]) — 상류 전용. round 없음(어답터·회차 없음) = 카드 없음. 레이블·이탈 키·개수만. */
+function censusSection(round) {
+  if (!round) return '';
+  const total = round.rows.reduce((n, r) => n + (r.delta ? r.delta.new.length : 0), 0);
+  const rows = round.rows.map(r => {
+    if (!r.delta) return `<tr><td>${esc(r.label)}</td><td class="meta" colspan="3">델타 없음(구 원자료)</td></tr>`;
+    const d = r.delta;
+    return `<tr><td>${esc(r.label)}</td><td>${d.new.length ? `<b>신규 ${d.new.length}</b> ${d.new.map(k => `<code>${esc(k)}</code>`).join(' ')}` : '신규 0'}${d.first ? ' <span class="meta">(첫 회차)</span>' : ''}</td><td>지속 ${d.persist.length}</td><td>해소 ${d.resolved.length}</td></tr>`;
+  }).join('\n');
+  return `<section class="card" id="adopters"><h2>어답터 이탈(신규) — census ${esc(round.date)}</h2>
+<div class="meta">신규 ${total} · 조치는 사람이 어답터 세션에 전달한다(상류는 어답터 레포를 쓰지 않는다). HANDOFF 한 줄: <code>node scripts/adopter-census.js --handoff</code></div>
+<table><tr><th>레포</th><th>신규</th><th>지속</th><th>해소</th></tr>
+${rows}
+</table></section>`;
+}
+
 function healthSection(h) {
   const tr = d => {
     const m = MARKS[d.status] || MARKS.INFO;
@@ -947,6 +963,7 @@ ${healthSection(health)}
 ${budgetSection(budget)}
 ${worktableSection(wos)}
 ${syncSection(health.sync, today)}
+${censusSection(data.census || null)}
 </div>
 </div>
 <div class="grid">
@@ -1021,13 +1038,14 @@ function gatherAll(root = path.resolve(__dirname, '..'), today = new Date().toIS
   const data = {
     index: buildIndex(root), health: gatherHealth(root), budget: gatherBudget(root),
     wos, sprint: gatherSprint(root, wos), time: gatherTime(root), today,
+    census: require('./adapter').isTemplateRepo(root) ? require('./census_round').latestRound(root) : null,
   };
   data.product = gatherProduct(root, data);   // 파생만 한다 — 같은 수집을 두 번 하지 않는다
   return data;
 }
 
 module.exports = {
-  tilesSection, healthSection, budgetSection, worktableSection,
+  tilesSection, healthSection, budgetSection, worktableSection, censusSection,
   sizeSection, syncSection, effectSection, contractSection, normCard, normView,
   gatherSprint, sprintView, gatherTime, timeView,
   gatherProduct, productView, parseExitCriteria, parseLiveRows, PHASE_TERMINAL,

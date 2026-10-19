@@ -6,6 +6,8 @@
     "scripts/blast-radius.js",
     "scripts/blocks-index.js",
     "scripts/blocks-index.test.js",
+    "scripts/census_round.js",
+    "scripts/census_round.test.js",
     "scripts/ci.js",
     "scripts/ci.test.js",
     "scripts/context-budget.js",

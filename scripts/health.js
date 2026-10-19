@@ -17,6 +17,7 @@ let leakageGuard = null;
 try { leakageGuard = require('./leakage-guard'); } catch { /* 어답터 — 게이트 해당 없음 */ }
 const { walkFiles } = require('./fs_walk');
 const { load: loadAdapter, isTemplateRepo } = require('./adapter');
+const censusRound = require('./census_round');
 const { gather: gatherBrokenRefs } = require('./ref-linter');
 const { gather: gatherBudget } = require('./context-budget');
 const receipts = require('./receipts');
@@ -88,7 +89,7 @@ function lastDateIn(txt) {
 }
 
 /** 순수 계산: 1차 지표 → 차원별 평가 리포트. (FS 비의존 → 테스트 용이) */
-function computeHealth({ index, domainsDefined, guideCount, namingViolations, historyViolations, leakageViolations, oversize = [], brokenRefs = 0, budget = null, sync = null, lessons = null, effect = null, contracts = null, norms = null, roadmap = null, adapter = null, historyClarifications = 0, testInfra = null, receiptsInfo = null, retroInfo = null, upstream = null }) {
+function computeHealth({ index, domainsDefined, guideCount, namingViolations, historyViolations, leakageViolations, oversize = [], brokenRefs = 0, budget = null, sync = null, lessons = null, effect = null, contracts = null, norms = null, roadmap = null, adapter = null, historyClarifications = 0, testInfra = null, receiptsInfo = null, retroInfo = null, upstream = null, census = null }) {
   const used = new Set(index.map(d => d.domain));
   const unused = domainsDefined.filter(d => !used.has(d));
   const locked = index.filter(d => LOCKED.includes(d.status));
@@ -204,6 +205,10 @@ function computeHealth({ index, domainsDefined, guideCount, namingViolations, hi
     // 하류 제안 고리([PRO-29] ①(a)) — 상류 새 버전을 명령 없이 보인다. 영원히 INFO: 업데이트 유무는 결함이 아니고, 적용은 사람이 제안문을 보고 정한다([ADR-12]).
     dims.push(upstreamDim(upstream));
   }
+  if (census) {
+    // 상류 이탈 알림 고리의 트리거([PRO-29] ②(d), [WO-29a-6]) — 상류 자신만. 영원히 INFO: 회차를 묻는 것이지 판정이 아니다.
+    dims.push(censusDim(census));
+  }
   const tiers = { draft: 0, reviewed: 0, ratified: 0, untagged: 0 };
   index.forEach(d => { tiers[d.tier && tiers[d.tier] !== undefined ? d.tier : 'untagged']++; });
   dims.push({ name: 'tier distribution', status: 'INFO',
@@ -211,6 +216,18 @@ function computeHealth({ index, domainsDefined, guideCount, namingViolations, hi
   const fails = dims.filter(d => d.status === 'FAIL').length;
   const warns = dims.filter(d => d.status === 'WARN').length;
   return { dims, byDomain, fails, warns, healthy: fails === 0 };
+}
+
+/** 순수: census 최신 회차 → 차원(항상 INFO). 마지막 회차가 STALE_DAYS 초과면 "회차 필요". */
+function censusDim({ round, today }) {
+  const name = 'adopter census';
+  const cmd = 'node scripts/adopter-census.js --delta --write';
+  if (!round) return { name, status: 'INFO', value: '회차 없음', note: `회차: ${cmd}` };
+  const days = censusRound.daysSince(round.date, today);
+  const n = censusRound.newCount(round);
+  const base = `마지막 회차 ${round.date}(${days}일) · 신규 이탈 ${n}`;
+  if (days > censusRound.STALE_DAYS) return { name, status: 'INFO', value: `${base} — 회차 필요(${censusRound.STALE_DAYS}일 초과)`, note: `회차: ${cmd} · HANDOFF 한 줄: node scripts/adopter-census.js --handoff` };
+  return { name, status: 'INFO', value: base, note: n ? 'HANDOFF §4 한 줄: node scripts/adopter-census.js --handoff' : '' };
 }
 
 /** 순수: upstream 수집 결과 → 차원(항상 INFO). */
@@ -314,6 +331,7 @@ function gather(root = path.resolve(__dirname, '..'), opts = {}) {
     sync, lessons: gatherLessons(root), effect: gatherEffectSurface(root), contracts, norms, roadmap, adapter,
     testInfra: gatherTestInfra(root), receiptsInfo: gatherReceipts(root, adapter), retroInfo: gatherRetro(root),
     upstream: gatherUpstream(root, { refresh: !!opts.upstreamRefresh }),
+    census: isTemplateRepo(root) ? { round: censusRound.latestRound(root), today: opts.today || new Date().toISOString().slice(0, 10) } : null,
   });
   // 판정(dims) 외에 원자료도 함께 낸다 — 대시보드가 같은 수집을 두 번 하지 않도록(합성 원칙).
   return { ...r, sizes, sizeCapKb: SIZE_CAP_KB, sync, contracts, norms, roadmap, adapter, concerns: concernUsage(index) };
@@ -538,6 +556,6 @@ function run(argv = process.argv.slice(2)) {
   return r.fails ? 1 : 0;
 }
 
-module.exports = { gatherUpstream, upstreamDim, computeHealth, gather, gatherSync, gatherLessons, gatherTestInfra, computeReceipts, gatherReceipts, gatherRetro, computeEffectSurface, gatherEffectSurface, parseContract, lastDateIn, resolveRoot, validateRoot, CONTRACT };
+module.exports = { gatherUpstream, upstreamDim, censusDim, computeHealth, gather, gatherSync, gatherLessons, gatherTestInfra, computeReceipts, gatherReceipts, gatherRetro, computeEffectSurface, gatherEffectSurface, parseContract, lastDateIn, resolveRoot, validateRoot, CONTRACT };
 
 if (require.main === module) process.exit(withContract(CONTRACT, argv => run(argv))());

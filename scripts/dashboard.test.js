@@ -532,5 +532,22 @@ check('합성: 어답터 섹션은 기본 축을 건드리지 않는다',
   withSecs.replace(/\n<section class="card" id="(kpi|ops)">[\s\S]*?<\/section>/g, '')
     .includes('data-view="overview"'));
 
+// --- [WO-29a-6] 어답터 이탈(신규) 카드 — 상류 전용(원자료 없으면 카드 없음, 어답터 회귀 0) ---
+{
+  const { censusSection } = require('./dashboard');
+  check('censusSection(null) → 빈 문자열', censusSection(null) === '');
+  const round = { date: '2026-10-19', rows: [
+    { label: 'A', delta: { first: false, new: ['sync:applicable'], persist: ['gate:naming gate'], resolved: [] } },
+    { label: 'B' },
+    { label: 'C', delta: { first: false, new: [], persist: [], resolved: ['rule:blocks-missing'] } }] };
+  const cs = censusSection(round);
+  check('카드: 제목 · 회차 날짜 · 레이블별 신규 키 · 지속/해소 수', cs.includes('id="adopters"') && cs.includes('2026-10-19') && cs.includes('sync:applicable') && /지속 1/.test(cs) && /해소 1/.test(cs));
+  check('카드: 델타 없는 레이블은 "델타 없음"', /B[\s\S]*델타 없음/.test(cs));
+  check('카드: 신규 합계 · HANDOFF 한 줄 명령', /신규 1/.test(cs) && cs.includes('--handoff'));
+  check('카드: 이스케이프', !censusSection({ date: 'd', rows: [{ label: '<x>', delta: { first: false, new: ['<k>'], persist: [], resolved: [] } }] }).includes('<k>'));
+  check('render: data.census 없으면 카드 없음(어답터)', !render({ ...data, census: null }, { title: 't' }).includes('id="adopters"'));
+  check('render: data.census 있으면 개요에 카드', render({ ...data, census: round }, { title: 't' }).includes('id="adopters"'));
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

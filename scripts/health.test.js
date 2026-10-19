@@ -46,7 +46,9 @@ const nonLeakFails = g.dims.filter(d => d.status === 'FAIL' && d.name !== 'leaka
 // 어답터 평면의 FAIL(예: 자기 중복 ID 의 naming) 은 상류 테스트 실패가 아니다 — 그린 단언은 템플릿 모드에서만([ADR-30]).
 if (require('./adapter').isTemplateRepo()) check('gather 커밋 평면 게이트 그린', nonLeakFails === 0);
 else check('어답터: gather 가 전 절을 산출(판정은 어답터 몫)', g.dims.every(d => d.name && d.status));
-check('gather dims 20 (관측 11절 포함 — test infra [PRO-21] · receipts [PRO-22] · retro due [PRO-25] · upstream [PRO-29])', g.dims.length === 20);
+// 상류 자신은 adopter census 차원이 하나 더 있다([WO-29a-6]) — 어답터 팔 사본(템플릿 아님)에서는 20.
+check('gather dims 20 + 상류 전용 1 (관측 11절 포함 — test infra [PRO-21] · receipts [PRO-22] · retro due [PRO-25] · upstream [PRO-29] · adopter census [PRO-29] ②)',
+  g.dims.length === 20 + (require('./adapter').isTemplateRepo() ? 1 : 0));
 // 로드맵 배선 관측([PRO-19] ②) — 판정 없는 INFO. roadmap 은 Schema 라 표면화가 수단의 전부다.
 const rDim = g.dims.find(d => d.name === 'roadmap wiring');
 check('roadmap wiring 절은 INFO', rDim && rDim.status === 'INFO');
@@ -183,6 +185,14 @@ check('gatherRetro(상류): 지표 7', (() => { const { gatherRetro } = require(
   const act = dimOf({ last: { at: '2026-10-19T00:00:00Z', updates: true, auto: 3, reviewNew: 1, migrations: 1, localVer: '6.0.0', upstreamVer: '6.0.0', forked: 2 } });
   check('실행 가능 → 자동 적용 · 새 review · ⚠ 를 앞에', /업데이트 있음 — 자동 적용 3 · 새 review 1 · ⚠ 마이그레이션 1/.test(act.value) && /--proposal/.test(act.note));
   check('구 캐시(auto 없음)도 읽는다', /업데이트 있음/.test(dimOf({ last: { at: '2026-10-19T00:00:00Z', updates: true, sync: 2, review: 1 } }).value));
+  // [WO-29a-6] adopter census 차원(상류 자신만, INFO) — 마지막 회차 7일 초과면 회차 필요
+  const cdim = c => computeHealth({ ...base, census: c }).dims.find(d => d.name === 'adopter census');
+  check('census 인자 없음(어답터) → 차원 없음', !computeHealth(base).dims.find(d => d.name === 'adopter census'));
+  check('회차 없음 → INFO + 명령', cdim({ round: null, today: '2026-10-19' }).status === 'INFO' && /회차 없음/.test(cdim({ round: null, today: '2026-10-19' }).value) && /--delta --write/.test(cdim({ round: null, today: '2026-10-19' }).note));
+  const rd = date => ({ round: { date, rows: [{ label: 'A', delta: { first: false, new: ['gate:x'], persist: [], resolved: [] } }] }, today: '2026-10-19' });
+  check('6일 → 정상 표기 + 신규 수', !/회차 필요/.test(cdim(rd('2026-10-13')).value) && /신규 이탈 1/.test(cdim(rd('2026-10-13')).value));
+  check('8일 → 회차 필요(INFO)', /회차 필요/.test(cdim(rd('2026-10-11')).value) && cdim(rd('2026-10-11')).status === 'INFO');
+  check('census 차원은 fails·warns 불변', computeHealth({ ...base, census: rd('2026-01-01') }).warns === computeHealth(base).warns);
   check('실패 → INFO(판정 아님)', dimOf({ last: { error: 'offline', errorAt: '2026-10-19T00:00:00Z' } }).status === 'INFO');
   check('upstream 차원은 fails·warns 를 바꾸지 않는다', computeHealth({ ...base, upstream: { last: { updates: true } } }).fails === computeHealth(base).fails && computeHealth({ ...base, upstream: { last: { updates: true } } }).warns === computeHealth(base).warns);
   // gatherUpstream: 상류 자신은 갱신을 시도하지 않는다 · 어답터는 만료 시 1회 refresh(주입)

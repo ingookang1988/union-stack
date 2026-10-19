@@ -370,6 +370,8 @@ function upstreamMeta(root) {
 }
 
 function run(argv = process.argv.slice(2), root = path.resolve(__dirname, '..')) {
+  // --handoff: 최신 회차(원자료)에서 상류 HANDOFF §4 한 줄만 낸다 — 측정 없음 · 쓰기 0([PRO-29] ②(c)).
+  if (argv.includes('--handoff')) { console.log(require('./census_round').handoffLine(require('./census_round').latestRound(root))); return OUTCOME.PASS; }
   const i = argv.indexOf('--repos');
   const listPath = i >= 0 && argv[i + 1] ? path.resolve(argv[i + 1]) : path.join(root, REPOS_FILE);
   let list;

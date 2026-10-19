@@ -18,6 +18,7 @@ version: 1.0
 `receipts` 절([PRO-22] 단계 2)은 `adapter.json checks[]` 의 **차단 검사별 최신 영수증 포인터·나이**(INFO)다 — 영수증이 끊기면 꺼진 CI 가 여기서 보인다. 선언 부재는 무기입.
 `upstream` 절([PRO-29] ①)은 어답터가 **명령을 기억하지 않아도** 상류 새 버전을 보인다(INFO 전용): `template-sync.json lastCheck` 캐시를 읽고, CLI 를 자기 레포에서 돌릴 때만 24h 만료 시 `template-update --refresh-cache` 를 1회(15s 상한).
 `--root`·`--offline`·`gather()` 호출(census·대시보드)은 읽기 전용 — 쓰기·네트워크 0. 업데이트가 있으면 `--proposal` 제안문을 사람에게 보인다. 상류 자신은 "해당 없음".
+`adopter census` 절([PRO-29] ②, 상류 자신만 · INFO): 마지막 census 회차 날짜·신규 이탈 수 — **7일 초과면 "회차 필요"**. 어답터에는 없다.
 "업데이트 있음"은 **실행 가능 항목**(자동 적용 · 안 본 review · ⚠ · 릴리스 뒤처짐)이 있을 때만 켜진다([WO-29a-4]) — 보존 포크·앵커 없음·HOLD·확인된 review 는 "실행할 것 없음(…)"의 숫자다.
 
 ## 언제 쓰나
