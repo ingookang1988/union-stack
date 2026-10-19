@@ -2,9 +2,9 @@
 ---
 id: WO-29a-5
 title: 상류 이탈 알림 고리 ① — census --delta(직전 회차 대비 신규/해소) + 규칙 이탈 4종 분류 — [PRO-29] ②(a)(b)
-status: Verifying
+status: Closed
 parent: PRO-29
-evidence: "구현 완료(2026-10-19, 테스트 먼저): census 규칙 이탈 4종(gate·rule·weak·sync) + 직전 원자료 대비 델타(신규·지속·해소) · --delta · --raw-dir · 이탈(신규) 열. rcpt:n/a — adopter-census.test 76(+18) · 스위트 50 중 48(실패 2 = fdt spike) · 팔 7 형상 · 주입 실험 4/4 신규 → 재실행 신규 0 → 되돌림 해소"
+evidence: "구현 완료(2026-10-19, 테스트 먼저): census 규칙 이탈 4종(gate·rule·weak·sync) + 직전 원자료 대비 델타(신규·지속·해소) · --delta · --raw-dir · 이탈(신규) 열. rcpt:n/a — adopter-census.test 76(+18) · 스위트 50 중 48(실패 2 = fdt spike) · 팔 7 형상 · 주입 실험 4/4 신규 → 재실행 신규 0 → 되돌림 해소 · Closed 판정 2026-10-19(인간 승인)"
 closed_by: [.union-stack/reference/tools/TOOL-30_adopter_census.md, .union-stack/proposals/PRO-29_connection_closure.md]
 version: 1.0
 ---
