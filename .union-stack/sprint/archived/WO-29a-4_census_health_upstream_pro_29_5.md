@@ -2,9 +2,9 @@
 ---
 id: WO-29a-4
 title: census 지연 분류 + health upstream 실행 가능 항목만 — [PRO-29] ① 5회차 보정
-status: Verifying
+status: Closed
 parent: PRO-29
-evidence: "구현 완료(2026-10-19, 테스트 먼저): template-update updates = 실행 가능 항목만(auto · 안 본 review · ⚠ · 릴리스) + reviewSeen(--apply·--ack-review 만 기록) · health upstream 실행할 것 없음 표기 · census 지연 5분류(적용 가능·보존 포크·review·상류 전용·거부, 로컬은 해시만). rcpt:n/a — template-update.test 125 · health.test 78 · adopter-census.test 58 · 스위트 50 중 48(실패 2 = fdt spike) · 팔 7 형상. 5회차 재계산: 적용 가능 A 0 · B 0 · C 0"
+evidence: "구현 완료(2026-10-19, 테스트 먼저): template-update updates = 실행 가능 항목만(auto · 안 본 review · ⚠ · 릴리스) + reviewSeen(--apply·--ack-review 만 기록) · health upstream 실행할 것 없음 표기 · census 지연 5분류(적용 가능·보존 포크·review·상류 전용·거부, 로컬은 해시만). rcpt:n/a — template-update.test 125 · health.test 78 · adopter-census.test 58 · 스위트 50 중 48(실패 2 = fdt spike) · 팔 7 형상. 5회차 재계산: 적용 가능 A 0 · B 0 · C 0 · Closed 판정 2026-10-19(인간 승인)"
 closed_by: [.union-stack/reference/tools/TOOL-30_adopter_census.md, .union-stack/reference/tools/TOOL-21_template_update.md, .union-stack/proposals/PRO-29_connection_closure.md]
 version: 1.0
 ---
