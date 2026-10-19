@@ -8,4 +8,5 @@
 | [WO-01a-1 · auth_wiring] | (예시) 인증 게이트웨이 배선 | PLAN-01 | Draft | 해당없음 |
 | [WO-10a-1 · e6_scenario] | E6 시나리오 A/B 1사이클 (팔 2개 × 5런) | PRO-10 | Draft | 해당없음 |
 | [WO-29a-2 · handoff_upstream] | 하류 제안 고리 닫기 — HANDOFF 린터 upstream 연결 + 어답터 3곳 실동기화 관측 — [PRO-29] ①(c) | PRO-29 | Verifying | 있음 |
+| [WO-29a-3 · w1_2] | 1회차 적용 회신 결함 2 — 어답터 생성 파일의 상류 ID up: 접두 + census 이력 밖 앵커를 sync 경로로 한정 — [PRO-29] ① | PRO-29 | Draft | 해당없음 |
 <!-- worktable:end -->
