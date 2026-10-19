@@ -2,10 +2,10 @@
 ---
 id: WO-29a-1
 title: 하류 제안 고리 — health upstream 차원 + template-update 제안문 — [PRO-29] ①(a)(b)
-status: Draft
+status: Verifying
 parent: PRO-29
-evidence: "none — 착수 전"
-closed_by: []
+evidence: "구현 완료(2026-10-19, 테스트 먼저): template-update checkSummary·lastCheck 캐시(앵커 보존)·isFresh(24h, 실패 시각 포함)·changelogSince(미릴리스 포함 옵션)·renderProposal · --proposal(쓰기 0)·--refresh-cache / health upstream 차원(INFO 전용) · gatherUpstream 기본 읽기 전용(CLI 자기 레포만 갱신). rcpt:n/a — template-update.test 111(+19) · health.test 75(+13) · 스위트 50 중 48(실패 2 = fdt spike 귀속) · 팔 7 형상 충족 · 실네트워크 스모크(어답터 형상 사본): 1회차 갱신 → 2회차 캐시 1.9s · 제안문 쓰기 0"
+closed_by: [.union-stack/reference/tools/TOOL-21_template_update.md, .union-stack/reference/tools/TOOL-04_health.md]
 version: 1.0
 ---
 # [WO-29a-1] 하류 제안 고리 — health upstream 차원 + template-update 제안문 — [PRO-29] ①(a)(b)
@@ -27,4 +27,7 @@ version: 1.0
 - 범위 밖: ①(c) HANDOFF 린터 연결 · 어답터 3곳 실동기화(다음 WO — 이 WO 의 제안문으로 진행).
 
 ## 증거
-- 닫을 때 frontmatter `evidence:` 에 값 또는 `none — 이유`(선언 검사가 있으면 `rcpt:<name>@<sha>`). 상위 축 흔적은 `closed_by:`.
+- 테스트: template-update +19(요약·캐시 앵커 보존·실패 병합·TTL 경계·미릴리스·줄바꿈 …·15건 상한·앵커 없음 안내) · health +13(차원 6상태·fails/warns 불변·self·읽기 전용 기본·gather 쓰기 0).
+- 설계 정정 1(구현 중 발견): 처음엔 `gather()` 가 만료 시 갱신했다 → census([TOOL-30])가 어답터 레포에 **쓰게** 되고 팔 env 형상 스위트가 red. 갱신을 CLI·자기 레포 opt-in 으로 옮겼다.
+- 설계 정정 2(스모크에서 발견): 상류는 릴리스 헤딩 없이 `[Unreleased]` 에 쌓는다 → 같은 6.0.0 어답터의 "바뀐 것"이 비었다. 파일 드리프트가 있으면 미릴리스 항목을 싣는다.
+- 남은 것(다음 WO): ①(c) HANDOFF 린터 연결 · 어답터 3곳 실동기화(이 제안문으로) · CHANGELOG 릴리스 헤딩 절단(6.0.0 이후 미릴리스 누적 — 사람 판단).

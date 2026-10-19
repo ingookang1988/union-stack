@@ -239,5 +239,50 @@ check('--force 에 보존 파일이 있으면(함께 갱신) 보류 해제', hol
 check('--force 전부면 보류 없음', holdTargets(['scripts/dashboard.js'], stale3, true).held, []);
 check('이미 동기화된 파일(대상 아님)의 불일치는 보류 대상이 아니다', holdTargets(['scripts/health.js'], stale3, false).held, []);
 
+// --- [WO-29a-1] 확인 캐시(lastCheck) · 신선도 · 제안문([PRO-29] ①(a)(b)) ---
+const { checkSummary, readLastCheck, writeLastCheck, isFresh, changelogSince, renderProposal, CHECK_TTL_MS } = require('./template-update');
+const planU = { changedSync: ['scripts/a.js'], newSync: ['scripts/b.js'], changedReview: ['AGENTS.md'], newReview: [], removedUpstream: [], upstreamOnlyLocal: [], dropped: [] };
+const guardU = { safe: ['scripts/a.js'], modified: ['scripts/b.js'], unknown: [] };
+const NOW = Date.parse('2026-10-19T00:00:00Z');
+const sum = checkSummary({ ref: 'main', localVer: '6.0.0', upstreamVer: '6.1.0', plan: planU, guard: guardU, held: [{ file: 'scripts/a.js' }], migrations: ['- ⚠ x'] }, NOW);
+check('요약: 업데이트 있음 · 수치', [sum.updates, sum.sync, sum.review, sum.held, sum.forked, sum.migrations, sum.at], [true, 2, 1, 1, 1, 1, '2026-10-19T00:00:00.000Z']);
+const sumLatest = checkSummary({ ref: 'main', localVer: '6.1.0', upstreamVer: '6.1.0', plan: { ...planU, changedSync: [], newSync: [], changedReview: [] }, guard: { safe: [], modified: [], unknown: [] }, held: [], migrations: [] }, NOW);
+check('요약: 최신', sumLatest.updates, false);
+
+const tmpC = fs.mkdtempSync(path.join(os.tmpdir(), 'tu-cache-'));
+try {
+  check('캐시 없음 → null', readLastCheck(tmpC), null);
+  fs.mkdirSync(path.join(tmpC, '.union-stack'), { recursive: true });
+  fs.writeFileSync(path.join(tmpC, ANCHOR_PATH), JSON.stringify({ upstream: 'u', ref: 'clone', blobs: { 'scripts/a.js': 'abc' } }));
+  writeLastCheck(tmpC, sum);
+  check('lastCheck 쓰기는 앵커(blobs·ref)를 보존', [readAnchor(tmpC), JSON.parse(fs.readFileSync(path.join(tmpC, ANCHOR_PATH), 'utf8')).ref], [{ 'scripts/a.js': 'abc' }, 'clone']);
+  check('lastCheck 읽기', readLastCheck(tmpC).upstreamVer, '6.1.0');
+  seedAnchor(tmpC, 'manual');
+  check('앵커 재기록이 lastCheck 를 지우지 않는다', !!readLastCheck(tmpC) && readLastCheck(tmpC).upstreamVer, '6.1.0');
+  writeLastCheck(tmpC, { at: new Date(NOW).toISOString(), error: 'offline' });
+  check('실패 기록은 직전 성공 요약을 지우지 않는다', [readLastCheck(tmpC).upstreamVer, readLastCheck(tmpC).error], ['6.1.0', 'offline']);
+} finally { fs.rmSync(tmpC, { recursive: true, force: true }); }
+
+check('TTL 24h', CHECK_TTL_MS, 24 * 3600 * 1000);
+check('신선: 23h 전', isFresh({ at: new Date(NOW - 23 * 3600e3).toISOString() }, NOW), true);
+check('만료: 25h 전', isFresh({ at: new Date(NOW - 25 * 3600e3).toISOString() }, NOW), false);
+check('기록 없음 = 만료', isFresh(null, NOW), false);
+check('실패 시각도 신선도에 든다(오프라인 재조회 폭주 방지)', isFresh({ at: new Date(NOW - 48 * 3600e3).toISOString(), errorAt: new Date(NOW - 1 * 3600e3).toISOString() }, NOW), true);
+
+const CLP = '# Changelog\n## [Unreleased]\n- **미배포.** x\n## [6.2.0]\n- **둘째 항목.** 설명\n- ⚠ **마이그레이션.** 설명\n## [6.1.0]\n- **첫째.** 설명\n## [6.0.0]\n- **옛것.** 설명\n';
+check('changelogSince: 로컬 이후 · Unreleased 제외', changelogSince(CLP, '6.0.0', '6.2.0').map(s => [s.ver, s.items.length]), [['6.2.0', 2], ['6.1.0', 1]]);
+check('changelogSince: 항목 = 굵은 머리', changelogSince(CLP, '6.1.0', '6.2.0')[0].items[0], '둘째 항목.');
+const prop = renderProposal({ localVer: '6.0.0', upstreamVer: '6.2.0', changelog: CLP, plan: planU, guard: guardU, held: [{ file: 'scripts/a.js', dep: 'scripts/c.js', missing: ['f'] }], migrations: ['- ⚠ **마이그레이션.** 설명'] });
+check('제안문: 버전·⚠·HOLD·분기·review·적용 명령', [/6\.0\.0 → 6\.2\.0/.test(prop), /⚠/.test(prop), /scripts\/a\.js/.test(prop) && /HOLD|보류/.test(prop), /scripts\/b\.js/.test(prop), /AGENTS\.md/.test(prop), /template-update\.js --apply/.test(prop), /승인/.test(prop)], [true, true, true, true, true, true, true]);
+check('changelogSince: includeUnreleased 면 맨 앞에 미릴리스', changelogSince(CLP, '6.2.0', '6.2.0', { includeUnreleased: true }).map(s => s.ver), ['Unreleased']);
+check('changelogSince: 굵은 머리 없는 줄바꿈 항목은 … 로 끝난다', changelogSince('## [1.1.0]\n- wrapped line that continues\n  on the next line\n- done.\n', '1.0.0', '1.1.0')[0].items, ['wrapped line that continues…', 'done.']);
+const propSame = renderProposal({ localVer: '6.2.0', upstreamVer: '6.2.0', changelog: CLP, plan: planU, guard: guardU, held: [], migrations: [] });
+check('제안문: 같은 버전 + 파일 드리프트 → 미릴리스 항목을 보인다', /미릴리스/.test(propSame) && /미배포\./.test(propSame), true);
+const propUnknown = renderProposal({ localVer: '6.0.0', upstreamVer: '6.2.0', changelog: CLP, plan: { ...planU, changedSync: ['scripts/a.js'], newSync: [] }, guard: { safe: [], modified: [], unknown: ['scripts/a.js'] }, held: [], migrations: [] });
+check('제안문: 자동 갱신 0 + 앵커 없음 → --apply 는 아무것도 안 한다고 말하고 --force 를 안내', /--force/.test(propUnknown) && /자동 갱신\(sync\) 0건/.test(propUnknown), true);
+const CLBIG = '## [Unreleased]\n' + Array.from({ length: 20 }, (_, i) => `- **항목 ${i}.** x`).join('\n') + '\n## [6.2.0]\n- **a.** x\n';
+check('제안문: 버전별 15건 상한 + 외 N건', (() => { const p = renderProposal({ localVer: '6.2.0', upstreamVer: '6.2.0', changelog: CLBIG, plan: planU, guard: guardU, held: [], migrations: [] }); return /항목 14\./.test(p) && !/항목 15\./.test(p) && /외 5건/.test(p); })(), true);
+check('제안문: 최신이면 한 줄', renderProposal({ localVer: '6.2.0', upstreamVer: '6.2.0', changelog: CLP, plan: { ...planU, changedSync: [], newSync: [], changedReview: [] }, guard: { safe: [], modified: [], unknown: [] }, held: [], migrations: [] }).trim().split('\n').length, 1);
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

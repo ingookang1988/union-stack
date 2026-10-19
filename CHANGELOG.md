@@ -12,6 +12,13 @@ design, see [`DESIGN_RATIONALE.md`](./DESIGN_RATIONALE.md). Entries marked **⚠
 action in already-adopted projects.
 
 ## [Unreleased]
+- **PRO-29 ① — adopters learn about upstream updates without remembering a command.** `health` gains an `upstream` line
+  (INFO only): it reads a check cache (`template-sync.json` key `lastCheck`, next to the anchor — the anchor is untouched) and,
+  when run by the CLI on its own repo, refreshes it at most once per 24h (`template-update --refresh-cache`, 15 s cap; offline =
+  INFO). `template-update --proposal` prints a human-readable proposal — changes since your version (including unreleased
+  upstream entries when files differ), ⚠ migrations, what `--apply` would update, skip (forked / no anchor) or hold, and the
+  apply command — and writes nothing. `health --root`, `--offline` and every `gather()` caller (census, dashboard) stay
+  read-only. The upstream repo itself shows "해당 없음". No migration.
 - **PRO-28 ⑤ — `context-budget` measures `AGENTS.md` and reads `injects:` declarations (advisory).** The largest always-injected
   surface was not counted. It is now reported beside the bootstrap total, with the share taken by generated marker blocks, but kept
   **outside** the total, the OVER count and the exit code (no budget is set for it yet). A PRO that grows an always-injected surface

@@ -16,6 +16,8 @@ version: 1.0
 `effect surface`는 평면 밖 권한 allowlist(`.claude/settings*.json`)를 계수한다 — 비가역 외부 효과의 유일한 통제면이라 관측만 붙였다([ADR-23]).
 `retro due` 절([PRO-25] ①)은 회고 지표 7(발행 증분·보관 부채·정체 WO·GC 가능 PLAN·평면 지연·증류 정체·원장 크기)을 싣고 하나라도 임계를 넘으면 **WARN**(= PRO 의 CLARIFY, 비차단)이다 — 에이전트는 HANDOFF §4 에 제안 한 줄만([TOOL-32]).
 `receipts` 절([PRO-22] 단계 2)은 `adapter.json checks[]` 의 **차단 검사별 최신 영수증 포인터·나이**(INFO)다 — 영수증이 끊기면 꺼진 CI 가 여기서 보인다. 선언 부재는 무기입.
+`upstream` 절([PRO-29] ①)은 어답터가 **명령을 기억하지 않아도** 상류 새 버전을 보인다(INFO 전용): `template-sync.json lastCheck` 캐시를 읽고, CLI 를 자기 레포에서 돌릴 때만 24h 만료 시 `template-update --refresh-cache` 를 1회(15s 상한).
+`--root`·`--offline`·`gather()` 호출(census·대시보드)은 읽기 전용 — 쓰기·네트워크 0. 업데이트가 있으면 `--proposal` 제안문을 사람에게 보인다. 상류 자신은 "해당 없음".
 
 ## 언제 쓰나
 - 세션 마무리·커밋 전 자기 점검, 하네스 구조 변경 직후.

@@ -202,6 +202,15 @@ stderr with exit 1 (the dashboard is still written, without those sections).
 union-stack files are small skeletons; real docs grow. When a doc exceeds ~30KB (`node scripts/health.js` warns), split it along its ZFS lineage and/or rotate older entries — see `DESIGN_RATIONALE.md` (§7, rotation protocol).
 
 ## Upgrading from an older union-stack
+
+### How you learn an update exists (PRO-29 ①)
+`node scripts/health.js` shows an **`upstream`** line (INFO only, never a failure). It reads a cache in
+`.union-stack/template-sync.json` (`lastCheck`) and refreshes it at most once per 24h; offline is reported, not guessed.
+When it says *업데이트 있음*, run `node scripts/template-update.js --proposal`: a plain-language proposal (what changed,
+⚠ migrations, what `--apply` would update / skip / hold, files that need a human diff). It writes nothing. **Show it to
+the human and apply only after their approval** (`--apply`, then `health` + tests). Agents never `--apply` on their own.
+`health --root <other repo>` and `--offline` never refresh (no writes, no network).
+
 For the full per-version change list, see [`CHANGELOG.md`](./CHANGELOG.md) (entries marked **⚠** require a migration action). The one structural change so far:
 
 Two directories were renamed for clarity (folder name now matches its meaning):

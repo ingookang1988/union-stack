@@ -27,6 +27,8 @@
 //   node scripts/template-update.js              # 확인만(버전 + 드리프트 보고)
 //   node scripts/template-update.js --apply      # sync 카테고리 갱신(review는 보고만)
 //   node scripts/template-update.js --ref v6.1.0 # 특정 태그/브랜치 기준(기본 main)
+//   node scripts/template-update.js --proposal   # 사람용 제안문(stdout, 파일 쓰기 0 — [PRO-29] ①(b))
+//   node scripts/template-update.js --refresh-cache  # 확인 캐시만 갱신(health 가 24h 만료 시 부른다) — 요약 JSON 1줄
 //   node scripts/template-update.js --force     # 로컬 개조·판별 불가 파일도 덮어씀(--apply 와 함께)
 //   node scripts/template-update.js --json
 const fs = require('fs');
@@ -35,7 +37,7 @@ const crypto = require('crypto');
 const { walkFiles } = require('./fs_walk');
 const { OUTCOME } = require('./gate-contract');
 const { TEMPLATE_BITS } = require('./init');
-const { load: loadAdapter } = require('./adapter');
+const { load: loadAdapter, isTemplateRepo } = require('./adapter');
 const { readManifest, parseManifest, requireSymbols, exportKeys, MANIFEST: SHIP_MANIFEST } = require('./ship-manifest');
 
 // 마지막 정합 앵커 매니페스트(어답터 소유 — classifyPath 가 불가침으로 분류한다).
@@ -322,10 +324,123 @@ function seedAnchor(root, ref = 'clone') {
   writeAnchorRaw(root, ref, localTemplateFiles(root));
 }
 
-function writeAnchorRaw(root, ref, blobs) {
+function readSyncFile(root) {
+  try { return JSON.parse(fs.readFileSync(path.join(root, ANCHOR_PATH), 'utf8')) || {}; } catch { return {}; }
+}
+
+function writeSyncFile(root, obj) {
   const abs = path.join(root, ANCHOR_PATH);
   fs.mkdirSync(path.dirname(abs), { recursive: true });
-  fs.writeFileSync(abs, JSON.stringify({ upstream: UPSTREAM, ref, blobs }, null, 2) + '\n');
+  fs.writeFileSync(abs, JSON.stringify(obj, null, 2) + '\n');
+}
+
+function writeAnchorRaw(root, ref, blobs) {
+  // 확인 캐시(lastCheck)는 앵커와 같은 파일의 별도 키다 — 앵커를 다시 써도 지우지 않는다.
+  const prev = readSyncFile(root);
+  writeSyncFile(root, { upstream: UPSTREAM, ref, blobs, ...(prev.lastCheck ? { lastCheck: prev.lastCheck } : {}) });
+}
+
+// --- 확인 캐시 · 제안문([PRO-29] ①(a)(b), [WO-29a-1]) ---
+// health 는 동기·네트워크 없음이라 이 캐시를 읽는다. 24h 안이면 재조회하지 않는다(실패 시각도 센다 — 오프라인 폭주 방지).
+const CHECK_TTL_MS = 24 * 3600 * 1000;
+const PROPOSAL_ITEMS_CAP = 15; // 버전별 항목 상한 — 제안문은 결정 재료지 CHANGELOG 사본이 아니다
+
+/** 순수: 확인 결과 → 캐시 요약. updates = 버전이 뒤처졌거나 sync/review 드리프트가 있다. */
+function checkSummary({ ref, localVer, upstreamVer, plan, guard, held = [], migrations = [] }, now = Date.now()) {
+  const sync = plan.changedSync.length + plan.newSync.length;
+  const review = plan.changedReview.length + plan.newReview.length;
+  const behind = !!(localVer && upstreamVer && cmpVersions(localVer, upstreamVer) < 0);
+  return {
+    at: new Date(now).toISOString(), ref, localVer: localVer || null, upstreamVer: upstreamVer || null,
+    updates: behind || sync + review > 0, sync, review, held: held.length,
+    forked: guard.modified.length, unknown: guard.unknown.length, migrations: migrations.length,
+  };
+}
+
+function readLastCheck(root) { return readSyncFile(root).lastCheck || null; }
+
+/** 성공 요약은 통째로 교체, 실패({error})는 직전 성공 요약 위에 error·errorAt 만 얹는다. 앵커 키는 보존. */
+function writeLastCheck(root, summary) {
+  const prev = readSyncFile(root);
+  const lastCheck = summary.error
+    ? { ...(prev.lastCheck || {}), error: summary.error, errorAt: summary.at }
+    : summary;
+  writeSyncFile(root, { ...prev, lastCheck });
+}
+
+/** 순수: 마지막 시도(성공 at · 실패 errorAt 중 늦은 쪽)가 TTL 안인가. */
+function isFresh(last, now = Date.now(), ttl = CHECK_TTL_MS) {
+  if (!last) return false;
+  const t = Math.max(Date.parse(last.at || 0) || 0, Date.parse(last.errorAt || 0) || 0);
+  return t > 0 && now - t < ttl;
+}
+
+/**
+ * 순수: CHANGELOG 에서 (fromVer, toVer] 구간 — 버전별 항목 머리(굵은 글씨, 없으면 첫 줄 — 다음 줄로 이어지면 …).
+ * Unreleased 는 기본 제외, `includeUnreleased` 면 포함(상류는 릴리스 헤딩 없이 main 에 쌓는다 — 같은 버전이어도 파일은 바뀐다).
+ */
+function changelogSince(txt, fromVer, toVer, { includeUnreleased = false } = {}) {
+  const out = [];
+  let cur = null;
+  for (const line of String(txt || '').split(/\r?\n/)) {
+    const h = line.match(/^##\s*\[([^\]]+)\]/);
+    if (h) {
+      const v = h[1];
+      const inRange = v === 'Unreleased' ? includeUnreleased : (!toVer || cmpVersions(v, toVer) <= 0) && (!fromVer || cmpVersions(v, fromVer) > 0);
+      cur = inRange ? { ver: v, items: [] } : null;
+      if (cur) out.push(cur);
+      continue;
+    }
+    const item = cur && line.match(/^-\s+(.*)$/);
+    if (item) {
+      const bold = item[1].match(/\*\*(.+?)\*\*/);
+      cur.items.push((bold ? bold[1] : item[1]).trim());
+      cur.open = !bold;
+    } else if (cur && cur.open && /^\s+\S/.test(line)) {
+      // 굵은 머리 없는 항목이 다음 줄로 이어진다 — 첫 줄만 싣고 잘렸음을 표시한다.
+      const i = cur.items.length - 1;
+      if (!cur.items[i].endsWith('…')) cur.items[i] += '…';
+      cur.open = false;
+    } else if (cur) cur.open = false;
+  }
+  out.forEach(o => delete o.open);
+  return out;
+}
+
+/** 순수: 사람에게 보일 제안문. 적용은 사람 승인 뒤([ADR-12]) — 이 문서는 결정 재료다. */
+function renderProposal({ localVer, upstreamVer, changelog, plan, guard, held = [], migrations = [] }) {
+  const sync = [...plan.changedSync, ...plan.newSync];
+  const review = [...plan.changedReview, ...plan.newReview];
+  const behind = localVer && upstreamVer && cmpVersions(localVer, upstreamVer) < 0;
+  if (!behind && !sync.length && !review.length) return `union-stack 상류 업데이트 없음 — 최신(${localVer || '?'}).\n`;
+  const L = [`# union-stack 업데이트 제안 — ${localVer || '?'} → ${upstreamVer || '?'}`, ''];
+  const since = changelogSince(changelog, localVer, upstreamVer, { includeUnreleased: sync.length + review.length > 0 });
+  if (since.length) {
+    L.push('## 무엇이 바뀌었나(상류 CHANGELOG)');
+    for (const s of since) {
+      L.push(s.ver === 'Unreleased' ? '- **미릴리스(상류 main — 일부는 이미 받았을 수 있다)**' : `- **${s.ver}**`);
+      s.items.slice(0, PROPOSAL_ITEMS_CAP).forEach(i => L.push(`  - ${i}`));
+      if (s.items.length > PROPOSAL_ITEMS_CAP) L.push(`  - … 외 ${s.items.length - PROPOSAL_ITEMS_CAP}건(상류 CHANGELOG.md)`);
+    }
+    L.push('');
+  }
+  if (migrations.length) {
+    L.push('## ⚠ 마이그레이션 필요(적용 전 확인)');
+    migrations.forEach(m => L.push(`  ${m}`));
+    L.push('  → 절차: MIGRATION.md §"Upgrading from an older union-stack"', '');
+  }
+  const heldSet = new Set(held.map(h => h.file));
+  const auto = sync.filter(p => !guard.modified.includes(p) && !guard.unknown.includes(p) && !heldSet.has(p));
+  L.push(`## 적용하면 생기는 일`);
+  L.push(`- 자동 갱신(sync) ${auto.length}건${auto.length ? ': ' + auto.join(' ') : ''}`);
+  if (guard.modified.length) L.push(`- 건너뜀 — 로컬 분기(localForked, 개조 보존) ${guard.modified.length}건: ${guard.modified.join(' ')}`);
+  if (guard.unknown.length) L.push(`- 건너뜀 — 앵커 없음(판별 불가) ${guard.unknown.length}건: ${guard.unknown.join(' ')}`);
+  if (held.length) L.push(`- 보류(HOLD — 받으면 로드 크래시) ${held.length}건: ${held.map(h => `${h.file} → ${h.dep}${h.missing ? ` (${h.missing.join(', ')})` : ''}`).join(' · ')}`);
+  if (review.length) L.push(`- 사람이 diff 를 보고 반영(review — 자동 적용 안 됨) ${review.length}건: ${review.join(' ')}`);
+  if (!auto.length && guard.unknown.length) L.push(`- ⚠ 지금 \`--apply\` 는 아무 파일도 바꾸지 않는다(전부 앵커 없음). 개조가 없다고 확신하면 \`--apply --force\`, 아니면 키트([TOOL-35])로 동일 파일만 앵커를 심는다.`);
+  L.push('', '## 결정', '- 승인하면: `node scripts/template-update.js --apply` → `node scripts/health.js` · 테스트.',
+    '- 이 제안문은 결정 재료다. 에이전트는 사람의 승인 없이 `--apply` 하지 않는다.');
+  return L.join('\n') + '\n';
 }
 
 async function applyPlan(root, ref, targets, upstreamMap) {
@@ -356,6 +471,10 @@ async function main(argv = process.argv.slice(2)) {
   const fi = argv.indexOf('--force');
   const force = fi < 0 ? false : (argv[fi + 1] && !argv[fi + 1].startsWith('--') ? argv[fi + 1].split(',').map(x => x.trim()).filter(Boolean) : true);
   const json = argv.includes('--json');
+  const proposal = argv.includes('--proposal');
+  const refreshCache = argv.includes('--refresh-cache');
+  // 캐시는 어답터 것이다 — 상류 자신(템플릿 레포)에는 template-sync.json 을 만들지 않는다. --proposal 은 파일 쓰기 0.
+  const cacheOk = !isTemplateRepo(root) && !proposal;
   const ri = argv.indexOf('--ref');
   const ref = ri >= 0 ? argv[ri + 1] : 'main';
 
@@ -370,6 +489,8 @@ async function main(argv = process.argv.slice(2)) {
       fetchUpstream(ref),
     ]);
   } catch (e) {
+    if (cacheOk) { try { writeLastCheck(root, { at: new Date().toISOString(), error: e.message }); } catch { /* 캐시 실패는 무시 */ } }
+    if (refreshCache) { console.log(JSON.stringify({ error: e.message })); return OUTCOME.REJECT; }
     console.error(`상류 조회 실패: ${e.message}\n(네트워크/레이트리밋 확인. 오프라인이면 이 도구는 판단 불가 — 추측하지 않는다.)`);
     return OUTCOME.REJECT;
   }
@@ -391,6 +512,11 @@ async function main(argv = process.argv.slice(2)) {
   // 검사 대상 = 이번 런 갱신 대상 + 이미 동기화된 파일(A 실측: 지난 회차에 갱신된 dashboard → 보존 handoff-linter 의 실재 불일치가 다시는 경고되지 않았다).
   const stale = staleDeps(p => { try { return fs.readFileSync(path.join(root, p), 'utf8'); } catch { return null; } }, [...new Set([...ft.targets, ...syncedPaths(localFiles, upstreamMap)])], ft.skipped);
 
+  const held = holdTargets(ft.targets, stale, force).held;
+  const summary = checkSummary({ ref, localVer, upstreamVer, plan, guard, held, migrations });
+  if (cacheOk) { try { writeLastCheck(root, summary); } catch { /* 캐시 실패는 무시 */ } }
+  if (refreshCache) { console.log(JSON.stringify(summary)); return summary.updates ? OUTCOME.CLARIFY : OUTCOME.PASS; }
+  if (proposal) { process.stdout.write(renderProposal({ localVer, upstreamVer, changelog: upstreamChangelog, plan, guard, held, migrations })); return summary.updates ? OUTCOME.CLARIFY : OUTCOME.PASS; }
   if (json) {
     console.log(JSON.stringify({ ref, localVer, upstreamVer, plan, guard, staleDeps: stale, migrations, localOwned: lo.localOwned, upstreamIgnored: lo.upstreamIgnored, ownedConflicts: conflicts, shipManifest: !!upManifest, applied: false }, null, 2));
     return drift ? OUTCOME.CLARIFY : OUTCOME.PASS;
@@ -467,6 +593,6 @@ async function main(argv = process.argv.slice(2)) {
   return OUTCOME.CLARIFY;
 }
 
-module.exports = { classifyPath, matchGlob, ownedConflicts, localCtx, forceTargets, parseChangelogVersion, cmpVersions, gitBlobSha, gitBlobShas, buildPlan, classifySyncTargets, staleDeps, syncedPaths, holdTargets, readAnchor, writeAnchor, seedAnchor, localTemplateFiles, migrationActions, UPSTREAM, ANCHOR_PATH, SHIP_MANIFEST };
+module.exports = { classifyPath, matchGlob, ownedConflicts, localCtx, forceTargets, parseChangelogVersion, cmpVersions, gitBlobSha, gitBlobShas, buildPlan, classifySyncTargets, staleDeps, syncedPaths, holdTargets, readAnchor, writeAnchor, seedAnchor, checkSummary, readLastCheck, writeLastCheck, isFresh, changelogSince, renderProposal, CHECK_TTL_MS, localTemplateFiles, migrationActions, UPSTREAM, ANCHOR_PATH, SHIP_MANIFEST };
 
 if (require.main === module) main().then(c => process.exit(c), e => { console.error(e); process.exit(OUTCOME.REJECT); });

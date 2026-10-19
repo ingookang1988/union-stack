@@ -46,7 +46,7 @@ const nonLeakFails = g.dims.filter(d => d.status === 'FAIL' && d.name !== 'leaka
 // 어답터 평면의 FAIL(예: 자기 중복 ID 의 naming) 은 상류 테스트 실패가 아니다 — 그린 단언은 템플릿 모드에서만([ADR-30]).
 if (require('./adapter').isTemplateRepo()) check('gather 커밋 평면 게이트 그린', nonLeakFails === 0);
 else check('어답터: gather 가 전 절을 산출(판정은 어답터 몫)', g.dims.every(d => d.name && d.status));
-check('gather dims 19 (관측 10절 포함 — test infra [PRO-21] · receipts [PRO-22] · retro due [PRO-25])', g.dims.length === 19);
+check('gather dims 20 (관측 11절 포함 — test infra [PRO-21] · receipts [PRO-22] · retro due [PRO-25] · upstream [PRO-29])', g.dims.length === 20);
 // 로드맵 배선 관측([PRO-19] ②) — 판정 없는 INFO. roadmap 은 Schema 라 표면화가 수단의 전부다.
 const rDim = g.dims.find(d => d.name === 'roadmap wiring');
 check('roadmap wiring 절은 INFO', rDim && rDim.status === 'INFO');
@@ -165,6 +165,42 @@ const rtNo = computeHealth({ index, domainsDefined: defined, guideCount: 5, nami
 check('retro due: 사유 없으면 INFO 현재 값', rtNo.status === 'INFO' && /사유 없음 · 원장 크기 22/.test(rtNo.value));
 check('retro 미수집이면 절 없음', computeHealth({ index, domainsDefined: defined, guideCount: 5, namingViolations: 0, historyViolations: 0, leakageViolations: 0 }).dims.every(d => d.name !== 'retro due'));
 check('gatherRetro(상류): 지표 7', (() => { const { gatherRetro } = require('./health'); const r = gatherRetro(pathR.resolve(__dirname, '..')); return !!r && r.indicators.length === 7; })());
+
+// --- [WO-29a-1] upstream 차원([PRO-29] ①(a)) — INFO 전용, 종료 코드 불변 ---
+{
+  const { gatherUpstream } = require('./health');
+  const base = { index, domainsDefined: defined, guideCount: 5, namingViolations: 0, historyViolations: 0, leakageViolations: 0 };
+  const dimOf = up => computeHealth({ ...base, upstream: up }).dims.find(d => d.name === 'upstream');
+  check('upstream 인자 없음 → 차원 없음(회귀 0)', !computeHealth(base).dims.find(d => d.name === 'upstream'));
+  check('상류 자신 → INFO 해당 없음', /해당 없음/.test(dimOf({ self: true }).value) && dimOf({ self: true }).status === 'INFO');
+  check('기록 없음 → INFO + 명령', dimOf({ last: null }).status === 'INFO' && /template-update/.test(dimOf({ last: null }).value + dimOf({ last: null }).note));
+  const upd = dimOf({ last: { at: '2026-10-19T00:00:00Z', updates: true, localVer: '6.0.0', upstreamVer: '6.1.0', sync: 2, review: 1, held: 0, forked: 1, migrations: 1 } });
+  check('업데이트 있음 → INFO + --proposal', upd.status === 'INFO' && /6\.0\.0/.test(upd.value) && /6\.1\.0/.test(upd.value) && /--proposal/.test(upd.note));
+  check('최신 → INFO 최신', /최신/.test(dimOf({ last: { at: '2026-10-19T00:00:00Z', updates: false, localVer: '6.1.0', upstreamVer: '6.1.0' } }).value));
+  check('실패 → INFO(판정 아님)', dimOf({ last: { error: 'offline', errorAt: '2026-10-19T00:00:00Z' } }).status === 'INFO');
+  check('upstream 차원은 fails·warns 를 바꾸지 않는다', computeHealth({ ...base, upstream: { last: { updates: true } } }).fails === computeHealth(base).fails && computeHealth({ ...base, upstream: { last: { updates: true } } }).warns === computeHealth(base).warns);
+  // gatherUpstream: 상류 자신은 갱신을 시도하지 않는다 · 어답터는 만료 시 1회 refresh(주입)
+  let calls = 0;
+  const osU = require('os'), fsU = require('fs');
+  // 상류 판별은 package.json name 이다 — 어답터 팔 사본에서도 성립하도록 픽스처로 잰다(현 레포에 기대지 않는다).
+  const tmpS = fsU.mkdtempSync(pathR.join(osU.tmpdir(), 'hus-'));
+  try {
+    fsU.writeFileSync(pathR.join(tmpS, 'package.json'), '{"name":"union-stack"}');
+    check('gatherUpstream(상류) → self, refresh 0', gatherUpstream(tmpS, { refresh: () => { calls++; } }).self === true && calls === 0);
+  } finally { fsU.rmSync(tmpS, { recursive: true, force: true }); }
+  const tmpU = fsU.mkdtempSync(pathR.join(osU.tmpdir(), 'hu-'));
+  try {
+    fsU.mkdirSync(pathR.join(tmpU, '.union-stack'));
+    check('기본은 읽기 전용 — refresh 옵션 없으면 갱신 0 · 쓰기 0', gatherUpstream(tmpU).last === null && !fsU.existsSync(pathR.join(tmpU, '.union-stack/template-sync.json')));
+    check('gather(어답터) 기본 호출도 쓰기 0(census 불변식)', (() => { try { gather(tmpU); } catch { /* 빈 평면 — 다른 수집 실패는 무관 */ } return !fsU.existsSync(pathR.join(tmpU, '.union-stack/template-sync.json')); })());
+    const g1 = gatherUpstream(tmpU, { refresh: () => { calls++; } });
+    check('어답터·캐시 없음 → refresh 1회 · 결과 없음이면 last null', calls === 1 && g1.self === false && g1.last === null);
+    fsU.writeFileSync(pathR.join(tmpU, '.union-stack/template-sync.json'), JSON.stringify({ blobs: {}, lastCheck: { at: new Date().toISOString(), updates: false } }));
+    calls = 0;
+    check('신선한 캐시 → refresh 0', gatherUpstream(tmpU, { refresh: () => { calls++; } }).last.updates === false && calls === 0);
+    check('refresh 예외는 삼킨다(점수표 생존)', gatherUpstream(tmpU, { refresh: () => { throw new Error('x'); }, now: Date.now() + 48 * 3600e3 }).self === false);
+  } finally { fsU.rmSync(tmpU, { recursive: true, force: true }); }
+}
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
