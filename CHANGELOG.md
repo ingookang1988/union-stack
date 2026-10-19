@@ -12,6 +12,10 @@ design, see [`DESIGN_RATIONALE.md`](./DESIGN_RATIONALE.md). Entries marked **⚠
 action in already-adopted projects.
 
 ## [Unreleased]
+- **`health --root` judges the leakage gate only if the measured repo has it.** An adopter that dropped the template-only
+  `leakage-guard.js` was still judged by upstream's own copy of the guard when the census measured it, so it showed a false FAIL.
+  If the measured repo has no `scripts/leakage-guard.js`, the gate now reads "해당 없음", the same as when the adopter runs `health`
+  itself. No migration.
 - **Census weakening signals count only what the adopter changed.** In the first real round, all five weakening signals were
   false: adopters had received upstream's own test changes through `--apply`, or deleted upstream-only copies that upstream told
   them to remove. Files whose content now equals upstream's current blob, and deletions of upstream-only scripts, are excluded,

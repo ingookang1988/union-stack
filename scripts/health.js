@@ -303,7 +303,10 @@ function gather(root = path.resolve(__dirname, '..'), opts = {}) {
   const historyMd = fs.existsSync(hp) ? fs.readFileSync(hp, 'utf8') : '';
   const historyViolations = historyViolationsOf(historyMd).length;
   const historyClarifications = historyClarificationsOf(historyMd).length;
-  const leakageViolations = leakageGuard
+  // 해당 여부는 **측정 대상**이 그 게이트를 갖는가로 정한다([WO-29a-8] — census 가 상류 health 를 root 로 돌릴 때 상류 모듈이
+  // 가드를 뺀 어답터를 판정했다: 6회차 A 오탐). 판정 자체는 상류 모듈로 한다(가드가 있는 레포).
+  const targetHasGuard = fs.existsSync(path.join(root, 'scripts', 'leakage-guard.js'));
+  const leakageViolations = leakageGuard && targetHasGuard
     ? leakageGuard.collectFiles(root)
         .filter(rel => !leakageGuard.isSanitized(rel, fs.readFileSync(path.join(root, rel), 'utf8'))).length
     : null;

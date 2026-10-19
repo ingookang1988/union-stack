@@ -218,5 +218,31 @@ check('gatherRetro(상류): 지표 7', (() => { const { gatherRetro } = require(
   } finally { fsU.rmSync(tmpU, { recursive: true, force: true }); }
 }
 
+// --- [WO-29a-8] 누설 게이트 해당 여부 = 측정 대상 레포가 그 게이트를 갖는가(census 6회차 A 오탐 — 상류 모듈이 가드 없는 어답터를 판정) ---
+{
+  const fsL = require('fs'), osL = require('os');
+  const mk = withGuard => {
+    const t = fsL.mkdtempSync(pathR.join(osL.tmpdir(), 'hl-'));
+    fsL.mkdirSync(pathR.join(t, '.union-stack/plan'), { recursive: true });
+    fsL.writeFileSync(pathR.join(t, '.union-stack/plan/PLAN-01_real.md'), '---\nstatus: Draft\n---\n# 실제 결제 연동 계획\n');
+    fsL.mkdirSync(pathR.join(t, 'scripts'));
+    if (withGuard) fsL.writeFileSync(pathR.join(t, 'scripts/leakage-guard.js'), '// guard present\n');
+    return t;
+  };
+  const noG = mk(false), withG = mk(true);
+  try {
+    const lg = r => r.dims.find(d => d.name === 'leakage gate');
+    const a = gather(noG), b = gather(withG);
+    check('가드 없는 측정 대상 → INFO 해당 없음 · fails 에 안 셈', lg(a).status === 'INFO' && /해당 없음/.test(lg(a).value) && !a.dims.some(d => d.name === 'leakage gate' && d.status === 'FAIL'));
+    // 판정 모듈은 health 자신의 것이다 — 이 레포에 가드가 없으면(팔 env 형상) 판정할 수 없어 해당 없음이 맞다.
+    const selfHas = fsL.existsSync(pathR.join(__dirname, 'leakage-guard.js'));
+    check('가드 있는 측정 대상 → 현행 판정(미표시 파일 = FAIL · 판정 모듈 없으면 해당 없음)', selfHas ? lg(b).status === 'FAIL' : lg(b).status === 'INFO');
+  } finally { fsL.rmSync(noG, { recursive: true, force: true }); fsL.rmSync(withG, { recursive: true, force: true }); }
+  // 이 레포에 가드가 있으면 판정 차원, 없으면(어답터 팔 env 형상 — 템플릿 비트 제거) 해당 없음. 현 레포에 기대지 않는다.
+  const hasG = fsL.existsSync(pathR.join(__dirname, 'leakage-guard.js'));
+  const selfL = gather().dims.find(d => d.name === 'leakage gate');
+  check('현 레포 → 가드 유무대로(있으면 판정 · 없으면 해당 없음)', hasG ? ['OK', 'FAIL'].includes(selfL.status) : (selfL.status === 'INFO' && /해당 없음/.test(selfL.value)));
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
