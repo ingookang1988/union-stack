@@ -2,9 +2,9 @@
 ---
 id: WO-29a-3
 title: 1회차 적용 회신 결함 2 — 어답터 생성 파일의 상류 ID up: 접두 + census 이력 밖 앵커를 sync 경로로 한정 — [PRO-29] ①
-status: Verifying
+status: Closed
 parent: PRO-29
-evidence: "구현 완료(2026-10-19, 테스트 먼저): 어답터에 쓰는 생성 파일 3곳(work-close next.md 뼈대 · scaffold 머리글 · init 리셋 템플릿)의 상류 ID → [up:ID](prefixUpstreamRefs 재사용, 상류 자신 불변) · census foreign ⚠ 를 sync 경로로 한정(review 는 INFO). rcpt:n/a — work-close.test 71 · scaffold.test 46 · init.test 25 · adopter-census.test 53 · 스위트 50 중 48(실패 2 = fdt spike) · 팔 7 형상 · ref-linter --strict 미해소 30 = 기준선 30(전부 fdt)"
+evidence: "구현 완료(2026-10-19, 테스트 먼저): 어답터에 쓰는 생성 파일 3곳(work-close next.md 뼈대 · scaffold 머리글 · init 리셋 템플릿)의 상류 ID → [up:ID](prefixUpstreamRefs 재사용, 상류 자신 불변) · census foreign ⚠ 를 sync 경로로 한정(review 는 INFO). rcpt:n/a — work-close.test 71 · scaffold.test 46 · init.test 25 · adopter-census.test 53 · 스위트 50 중 48(실패 2 = fdt spike) · 팔 7 형상 · ref-linter --strict 미해소 30 = 기준선 30(전부 fdt) · Closed 판정 2026-10-19(인간 승인)"
 closed_by: [.union-stack/reference/tools/TOOL-30_adopter_census.md, .union-stack/proposals/PRO-29_connection_closure.md]
 version: 1.0
 ---

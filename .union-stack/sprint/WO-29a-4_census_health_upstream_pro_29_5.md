@@ -2,7 +2,7 @@
 ---
 id: WO-29a-4
 title: census 지연 분류 + health upstream 실행 가능 항목만 — [PRO-29] ① 5회차 보정
-status: Draft
+status: Active
 parent: PRO-29
 evidence: "none — 착수 전"
 closed_by: []
