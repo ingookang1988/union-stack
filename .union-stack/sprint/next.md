@@ -7,4 +7,5 @@
 |---|---|---|---|---|
 | [WO-01a-1 · auth_wiring] | (예시) 인증 게이트웨이 배선 | PLAN-01 | Draft | 해당없음 |
 | [WO-10a-1 · e6_scenario] | E6 시나리오 A/B 1사이클 (팔 2개 × 5런) | PRO-10 | Draft | 해당없음 |
+| [WO-29a-6 · handoff_7] | 상류 이탈 알림 고리 ② — 대시보드 어답터 이탈(신규) 카드 + HANDOFF 한 줄 + 7일 health INFO — [PRO-29] ②(c)(d) | PRO-29 | Draft | 해당없음 |
 <!-- worktable:end -->

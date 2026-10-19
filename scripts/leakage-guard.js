@@ -82,6 +82,7 @@ const METHODOLOGY = new Set([
   'WO-29a-3_w1_2_id_up_census_sync_pro_29.md',
   'WO-29a-4_census_health_upstream_pro_29_5.md',
   'WO-29a-5_census_delta_4_pro_29_a_b.md',
+  'WO-29a-6_handoff_7_health_info_pro_29_c_d.md',
   // 이 템플릿 자신의 개발에서 얻은 교훈([LSN-17]). 위탁 데이터 0이고, 더미로 만들면 선주입되는
   // *경고*가 경고이기를 그만둔다 — WO-10a-1 과 같은 근거로 마커 대신 등재로 닫는다.
   'LSN-17_shape_blind_spot.md',
