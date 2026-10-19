@@ -159,6 +159,72 @@ function upstreamBlobsOf(root) {
   } catch { return null; }
 }
 
+/**
+ * 규칙 이탈 키(순수, [PRO-29] ②(b) 고정 4종). 원자료 → 정렬된 키 배열 — 델타의 단위다. 관측 불가(null·absent)는 이탈이 아니다([ADR-23]).
+ *   gate:<차원>        어답터 health(상류 도구를 root 로)의 FAIL
+ *   rule:blocks-missing|blocks-stale|gate-contract-fork   AGENTS.md 재제안 차단 블록이 없거나 자기 원장과 어긋남 · 규칙 핵심(gate-contract.js) 보존 포크
+ *   weak:<종류>·weak:exceptions   직전 회차 HEAD 이후 약화 신호(상류 weakening-guard 분석) · 예외 순증
+ *   sync:applicable    적용 가능 지연 > 0([PRO-29] §6 재정의 바)
+ */
+function deviations(raw) {
+  const keys = new Set();
+  for (const d of ((raw.health && raw.health.dims) || [])) if (d.status === 'FAIL') keys.add(`gate:${d.name}`);
+  const r = raw.rules || {};
+  if (r.blocks === 'missing' || r.blocks === 'stale') keys.add(`rule:blocks-${r.blocks}`);
+  if (r.gateContractFork) keys.add('rule:gate-contract-fork');
+  if (raw.weakening) {
+    for (const k of raw.weakening.kinds || []) keys.add(`weak:${k}`);
+    if ((raw.weakening.exceptionsNet || 0) > 0) keys.add('weak:exceptions');
+  }
+  if (raw.sync && raw.sync.kinds && raw.sync.kinds.applicable > 0) keys.add('sync:applicable');
+  return [...keys].sort();
+}
+
+/** 델타(순수): 직전 키 vs 지금 키 → 신규 · 지속 · 해소. 직전 없음 = 첫 회차(전부 신규). 같은 이탈의 재보고는 지속이다. */
+function deltaOf(prev, cur) {
+  const p = new Set(prev || []), c = new Set(cur || []);
+  return { first: prev == null, new: [...c].filter(k => !p.has(k)), persist: [...c].filter(k => p.has(k)), resolved: [...p].filter(k => !c.has(k)) };
+}
+
+/** 어답터 git HEAD(읽기만). git 아님 = null. */
+function headOf(root) {
+  try { return execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); } catch { return null; }
+}
+
+/** 약화 신호(읽기만): 직전 회차 HEAD(없으면 HEAD) 대비 작업 트리 diff 를 상류 weakening-guard 로 분석. 종류·예외 순증만 남긴다(경로·본문 0). */
+function weakeningOf(root, prevHead) {
+  const range = prevHead || 'HEAD';
+  let txt;
+  try { txt = execFileSync('git', ['diff', '-U0', '--no-color', range], { cwd: root, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, stdio: ['ignore', 'pipe', 'ignore'] }); } catch { return null; }
+  // 삭제·신규 파일까지 보려면 추적 안 된 삭제도 포함해야 한다 — git diff <commit> 은 작업 트리 삭제를 이미 포함한다.
+  try {
+    const wg = require('./weakening-guard');
+    const a = wg.analyze(wg.parseUnifiedDiff(txt));
+    return { range, kinds: a.signals.map(x => x.kind), exceptionsNet: a.exceptions.net };
+  } catch { return null; }
+}
+
+/** 규칙 파일(읽기만): AGENTS.md 재제안 차단 블록 상태 · gate-contract.js 보존 포크 여부. */
+function rulesOf(root, syncJson, upstreamTree) {
+  const out = { blocks: 'absent', gateContractFork: false };
+  const agents = readSafe(path.join(root, 'AGENTS.md'));
+  if (agents != null) {
+    try {
+      const bi = require('./blocks-index');
+      const expected = bi.inject(agents, bi.buildIndex(bi.gather(root)));
+      out.blocks = expected == null ? 'missing' : expected.replace(/\r\n/g, '\n') === agents.replace(/\r\n/g, '\n') ? 'ok' : 'stale';
+    } catch { out.blocks = 'absent'; }
+  }
+  const gc = 'scripts/gate-contract.js';
+  const local = readSafe(path.join(root, gc));
+  const a = syncJson && syncJson.blobs && syncJson.blobs[gc];
+  if (local != null && a && upstreamTree && upstreamTree[gc]) {
+    const cands = Array.isArray(a) ? a : [a];
+    out.gateContractFork = !gitBlobShas(local).some(x => cands.includes(x));
+  }
+  return out;
+}
+
 function measure(root, label, upstreamKeys = new Set(), opts = {}) {
   const raw = { label, path: root, measured: localDate() };
   if (!fs.existsSync(path.join(root, '.union-stack'))) { raw.error = '.union-stack 없음 — 측정 대상 아님'; return raw; }
@@ -185,6 +251,10 @@ function measure(root, label, upstreamKeys = new Set(), opts = {}) {
     syncCtx = { upstreamOnly: opts.upstreamOnly || new Set(), ignored: adapter.upstreamIgnored || [], localShas };
   }
   raw.sync = syncLag(syncJson, opts.upstreamTree || null, opts.upstreamBlobs || null, syncCtx);
+  // [WO-29a-5] 규칙 이탈 재료 — git·파일 읽기만, 어답터 쓰기 0.
+  raw.head = headOf(root);
+  raw.rules = rulesOf(root, syncJson, opts.upstreamTree || null);
+  raw.weakening = raw.head ? weakeningOf(root, opts.prevHead || null) : null;
   let scripts = [];
   try { scripts = fs.readdirSync(path.join(root, 'scripts')); } catch { /* 없음 */ }
   raw.instruments = { present: INSTRUMENTS.filter(f => scripts.includes(f)), missing: INSTRUMENTS.filter(f => !scripts.includes(f)),
@@ -266,12 +336,15 @@ function anonymize(raw) {
     residual: raw.residual ? `H2 없음 ${raw.residual.noH2} · 절 부재 ${raw.residual.absent} · 별칭 후보 ${raw.residual.alias} · evidence 소급 ${raw.residual.evidence}${raw.residual.unresolved.length ? ' — 미해소 헤딩: ' + raw.residual.unresolved.slice(0, DIST_CAP).map(u => `${u.heading}(${u.n})`).join(' · ') + (raw.residual.unresolved.length > DIST_CAP ? ` · 외 ${raw.residual.unresolved.length - DIST_CAP}종` : '') : ''}` : '—',
     sync: !raw.sync ? '—' : !raw.sync.anchor ? '판별 불가(앵커 없음)'
       : `${raw.sync.behind == null ? '지연 ?(상류 트리 없음)' : raw.sync.kinds ? `적용 가능 ${raw.sync.kinds.applicable}` : `지연 ${raw.sync.behind}`} / 앵커 ${raw.sync.files}${raw.sync.kinds ? [['forked', '보존 포크'], ['review', 'review'], ['upstreamOnly', '상류 전용'], ['refused', '거부']].filter(([k]) => raw.sync.kinds[k]).map(([k, l]) => ` · ${l} ${raw.sync.kinds[k]}`).join('') : ''}${raw.sync.removed ? ` · 상류 삭제 ${raw.sync.removed}` : ''}${raw.sync.foreign ? ` · ⚠ 이력 밖 앵커 ${raw.sync.foreign}` : ''}${raw.sync.foreignReview ? ` · review 이력 밖 ${raw.sync.foreignReview}(덮어쓰기 없음)` : ''}${raw.sync.lastCheck ? ` · 자기 확인 ${raw.sync.lastCheck.error && !raw.sync.lastCheck.at ? '실패' : raw.sync.lastCheck.updates ? '업데이트 있음' : '최신'} @ ${String(raw.sync.lastCheck.at || '').slice(0, 10) || '?'}` : ' · 자기 확인 없음'}`,
+    deviation: !raw.delta ? '—' : raw.delta.first
+      ? `첫 회차 — ${raw.delta.new.length}${raw.delta.new.length ? ` (${raw.delta.new.join(' · ')})` : ''}`
+      : `신규 ${raw.delta.new.length}${raw.delta.new.length ? ` (${raw.delta.new.join(' · ')})` : ''} · 지속 ${raw.delta.persist.length} · 해소 ${raw.delta.resolved.length}`,
     headings, health, adrs: String(raw.ledger.adrs), planeKb: raw.health.planeKb != null ? String(raw.health.planeKb) : '—',
   };
 }
 
 const COLS = [
-  ['label', '레포'], ['version', '버전 / 앵커'], ['sync', '동기화 지연(파일)'], ['instruments', '계측기'], ['docs', '문서'], ['wo', 'WO · 상태(첫 토큰)'], ['headings', 'WO H2 헤딩(상위 8)'], ['sections', '필수 절 매칭(활성 WO)'], ['residual', '잔여 원인'], ['evidence', 'evidence'],
+  ['label', '레포'], ['version', '버전 / 앵커'], ['sync', '동기화 지연(파일)'], ['deviation', '이탈(신규)'], ['instruments', '계측기'], ['docs', '문서'], ['wo', 'WO · 상태(첫 토큰)'], ['headings', 'WO H2 헤딩(상위 8)'], ['sections', '필수 절 매칭(활성 WO)'], ['residual', '잔여 원인'], ['evidence', 'evidence'],
   ['backfill', '백필 대상'], ['duplicates', '중복 ID'], ['collisions', '상류 ID 충돌'], ['arithmeticFrom', 'arithmeticFrom'], ['fetch', 'upward-fetch'],
   ['candidates', 'upstream_candidate'], ['adapter', 'adapter.json'], ['health', 'health'], ['adrs', 'ADR'], ['planeKb', '평면 KB'],
 ];
@@ -306,21 +379,38 @@ function run(argv = process.argv.slice(2), root = path.resolve(__dirname, '..'))
     return OUTCOME.CLARIFY;
   }
   const upstreamKeys = new Set(buildIndex(root).map(d => `${d.domain}-${d.id}`));
+  // 원자료 위치(주입 실험은 --raw-dir 로 실데이터와 분리). 직전 회차 = 레이블별 가장 늦은 원자료(쓰기 전에 읽는다).
+  const rdi = argv.indexOf('--raw-dir');
+  const rawDir = rdi >= 0 && argv[rdi + 1] ? path.resolve(argv[rdi + 1]) : path.join(root, RAW_DIR);
+  const prevOf = label => {
+    let files = [];
+    try { files = fs.readdirSync(rawDir).filter(f => f.endsWith(`_${label}.json`)).sort(); } catch { return null; }
+    for (let i = files.length - 1; i >= 0; i--) { try { return JSON.parse(fs.readFileSync(path.join(rawDir, files[i]), 'utf8')); } catch { /* 다음 */ } }
+    return null;
+  };
   const { tree: upstreamTree } = upstreamTreeOf(root);
   const upstreamBlobs = upstreamBlobsOf(root);
   let upstreamOnly = new Set();
   try { upstreamOnly = new Set(JSON.parse(readSafe(path.join(root, 'scripts/ship-manifest.json')) || '{}').upstreamOnly || []); } catch { /* 매니페스트 없음 */ }
   const raws = list.map(r => {
-    try { return measure(path.resolve(String(r.path || '')), String(r.label || '?'), upstreamKeys, { upstreamTree, upstreamBlobs, upstreamOnly }); }
+    const label = String(r.label || '?');
+    const prev = prevOf(label);
+    try {
+      const raw = measure(path.resolve(String(r.path || '')), label, upstreamKeys, { upstreamTree, upstreamBlobs, upstreamOnly, prevHead: prev && prev.head });
+      if (!raw.error) { raw.deviations = deviations(raw); raw.delta = deltaOf(prev && Array.isArray(prev.deviations) ? prev.deviations : (prev ? deviations(prev) : null), raw.deviations); }
+      return raw;
+    }
     catch (e) { return { label: String(r.label || '?'), path: r.path, measured: localDate(), error: String(e && e.message || e).split('\n')[0] }; }
   });
   const rows = raws.map(anonymize);
   const meta = upstreamMeta(root);
   const measured = rows.filter(r => !r.error).length;
   if (argv.includes('--json')) { console.log(JSON.stringify({ meta, rows }, null, 2)); return measured ? OUTCOME.PASS : OUTCOME.CLARIFY; }
+  if (argv.includes('--delta')) {
+    for (const raw of raws) if (raw.delta) console.log(`  ${raw.label}: ${raw.delta.first ? '첫 회차' : '델타'} — 신규 ${raw.delta.new.length}${raw.delta.new.length ? ` (${raw.delta.new.join(' · ')})` : ''} · 지속 ${raw.delta.persist.length} · 해소 ${raw.delta.resolved.length}${raw.delta.resolved.length ? ` (${raw.delta.resolved.join(' · ')})` : ''}`);
+  }
   const section = render(rows, meta);
   if (argv.includes('--write')) {
-    const rawDir = path.join(root, RAW_DIR);
     fs.mkdirSync(rawDir, { recursive: true });
     for (const raw of raws) fs.writeFileSync(path.join(rawDir, `${meta.date}_${raw.label}.json`), JSON.stringify(raw, null, 2) + '\n');
     const outPath = path.join(root, OUT);
@@ -336,6 +426,6 @@ function run(argv = process.argv.slice(2), root = path.resolve(__dirname, '..'))
   return measured ? OUTCOME.PASS : OUTCOME.CLARIFY;
 }
 
-module.exports = { localDate, DIST_CAP, statusHead, headingDist, estimateArithmeticFrom, isUpstreamCandidate, syncLag, upstreamTreeOf, upstreamBlobsOf, measure, anonymize, render, appendSection, run, CONTRACT, INSTRUMENTS, COLS, REPOS_FILE, RAW_DIR, OUT, BLOCK_BEGIN };
+module.exports = { localDate, DIST_CAP, statusHead, headingDist, estimateArithmeticFrom, isUpstreamCandidate, deviations, deltaOf, syncLag, upstreamTreeOf, upstreamBlobsOf, measure, anonymize, render, appendSection, run, CONTRACT, INSTRUMENTS, COLS, REPOS_FILE, RAW_DIR, OUT, BLOCK_BEGIN };
 
 if (require.main === module) process.exit(withContract(CONTRACT, argv => run(argv))());

@@ -2,10 +2,10 @@
 ---
 id: WO-29a-5
 title: 상류 이탈 알림 고리 ① — census --delta(직전 회차 대비 신규/해소) + 규칙 이탈 4종 분류 — [PRO-29] ②(a)(b)
-status: Draft
+status: Verifying
 parent: PRO-29
-evidence: "none — 착수 전"
-closed_by: []
+evidence: "구현 완료(2026-10-19, 테스트 먼저): census 규칙 이탈 4종(gate·rule·weak·sync) + 직전 원자료 대비 델타(신규·지속·해소) · --delta · --raw-dir · 이탈(신규) 열. rcpt:n/a — adopter-census.test 76(+18) · 스위트 50 중 48(실패 2 = fdt spike) · 팔 7 형상 · 주입 실험 4/4 신규 → 재실행 신규 0 → 되돌림 해소"
+closed_by: [.union-stack/reference/tools/TOOL-30_adopter_census.md, .union-stack/proposals/PRO-29_connection_closure.md]
 version: 1.0
 ---
 # [WO-29a-5] 상류 이탈 알림 고리 ① — census --delta(직전 회차 대비 신규/해소) + 규칙 이탈 4종 분류 — [PRO-29] ②(a)(b)
@@ -27,4 +27,9 @@ version: 1.0
 - 범위 밖: 대시보드 카드 · HANDOFF 한 줄 · 7일 health INFO([PRO-29] ②(c)(d) — 다음 WO).
 
 ## 증거
-- 닫을 때 frontmatter `evidence:` 에 값 또는 `none — 이유`(선언 검사가 있으면 `rcpt:<name>@<sha>`). 상위 축 흔적은 `closed_by:`.
+- 테스트: census +18(4종 각각 · 관측 불가 = 이탈 아님 · 구 원자료 호환 · 델타 3상태·첫 회차·재보고 = 지속 · 익명 열 3 · 실 git 픽스처: head 기록·blocks missing·테스트 삭제 검출·쓰기 0).
+- **주입 실험**(어답터 형상 사본 · `--raw-dir` 분리 · 상류 CENSUS.md 원복): 주입 → 신규 4종 전부(+ `gate:leakage gate` — 주입한 잘못된 이름 파일이 더미 표식도 없어 같은 주입이 두 게이트를 깼다, 정당한 검출) ·
+  그대로 재실행 → **신규 0** · 지속 5 · 되돌림 → **해소 5**. 성공 바 4/4 · 재보고 0 충족.
+- 실데이터 첫 델타(dry-run, 직전 = 2026-10-19 원자료 — 규칙·약화 필드 없는 구 꼴): A 신규 sync:applicable · weak:numeric-change · B 신규 sync:applicable ·
+  C 신규 rule:blocks-missing(AGENTS.md 에 차단 블록 마커 없음 — [PRO-14] 이전 미완) · sync:applicable · weak 3종(커밋 안 된 작업 트리). sync:applicable 은 오늘 push 분.
+- 설계 판단: 규칙 파일 분기는 "상류와 다름"이 아니라 **자기 원장 대비 낡음**으로 본다 — 어답터 차단 블록은 자기 원장에서 생성되므로 상류와 늘 다르다(비교 무의미).

@@ -26,6 +26,10 @@ frontmatter-backfill·zfs-linter·upward-fetch)를 `root` 인자로 돌린다 �
   **적용 가능**(바 = 0, [PRO-29] §6) · 보존 포크(로컬 해시 ≠ 앵커 — 해시만) · review · 상류 전용 · 거부(`upstreamIgnored`) ·
   상류 삭제 · **이력 밖 앵커**(상류 어느 이력에도 없는 sha — 로컬 개조가 정합으로 시딩됨. ⚠ 는 sync 경로만 — 다음 `--apply` 가 덮는다. review 경로는 가드가 쓰지 않아 INFO) · 어답터 자기 확인(`lastCheck`). git 읽기만, 앵커 없음 = 판별 불가. 계측기 열은 **배송 도구만**(상류 전용 adopter-arm 은 3회차에 제외 — 사본 없는 어답터가 9/10 으로 오보됐다).
 
+- **규칙 이탈(신규)**([PRO-29] ②, [WO-29a-5]): 고정 4종 — `gate:<차원>`(health FAIL) · `rule:blocks-missing|blocks-stale|gate-contract-fork` · `weak:<종류>`·`weak:exceptions`
+  (직전 회차 HEAD 이후 diff 를 상류 weakening-guard 로) · `sync:applicable`. 직전 원자료와 대조해 **신규 / 지속 / 해소** — 같은 이탈은 다시 "신규"가 되지 않는다.
+  `--delta` 는 레포별 1줄 요약. `--raw-dir <dir>` 로 원자료 위치를 분리한다(주입 실험용).
+
 ## 언제 쓰지 않나
 - **어답터 변경** — 읽기만. 백필 적용·설정은 어답터 몫([PRO-27] §5).
 - **자동 승격** — `upstream_candidate` 는 ID·개수만 목록화, 검토는 사람([ADR-12]).
@@ -37,4 +41,5 @@ node scripts/adopter-census.js                 # dry-run: 표 출력 (목록 없
 node scripts/adopter-census.js --write         # eval/CENSUS.md 에 회차 append + eval/private/census/ 원자료
 node scripts/adopter-census.js --repos <json>  # 목록 파일 지정: { "repos": [{ "label": "A", "path": "…" }] }
 node scripts/adopter-census.js --json          # 기계 판독 (--contract 로 계약 출력)
+node scripts/adopter-census.js --delta         # 레포별 규칙 이탈 신규·지속·해소 1줄(--write 와 함께 쓰면 회차 기록)
 ```

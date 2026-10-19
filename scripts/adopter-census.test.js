@@ -151,5 +151,51 @@ try {
   } finally { fs.rmSync(tmpS, { recursive: true, force: true }); }
 }
 
+// --- [WO-29a-5] 규칙 이탈 4종 + 델타([PRO-29] ②(a)(b)) ---
+{
+  const { deviations, deltaOf } = require('./adopter-census');
+  const R = (o = {}) => ({ health: { fails: 0, dims: [] }, rules: { blocks: 'ok', gateContractFork: false }, weakening: { kinds: [], exceptionsNet: 0 }, sync: { anchor: true, kinds: { applicable: 0 } }, ...o });
+  check('이탈 없음 → []', JSON.stringify(deviations(R())) === '[]');
+  check('① 게이트 red → gate:<차원>', JSON.stringify(deviations(R({ health: { fails: 1, dims: [{ name: 'naming gate', status: 'FAIL' }, { name: 'x', status: 'WARN' }] } }))) === '["gate:naming gate"]');
+  check('② 규칙 파일: blocks 없음/낡음 · gate-contract 포크', JSON.stringify(deviations(R({ rules: { blocks: 'stale', gateContractFork: true } }))) === '["rule:blocks-stale","rule:gate-contract-fork"]'
+    && deviations(R({ rules: { blocks: 'missing', gateContractFork: false } }))[0] === 'rule:blocks-missing');
+  check('③ 약화: 종류별 1키 + 예외 순증', JSON.stringify(deviations(R({ weakening: { kinds: ['test-deleted', 'test-deleted', 'skip-added'], exceptionsNet: 2 } }))) === '["weak:exceptions","weak:skip-added","weak:test-deleted"]');
+  check('④ 동기화: 적용 가능 > 0', JSON.stringify(deviations(R({ sync: { anchor: true, kinds: { applicable: 3 } } }))) === '["sync:applicable"]');
+  check('관측 불가(약화 null · blocks absent)는 이탈이 아니다', JSON.stringify(deviations(R({ weakening: null, rules: { blocks: 'absent', gateContractFork: false } }))) === '[]');
+  check('구 원자료(필드 없음) 호환 → 게이트만', JSON.stringify(deviations({ health: { fails: 0, dims: [] } })) === '[]');
+  const d1 = deltaOf(null, ['gate:a', 'weak:b']);
+  check('델타: 직전 없음 = 첫 회차 · 전부 신규', d1.first === true && d1.new.length === 2 && !d1.persist.length);
+  const d2 = deltaOf(['gate:a', 'weak:b'], ['gate:a', 'sync:applicable']);
+  check('델타: 신규 · 지속 · 해소', JSON.stringify([d2.new, d2.persist, d2.resolved]) === JSON.stringify([['sync:applicable'], ['gate:a'], ['weak:b']]) && d2.first === false);
+  check('델타: 같은 이탈 재보고 = 지속(신규 0)', deltaOf(['gate:a'], ['gate:a']).new.length === 0);
+  const BASED = { label: 'D', measured: 'd', version: { changelog: null }, anchor: { present: false }, instruments: { present: [], missing: [] }, docs: { total: 0, byDomain: {} },
+    wo: { total: 0, malformed: 0, statusDist: {}, evidence: { value: 0, none: 0, missing: 0 }, closedBy: 0 }, backfill: { targets: 0, estimable: 0 }, naming: { duplicates: 0, violations: 0 }, collisions: 0,
+    arithmeticFrom: { current: 0, suggested: 0, colliding: [] }, fetch: { active: 0, vacuous: 0 }, candidates: [], adapter: { present: false }, health: { fails: 0, dims: [] }, ledger: { adrs: 0 } };
+  check('익명 열: 신규 키 · 지속·해소 수', /^신규 1 \(sync:applicable\) · 지속 1 · 해소 1$/.test(anonymize({ ...BASED, delta: d2 }).deviation));
+  check('익명 열: 첫 회차', /^첫 회차 — 2 \(gate:a · weak:b\)$/.test(anonymize({ ...BASED, delta: d1 }).deviation));
+  check('익명 열: 델타 없음(구 원자료) → —', anonymize(BASED).deviation === '—');
+  check('COLS 에 이탈(신규)', COLS.some(c => c[0] === 'deviation'));
+  // measure: 실제 git 레포 픽스처 — 약화(테스트 삭제)·blocks 없음 · 어답터 쓰기 0
+  const { execFileSync } = require('child_process');
+  const tmpD = fs.mkdtempSync(path.join(os.tmpdir(), 'census-dev-'));
+  try {
+    const g = (...a) => execFileSync('git', a, { cwd: tmpD, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+    fs.mkdirSync(path.join(tmpD, '.union-stack/sprint'), { recursive: true });
+    fs.mkdirSync(path.join(tmpD, 'scripts'));
+    fs.writeFileSync(path.join(tmpD, 'scripts/a.test.js'), "check('x', 1)\n");
+    fs.writeFileSync(path.join(tmpD, 'AGENTS.md'), '# agents\n');
+    g('init', '-q'); g('-c', 'user.email=t@t', '-c', 'user.name=t', 'add', '-A'); g('-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qm', 'base');
+    const head0 = g('rev-parse', 'HEAD');
+    const r0 = measure(tmpD, 'D');
+    check('measure: head 기록 · 첫 회차 약화 범위 = 작업 트리', r0.head === head0 && r0.weakening && r0.weakening.range === 'HEAD');
+    check('measure: AGENTS.md 에 blocks 마커 없음 → missing', r0.rules.blocks === 'missing');
+    fs.rmSync(path.join(tmpD, 'scripts/a.test.js'));
+    const before = g('status', '--porcelain');
+    const r1 = measure(tmpD, 'D', new Set(), { prevHead: head0 });
+    check('measure: 직전 HEAD 이후 테스트 삭제 → weak:test-deleted', deviations(r1).includes('weak:test-deleted') && r1.weakening.range === head0);
+    check('measure: 어답터 쓰기 0(git 상태 불변)', g('status', '--porcelain') === before);
+  } finally { fs.rmSync(tmpD, { recursive: true, force: true }); }
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

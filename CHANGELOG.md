@@ -12,6 +12,11 @@ design, see [`DESIGN_RATIONALE.md`](./DESIGN_RATIONALE.md). Entries marked **⚠
 action in already-adopted projects.
 
 ## [Unreleased]
+- **PRO-29 ② — upstream sees when an adopter drifts from the rules, and only what is new.** `adopter-census` derives four fixed
+  deviation kinds per adopter: a failing health gate; a missing or stale re-proposal blocks block in AGENTS.md, or a kept fork of
+  `gate-contract.js`; weakening signals since the previous round's HEAD (upstream `weakening-guard` over the adopter's diff); and
+  applicable sync lag. It compares them with the previous round's raw data as **new / persisting / resolved**. `--delta` prints one line
+  per adopter, and `--write` adds an "이탈(신규)" column. Git and file reads only, no adopter writes; output holds kind names and counts only. `--raw-dir` keeps experiment data apart.
 - **PRO-29 ① — "update available" means there is something to do.** After the second adopter round, all three adopters had
   nothing left to apply, yet `health` said *업데이트 있음* everywhere: kept forks and review files they had already looked at counted
   as updates. Now `template-update` raises it only for files `--apply` would update, unseen review changes, ⚠ migrations or a newer
