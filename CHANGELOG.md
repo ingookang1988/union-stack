@@ -12,6 +12,12 @@ design, see [`DESIGN_RATIONALE.md`](./DESIGN_RATIONALE.md). Entries marked **⚠
 action in already-adopted projects.
 
 ## [Unreleased]
+- **PRO-29 ①(c) — the update proposal has to reach a human, and upstream can see whether it did.** `handoff-linter` raises a
+  CLARIFY (never a block) when the `upstream` cache says an update exists but neither "next work" nor "open items" in HANDOFF
+  mentions it. Deferring is fine; it just has to be written down. It reads the cache only (no network) and stays silent upstream.
+  `adopter-census` gains a **sync lag** column: the adopter's anchor (the upstream blobs it last received) against upstream
+  `origin/main`, by file count, plus files removed upstream, **anchors found nowhere in upstream history** (a local fork
+  seeded as "in sync", which the next `--apply` would overwrite), and the adopter's own last check. Git reads only; no anchor = undeterminable. No migration.
 - **PRO-29 ① — adopters learn about upstream updates without remembering a command.** `health` gains an `upstream` line
   (INFO only): it reads a check cache (`template-sync.json` key `lastCheck`, next to the anchor — the anchor is untouched) and,
   when run by the CLI on its own repo, refreshes it at most once per 24h (`template-update --refresh-cache`, 15 s cap; offline =

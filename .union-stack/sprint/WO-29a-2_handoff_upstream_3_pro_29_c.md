@@ -2,10 +2,10 @@
 ---
 id: WO-29a-2
 title: 하류 제안 고리 닫기 — HANDOFF 린터 upstream 연결 + 어답터 3곳 실동기화 관측 — [PRO-29] ①(c)
-status: Draft
+status: Verifying
 parent: PRO-29
-evidence: "none — 착수 전"
-closed_by: []
+evidence: "상류 몫 완료(2026-10-19, 테스트 먼저): handoff-linter upstream-unrelayed(§3·§4 언급 검사 · 캐시만 · 상류 침묵) · adopter-census 동기화 지연 열(syncLag — 앵커 vs origin/main 블롭 · 후보 배열 · 상류 삭제 · 이력 밖 앵커 · 자기 확인). rcpt:n/a — handoff-linter.test 29(+8) · adopter-census.test 51(+14) · 스위트 50 중 48(실패 2 = fdt spike 귀속) · 팔 7 형상 충족. dry-run: A 지연 13/80 · B 55/120(상류 삭제 10 · 이력 밖 5) · C 4/91 · 자기 확인 3곳 없음. 사람 몫(어답터 3곳 적용 → 5회차 지연 0) 대기 — Verifying 유지"
+closed_by: [.union-stack/reference/tools/TOOL-30_adopter_census.md, .union-stack/proposals/PRO-29_connection_closure.md]
 version: 1.0
 ---
 # [WO-29a-2] 하류 제안 고리 닫기 — HANDOFF 린터 upstream 연결 + 어답터 3곳 실동기화 관측 — [PRO-29] ①(c)
@@ -26,4 +26,8 @@ version: 1.0
 - 부산물: 적용 중 드러난 상류 결함은 이 WO 에서 고치지 않고 별 WO 로 발행(범위 고정). 카드 [TOOL-30] · handoff-linter 카드 · CHANGELOG.
 
 ## 증거
-- 닫을 때 frontmatter `evidence:` 에 값 또는 `none — 이유`(선언 검사가 있으면 `rcpt:<name>@<sha>`). 상위 축 흔적은 `closed_by:`.
+- 테스트: handoff-linter +8(언급 없음 CLARIFY · §3/§4 언급 통과 · §1만 = CLARIFY · 최신/캐시 없음/옵션 없음 침묵 · --proposal 안내) · census +14(판별 불가 · 지연/삭제 · 후보 배열 · foreign · 익명 열 · 쓰기 0).
+- 발견 1(실측): 시딩 앵커는 후보 배열(B 120 중 100) — 첫 구현은 104 로 과대 집계. 배열 대조로 수정.
+- 발견 2(실측): B 앵커 5건이 상류 이력 어디에도 없다 = 로컬 개조가 정합으로 시딩됨 → 다음 `--apply` 가 덮는다. 열에 ⚠ 로 표면화(②고리 규칙 이탈의 첫 실례).
+- 카드: handoff-linter 전용 TOOL 카드는 없다(게이트 체인 소속) — 신설 안 함. 규칙은 CHANGELOG·코드 주석.
+- 남은 것(사람): A·B·C 세션에서 health upstream → --proposal → 승인 → --apply → 상류 census --write(5회차). B 는 이력 밖 앵커 5 를 먼저 확인(--force 대상에서 제외).

@@ -89,5 +89,42 @@ try {
   check('측정 대상 아님은 error 행', measure(path.join(tmp, 'nope'), 'N').error && anonymize(measure(path.join(tmp, 'nope'), 'N')).error);
 } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
 
+// --- [WO-29a-2] 동기화 지연 열([PRO-29] ①) — 앵커(받은 상류 블롭) vs 상류 origin/main 블롭. 읽기 전용 · 네트워크 0 ---
+{
+  const { syncLag } = require('./adopter-census');
+  const tree = { 'scripts/a.js': 'A2', 'scripts/b.js': 'B1', 'CHANGELOG.md': 'C2' };
+  check('앵커 없음 → 판별 불가(0 아님)', JSON.stringify(syncLag(null, tree)) === JSON.stringify({ anchor: false }));
+  const lag = syncLag({ ref: 'main', blobs: { 'scripts/a.js': 'A1', 'scripts/b.js': 'B1', 'scripts/gone.js': 'G1' }, lastCheck: { at: '2026-10-19T00:00:00Z', updates: true } }, tree);
+  check('지연 = 앵커 블롭 ≠ 상류 블롭 · 상류에서 사라진 파일은 따로', lag.anchor === true && lag.files === 3 && lag.behind === 1 && lag.removed === 1);
+  check('자기 확인(lastCheck) 병기', lag.lastCheck.updates === true && lag.lastCheck.at === '2026-10-19T00:00:00Z');
+  check('시딩 앵커의 후보 배열(gitBlobShas) — 하나라도 일치하면 지연 아님(어답터 실측: 120 중 100 이 배열)',
+    syncLag({ blobs: { 'scripts/a.js': ['X', 'A2'], 'scripts/b.js': ['Y', 'Z'] } }, tree).behind === 1);
+  const lagF = syncLag({ blobs: { 'scripts/a.js': 'A1', 'scripts/b.js': 'LOCAL' } }, { 'scripts/a.js': 'A2', 'scripts/b.js': 'B1' }, new Set(['A1', 'A2', 'B1']));
+  check('상류 이력에 없는 앵커(foreign) — 지연과 따로(로컬 개조가 정합으로 시딩됨 → 다음 --apply 가 덮는다)', lagF.behind === 1 && lagF.foreign === 1);
+  check('익명 열: foreign 표기', /이력 밖 앵커 1/.test(anonymize({ label: 'F', measured: 'd', version: { changelog: null }, anchor: { present: true }, instruments: { present: [], missing: [] }, docs: { total: 0, byDomain: {} },
+    wo: { total: 0, malformed: 0, statusDist: {}, evidence: { value: 0, none: 0, missing: 0 }, closedBy: 0 }, backfill: { targets: 0, estimable: 0 }, naming: { duplicates: 0, violations: 0 }, collisions: 0,
+    arithmeticFrom: { current: 0, suggested: 0, colliding: [] }, fetch: { active: 0, vacuous: 0 }, candidates: [], adapter: { present: false }, health: { fails: 0, dims: [] }, ledger: { adrs: 0 }, sync: lagF }).sync));
+  check('상류 트리 없음 → 비교 불가(behind null)', syncLag({ blobs: { 'scripts/a.js': 'A1' } }, null).behind === null);
+  const base = { label: 'S', measured: 'd', version: { changelog: '6.0.0' }, anchor: { present: true, ref: 'main', date: '2026-10-19' }, instruments: { present: [], missing: [] }, docs: { total: 0, byDomain: {} },
+    wo: { total: 0, malformed: 0, statusDist: {}, evidence: { value: 0, none: 0, missing: 0 }, closedBy: 0 }, backfill: { targets: 0, estimable: 0 }, naming: { duplicates: 0, violations: 0 }, collisions: 0,
+    arithmeticFrom: { current: 0, suggested: 0, colliding: [] }, fetch: { active: 0, vacuous: 0 }, candidates: [], adapter: { present: false }, health: { fails: 0, dims: [] }, ledger: { adrs: 0 } };
+  check('익명 열: 지연 N 파일 · 앵커 · 자기 확인', /지연 1 \/ 앵커 3 · 상류 삭제 1 · 자기 확인 업데이트 있음 @ 2026-10-19/.test(anonymize({ ...base, sync: lag }).sync));
+  check('익명 열: 지연 0', /^지연 0 \/ 앵커 2/.test(anonymize({ ...base, sync: syncLag({ blobs: { 'scripts/b.js': 'B1', 'CHANGELOG.md': 'C2' } }, tree) }).sync));
+  check('익명 열: 앵커 없음 = 판별 불가', /판별 불가/.test(anonymize({ ...base, sync: { anchor: false } }).sync));
+  check('익명 열: 구 원자료(sync 없음) → —', anonymize(base).sync === '—');
+  check('익명 열: 파일명 없음', !/scripts\//.test(anonymize({ ...base, sync: lag }).sync));
+  check('COLS 에 동기화 지연', COLS.some(c => c[0] === 'sync'));
+  // measure: 앵커 파일만 읽고 쓰지 않는다
+  const tmpS = fs.mkdtempSync(path.join(os.tmpdir(), 'census-sync-'));
+  try {
+    fs.mkdirSync(path.join(tmpS, '.union-stack/sprint'), { recursive: true });
+    const anchorTxt = JSON.stringify({ ref: 'main', blobs: { 'scripts/a.js': 'A1' } });
+    fs.writeFileSync(path.join(tmpS, '.union-stack/template-sync.json'), anchorTxt);
+    const r = measure(tmpS, 'S', new Set(), { upstreamTree: tree });
+    check('measure: sync 원자료', r.sync && r.sync.behind === 1 && r.sync.files === 1);
+    check('measure: 어답터 쓰기 0(앵커 파일 불변)', fs.readFileSync(path.join(tmpS, '.union-stack/template-sync.json'), 'utf8') === anchorTxt);
+  } finally { fs.rmSync(tmpS, { recursive: true, force: true }); }
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

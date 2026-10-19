@@ -78,7 +78,7 @@ function partBody(text, key) {
 }
 
 /** 순수 분석: 본문 → {findings, tokens, budget}. findings는 전부 CLARIFY급. */
-function analyze(text, budget = BUDGETS.handoff) {
+function analyze(text, budget = BUDGETS.handoff, { upstream = null } = {}) {
   const findings = [];
   const tokens = estimateTokens(text);
   if (tokens > budget) {
@@ -108,7 +108,25 @@ function analyze(text, budget = BUDGETS.handoff) {
         '다음 작업이 WO 를 가리키지 않는다 — 이월 중인 prose 라면 WO 로 승격해 진입점을 [WO-*] 로 적어라([PRO-13] §4-4 · [PRO-19])' });
     }
   }
+  // 하류 제안 고리([PRO-29] ①(c)): 상류 업데이트가 있다(health upstream 캐시)는데 다음 세션 진입점(§3)·미해결(§4)에 그 말이 없으면
+  // 제안이 사람에게 닿지 않은 채 세션이 끝난다. 적용하라는 게 아니라 "사람에게 보였는가"를 묻는다 — 보류도 언급이면 충분하다.
+  if (upstream && upstream.updates) {
+    const carry = [assigned.next, assigned.open].filter(Boolean).map(s => s.body.join('\n')).join('\n');
+    if (!UPSTREAM_MENTION.test(carry)) {
+      findings.push({ rule: 'upstream-unrelayed', msg:
+        `상류 업데이트 있음(${upstream.localVer || '?'} → ${upstream.upstreamVer || '?'}) — §3 또는 §4 에 언급이 없다. \`node scripts/template-update.js --proposal\` 을 사람에게 보이고 결정(적용·보류)을 적어라([PRO-29] ①)` });
+    }
+  }
   return { findings, tokens, budget };
+}
+const UPSTREAM_MENTION = /template-update|--proposal|업데이트 제안|상류 업데이트|upstream/i;
+
+/** 상류 확인 캐시(template-sync.json lastCheck) — 네트워크 0. 상류 자신·캐시 없음·template-update 부재 = null(침묵). */
+function readUpstream(root) {
+  try {
+    if (require('./adapter').isTemplateRepo(root)) return null;
+    return require('./template-update').readLastCheck(root);
+  } catch { return null; }
 }
 
 function run(argv = process.argv.slice(2)) {
@@ -118,7 +136,7 @@ function run(argv = process.argv.slice(2)) {
     console.log('HANDOFF 린터: HANDOFF.md 없음 — 건너뜀(신규 프로젝트 보호).');
     return OUTCOME.PASS;
   }
-  const r = analyze(fs.readFileSync(p, 'utf8'), budgetsFor(root).handoff); // adapter.json budgets.handoff 가 있으면 그 값([ADR-29])
+  const r = analyze(fs.readFileSync(p, 'utf8'), budgetsFor(root).handoff, { upstream: readUpstream(root) }); // adapter.json budgets.handoff 가 있으면 그 값([ADR-29])
   if (argv.includes('--json')) { console.log(JSON.stringify(r, null, 2)); return r.findings.length ? OUTCOME.CLARIFY : OUTCOME.PASS; }
   if (r.findings.length) {
     console.error(`\n[HANDOFF 린터] CLARIFY — 표면화만, 차단하지 않는다([PRO-13]):`);
@@ -130,6 +148,6 @@ function run(argv = process.argv.slice(2)) {
   return OUTCOME.PASS;
 }
 
-module.exports = { analyze, parseSections, assignParts, partBody, run, CONTRACT, PARTS, HANDOFF_PATH };
+module.exports = { readUpstream, UPSTREAM_MENTION, analyze, parseSections, assignParts, partBody, run, CONTRACT, PARTS, HANDOFF_PATH };
 
 if (require.main === module) process.exit(withContract(CONTRACT, run)());

@@ -91,7 +91,53 @@ function readSafe(p) { try { return fs.readFileSync(p, 'utf8'); } catch { return
 function dateOf(p) { try { return fs.statSync(p).mtime.toISOString().slice(0, 10); } catch { return null; } }
 
 /** 한 레포 측정(읽기 전용). upstreamKeys: 상류 색인의 DOMAIN-ID 집합(충돌 계수용). 반환: 원자료(경로 포함 — 비공개). */
-function measure(root, label, upstreamKeys = new Set()) {
+/**
+ * 동기화 지연(순수, [PRO-29] ①): 어답터 앵커(받은 상류 블롭 sha) vs 상류 트리(origin/main 블롭 sha).
+ * behind = 앵커에 있는 파일 중 상류가 그 뒤로 바뀐 것 · removed = 상류에서 사라진 것. 앵커 없음 = 판별 불가(0 아님, [ADR-23]).
+ * lastCheck = 어답터 자기 확인 캐시(health upstream) — 병기만. upstreamBlobs(상류 전 이력 블롭 집합)가 있으면 foreign 을 가른다.
+ */
+function syncLag(syncJson, upstreamTree, upstreamBlobs = null) {
+  if (!syncJson || typeof syncJson.blobs !== 'object' || !syncJson.blobs) return { anchor: false };
+  const paths = Object.keys(syncJson.blobs);
+  const lc = syncJson.lastCheck || null;
+  const out = { anchor: true, ref: syncJson.ref || null, files: paths.length, behind: null, removed: null,
+    lastCheck: lc ? { at: lc.at || null, updates: lc.updates === true, error: lc.error || null } : null };
+  if (!upstreamTree) return out;
+  // 앵커 값은 sha 문자열 또는 후보 배열(시딩 — 개행 이형 흡수, template-update gitBlobShas). 후보 중 하나라도 같으면 정합.
+  const same = (a, up) => Array.isArray(a) ? a.includes(up) : a === up;
+  const lagging = paths.filter(p => upstreamTree[p] && !same(syncJson.blobs[p], upstreamTree[p]));
+  // foreign: 지연 중 앵커 값이 상류 이력 어디에도 없는 것 — 로컬 개조가 "정합"으로 시딩됐다(다음 --apply 가 개조를 덮는다). 이력 집합이 있을 때만.
+  if (upstreamBlobs) {
+    const foreign = lagging.filter(p => !(Array.isArray(syncJson.blobs[p]) ? syncJson.blobs[p] : [syncJson.blobs[p]]).some(x => upstreamBlobs.has(x)));
+    out.foreign = foreign.length;
+    out.behind = lagging.length - foreign.length;
+  } else out.behind = lagging.length;
+  out.removed = paths.filter(p => !upstreamTree[p]).length;
+  return out;
+}
+
+/** 상류 트리(path → blob sha) — 어답터가 받을 수 있는 지점(origin/main), 없으면 HEAD. git 읽기만. */
+function upstreamTreeOf(root) {
+  for (const ref of ['origin/main', 'HEAD']) {
+    try {
+      const out = execFileSync('git', ['ls-tree', '-r', ref], { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 64 * 1024 * 1024 });
+      const tree = {};
+      for (const line of out.split('\n')) { const m = line.match(/^\d+ blob ([0-9a-f]{40})\t(.+)$/); if (m) tree[m[2]] = m[1]; }
+      return { ref, tree };
+    } catch { /* 다음 ref */ }
+  }
+  return { ref: null, tree: null };
+}
+
+/** 상류 전 이력의 블롭 sha 집합(git 읽기만, 1회). 실패 = null(foreign 판별 생략). */
+function upstreamBlobsOf(root) {
+  try {
+    const out = execFileSync('git', ['rev-list', '--all', '--objects'], { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 512 * 1024 * 1024 });
+    return new Set(out.split('\n').map(l => l.slice(0, 40)).filter(x => x.length === 40));
+  } catch { return null; }
+}
+
+function measure(root, label, upstreamKeys = new Set(), opts = {}) {
   const raw = { label, path: root, measured: localDate() };
   if (!fs.existsSync(path.join(root, '.union-stack'))) { raw.error = '.union-stack 없음 — 측정 대상 아님'; return raw; }
   const adapter = loadAdapter(root);
@@ -104,6 +150,9 @@ function measure(root, label, upstreamKeys = new Set()) {
   let ref = null;
   try { ref = anchor ? (JSON.parse(anchor).ref || null) : null; } catch { ref = '(파싱 실패)'; }
   raw.anchor = { present: !!anchor, ref, date: anchor ? dateOf(path.join(root, '.union-stack/template-sync.json')) : null };
+  let syncJson = null;
+  try { syncJson = anchor ? JSON.parse(anchor) : null; } catch { syncJson = null; }
+  raw.sync = syncLag(syncJson, opts.upstreamTree || null, opts.upstreamBlobs || null);
   let scripts = [];
   try { scripts = fs.readdirSync(path.join(root, 'scripts')); } catch { /* 없음 */ }
   raw.instruments = { present: INSTRUMENTS.filter(f => scripts.includes(f)), missing: INSTRUMENTS.filter(f => !scripts.includes(f)),
@@ -183,12 +232,14 @@ function anonymize(raw) {
     adapter: raw.adapter.present ? `statusMap ${raw.adapter.statusMapKeys} · evidenceFields ${raw.adapter.evidenceFields.join('/') || '없음'}${raw.adapter.private ? ' · private' : ''}` : '없음',
     sections: raw.sections ? (raw.sections.active ? `활성 ${raw.sections.active} · 목표 ${Math.round(100 * raw.sections.goal / raw.sections.active)}% · 수용 기준 ${Math.round(100 * raw.sections.accept / raw.sections.active)}% · 증거 ${Math.round(100 * raw.sections.evidence / raw.sections.active)}% · 3절 충족 ${raw.sections.complete}` : '활성 0') : '—',
     residual: raw.residual ? `H2 없음 ${raw.residual.noH2} · 절 부재 ${raw.residual.absent} · 별칭 후보 ${raw.residual.alias} · evidence 소급 ${raw.residual.evidence}${raw.residual.unresolved.length ? ' — 미해소 헤딩: ' + raw.residual.unresolved.slice(0, DIST_CAP).map(u => `${u.heading}(${u.n})`).join(' · ') + (raw.residual.unresolved.length > DIST_CAP ? ` · 외 ${raw.residual.unresolved.length - DIST_CAP}종` : '') : ''}` : '—',
+    sync: !raw.sync ? '—' : !raw.sync.anchor ? '판별 불가(앵커 없음)'
+      : `${raw.sync.behind == null ? '지연 ?(상류 트리 없음)' : `지연 ${raw.sync.behind}`} / 앵커 ${raw.sync.files}${raw.sync.removed ? ` · 상류 삭제 ${raw.sync.removed}` : ''}${raw.sync.foreign ? ` · ⚠ 이력 밖 앵커 ${raw.sync.foreign}` : ''}${raw.sync.lastCheck ? ` · 자기 확인 ${raw.sync.lastCheck.error && !raw.sync.lastCheck.at ? '실패' : raw.sync.lastCheck.updates ? '업데이트 있음' : '최신'} @ ${String(raw.sync.lastCheck.at || '').slice(0, 10) || '?'}` : ' · 자기 확인 없음'}`,
     headings, health, adrs: String(raw.ledger.adrs), planeKb: raw.health.planeKb != null ? String(raw.health.planeKb) : '—',
   };
 }
 
 const COLS = [
-  ['label', '레포'], ['version', '버전 / 앵커'], ['instruments', '계측기'], ['docs', '문서'], ['wo', 'WO · 상태(첫 토큰)'], ['headings', 'WO H2 헤딩(상위 8)'], ['sections', '필수 절 매칭(활성 WO)'], ['residual', '잔여 원인'], ['evidence', 'evidence'],
+  ['label', '레포'], ['version', '버전 / 앵커'], ['sync', '동기화 지연(파일)'], ['instruments', '계측기'], ['docs', '문서'], ['wo', 'WO · 상태(첫 토큰)'], ['headings', 'WO H2 헤딩(상위 8)'], ['sections', '필수 절 매칭(활성 WO)'], ['residual', '잔여 원인'], ['evidence', 'evidence'],
   ['backfill', '백필 대상'], ['duplicates', '중복 ID'], ['collisions', '상류 ID 충돌'], ['arithmeticFrom', 'arithmeticFrom'], ['fetch', 'upward-fetch'],
   ['candidates', 'upstream_candidate'], ['adapter', 'adapter.json'], ['health', 'health'], ['adrs', 'ADR'], ['planeKb', '평면 KB'],
 ];
@@ -223,8 +274,10 @@ function run(argv = process.argv.slice(2), root = path.resolve(__dirname, '..'))
     return OUTCOME.CLARIFY;
   }
   const upstreamKeys = new Set(buildIndex(root).map(d => `${d.domain}-${d.id}`));
+  const { tree: upstreamTree } = upstreamTreeOf(root);
+  const upstreamBlobs = upstreamBlobsOf(root);
   const raws = list.map(r => {
-    try { return measure(path.resolve(String(r.path || '')), String(r.label || '?'), upstreamKeys); }
+    try { return measure(path.resolve(String(r.path || '')), String(r.label || '?'), upstreamKeys, { upstreamTree, upstreamBlobs }); }
     catch (e) { return { label: String(r.label || '?'), path: r.path, measured: localDate(), error: String(e && e.message || e).split('\n')[0] }; }
   });
   const rows = raws.map(anonymize);
@@ -249,6 +302,6 @@ function run(argv = process.argv.slice(2), root = path.resolve(__dirname, '..'))
   return measured ? OUTCOME.PASS : OUTCOME.CLARIFY;
 }
 
-module.exports = { localDate, DIST_CAP, statusHead, headingDist, estimateArithmeticFrom, isUpstreamCandidate, measure, anonymize, render, appendSection, run, CONTRACT, INSTRUMENTS, COLS, REPOS_FILE, RAW_DIR, OUT, BLOCK_BEGIN };
+module.exports = { localDate, DIST_CAP, statusHead, headingDist, estimateArithmeticFrom, isUpstreamCandidate, syncLag, upstreamTreeOf, upstreamBlobsOf, measure, anonymize, render, appendSection, run, CONTRACT, INSTRUMENTS, COLS, REPOS_FILE, RAW_DIR, OUT, BLOCK_BEGIN };
 
 if (require.main === module) process.exit(withContract(CONTRACT, argv => run(argv))());

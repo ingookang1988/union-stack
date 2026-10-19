@@ -89,5 +89,21 @@ check('REJECT 불가 게이트', code === OUTCOME.REJECT, false);
 check('예산 인자 주입: 넉넉하면 budget 소견 없음', analyze(bloated, 100000).findings.some(f => f.rule === 'budget'), false);
 check('예산 인자 주입: 보고되는 budget 값', analyze(bloated, 100000).budget, 100000);
 
+// --- [WO-29a-2] upstream 연결([PRO-29] ①(c)) — 업데이트 제안이 사람에게 닿았는지 세션 종료 의례가 묻는다 ---
+{
+  const UP = { updates: true, localVer: '6.0.0', upstreamVer: '6.1.0' };
+  const rules = (t, up) => analyze(t, 100000, { upstream: up }).findings.map(f => f.rule);
+  check('업데이트 있음 + 언급 없음 → upstream-unrelayed', rules(FULL, UP).includes('upstream-unrelayed'), true);
+  const relayed3 = FULL.replace('## 3. 다음 작업', '## 3. 다음 작업\n- 상류 업데이트 제안(template-update --proposal)을 사람에게 보임 — 승인 대기');
+  check('§3 에 언급 → 통과', rules(relayed3, UP).includes('upstream-unrelayed'), false);
+  const relayed4 = FULL.replace(/(## 4\.[^\n]*\n)/, '$1- upstream 업데이트 있음 — 사람이 보류 결정\n');
+  check('§4 에 언급 → 통과', rules(relayed4, UP).includes('upstream-unrelayed'), false);
+  check('§1 요약에만 언급 → 여전히 CLARIFY(다음 세션 진입점에 있어야 한다)', rules(FULL.replace('- 했다', '- 했다 · template-update 봄'), UP).includes('upstream-unrelayed'), true);
+  check('최신 → 침묵', rules(FULL, { updates: false }).includes('upstream-unrelayed'), false);
+  check('캐시 없음 → 침묵', rules(FULL, null).includes('upstream-unrelayed'), false);
+  check('옵션 없음(기존 호출) → 침묵(회귀 0)', analyze(FULL).findings.map(f => f.rule).includes('upstream-unrelayed'), false);
+  check('메시지에 --proposal 안내', analyze(FULL, 100000, { upstream: UP }).findings.find(f => f.rule === 'upstream-unrelayed').msg.includes('--proposal'), true);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
