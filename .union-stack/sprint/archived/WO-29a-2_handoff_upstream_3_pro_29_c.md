@@ -2,9 +2,9 @@
 ---
 id: WO-29a-2
 title: 하류 제안 고리 닫기 — HANDOFF 린터 upstream 연결 + 어답터 3곳 실동기화 관측 — [PRO-29] ①(c)
-status: Verifying
+status: Closed
 parent: PRO-29
-evidence: "상류 몫 완료(2026-10-19, 테스트 먼저): handoff-linter upstream-unrelayed(§3·§4 언급 검사 · 캐시만 · 상류 침묵) · adopter-census 동기화 지연 열(syncLag — 앵커 vs origin/main 블롭 · 후보 배열 · 상류 삭제 · 이력 밖 앵커 · 자기 확인). rcpt:n/a — handoff-linter.test 29(+8) · adopter-census.test 51(+14) · 스위트 50 중 48(실패 2 = fdt spike 귀속) · 팔 7 형상 충족. dry-run: A 지연 13/80 · B 55/120(상류 삭제 10 · 이력 밖 5) · C 4/91 · 자기 확인 3곳 없음. 사람 몫(어답터 3곳 적용 → 5회차 지연 0) 대기 — Verifying 유지"
+evidence: "상류 몫 완료(2026-10-19, 테스트 먼저): handoff-linter upstream-unrelayed(§3·§4 언급 검사 · 캐시만 · 상류 침묵) · adopter-census 동기화 지연 열(syncLag — 앵커 vs origin/main 블롭 · 후보 배열 · 상류 삭제 · 이력 밖 앵커 · 자기 확인). rcpt:n/a — handoff-linter.test 29(+8) · adopter-census.test 51(+14) · 스위트 50 중 48(실패 2 = fdt spike 귀속) · 팔 7 형상 충족. dry-run: A 지연 13/80 · B 55/120(상류 삭제 10 · 이력 밖 5) · C 4/91 · 자기 확인 3곳 없음. 사람 몫(어답터 3곳 적용 → 5회차 지연 0) — 5회차(2026-10-19): 3곳 health upstream 자기 확인 도달 · 자동 적용 가능 지연 3곳 0. 바 재정의(지연 0 → 자동 적용 가능 지연 0, PRO-29 §6 판정) 로 충족 · Closed 판정 2026-10-19(인간 승인)"
 closed_by: [.union-stack/reference/tools/TOOL-30_adopter_census.md, .union-stack/proposals/PRO-29_connection_closure.md]
 version: 1.0
 ---
