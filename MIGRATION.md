@@ -252,6 +252,10 @@ Then `node scripts/work-close.js --table --write`. Any work orders you tracked a
 view by itself. Closed WOs move to `sprint/archived/` at session end and are **never deleted** — they
 must stay indexed for the GC condition in `plan/_GUIDE.md` to remain computable.
 
+If `work-close --table --write` (or `scaffold`) created a file for you before this fix, its header may cite an upstream ID
+as `[PRO-15]`, which your `ref-linter --strict` reports as broken (you have no local PRO-15). Change it to `[up:PRO-15]`
+in the comment line above the marker block (outside the generated block, so it is yours to edit). New files are written that way already.
+
 Also: `Live` was removed from the lock vocabulary — search your docs for `Verifying/Live` and drop the
 `Live` half. No node can have had that status (it was never indexable), so nothing unlocks in practice.
 

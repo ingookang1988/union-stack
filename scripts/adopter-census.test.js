@@ -104,6 +104,14 @@ try {
   check('익명 열: foreign 표기', /이력 밖 앵커 1/.test(anonymize({ label: 'F', measured: 'd', version: { changelog: null }, anchor: { present: true }, instruments: { present: [], missing: [] }, docs: { total: 0, byDomain: {} },
     wo: { total: 0, malformed: 0, statusDist: {}, evidence: { value: 0, none: 0, missing: 0 }, closedBy: 0 }, backfill: { targets: 0, estimable: 0 }, naming: { duplicates: 0, violations: 0 }, collisions: 0,
     arithmeticFrom: { current: 0, suggested: 0, colliding: [] }, fetch: { active: 0, vacuous: 0 }, candidates: [], adapter: { present: false }, health: { fails: 0, dims: [] }, ledger: { adrs: 0 }, sync: lagF }).sync));
+  // [WO-29a-3] B 실측 꼴: 이력 밖 앵커 5건이 전부 review — 3-way 가드는 sync 후보의 앵커만 쓰고 review 는 --apply·--force 어느 쪽도 쓰지 않는다 → 경보 아님
+  const revPaths = ['AGENTS.md', 'README.md', 'package.json', '.union-stack/plan/_GUIDE.md', '.union-stack/sprint/_GUIDE.md'];
+  const lagR = syncLag({ blobs: Object.fromEntries(revPaths.map(p => [p, 'LOCAL'])) }, Object.fromEntries(revPaths.map(p => [p, 'UP'])), new Set(['UP']));
+  check('review 이력 밖 앵커 → foreign 0 · foreignReview 5 · 지연에서도 뺀다', lagR.foreign === 0 && lagR.foreignReview === 5 && lagR.behind === 0);
+  const colR = anonymize({ label: 'R', measured: 'd', version: { changelog: null }, anchor: { present: true }, instruments: { present: [], missing: [] }, docs: { total: 0, byDomain: {} },
+    wo: { total: 0, malformed: 0, statusDist: {}, evidence: { value: 0, none: 0, missing: 0 }, closedBy: 0 }, backfill: { targets: 0, estimable: 0 }, naming: { duplicates: 0, violations: 0 }, collisions: 0,
+    arithmeticFrom: { current: 0, suggested: 0, colliding: [] }, fetch: { active: 0, vacuous: 0 }, candidates: [], adapter: { present: false }, health: { fails: 0, dims: [] }, ledger: { adrs: 0 }, sync: lagR }).sync;
+  check('익명 열: review 이력 밖은 ⚠ 없이 INFO 표기', !colR.includes('⚠') && /review 이력 밖 5\(덮어쓰기 없음\)/.test(colR));
   check('상류 트리 없음 → 비교 불가(behind null)', syncLag({ blobs: { 'scripts/a.js': 'A1' } }, null).behind === null);
   const base = { label: 'S', measured: 'd', version: { changelog: '6.0.0' }, anchor: { present: true, ref: 'main', date: '2026-10-19' }, instruments: { present: [], missing: [] }, docs: { total: 0, byDomain: {} },
     wo: { total: 0, malformed: 0, statusDist: {}, evidence: { value: 0, none: 0, missing: 0 }, closedBy: 0 }, backfill: { targets: 0, estimable: 0 }, naming: { duplicates: 0, violations: 0 }, collisions: 0,

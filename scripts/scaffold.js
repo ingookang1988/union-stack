@@ -14,7 +14,8 @@ const fs = require('fs');
 const path = require('path');
 const { buildIndex } = require('./zfs_index');
 const { parseId, isValidName } = require('./zfs_util');
-const { load: loadAdapter, arithmeticApplies, SECTION_KEYS } = require('./adapter');
+const { load: loadAdapter, arithmeticApplies, SECTION_KEYS, isTemplateRepo } = require('./adapter');
+const { prefixUpstreamRefs } = require('./ref-linter');
 const { estimateTokens } = require('./context-budget');
 const { withContract, OUTCOME } = require('./gate-contract');
 
@@ -85,10 +86,12 @@ function slugOf(slug, title) {
 }
 
 /** 뼈대 본문(순수). 선택 절은 주석 한 줄로만 안내 — 뼈대가 예산을 먹으면 안 된다. */
-function renderBody({ domain, id, title, parent, sections }) {
+function renderBody({ domain, id, title, parent, sections, adopter = false }) {
   const [goal, accept, evidence] = sections;
+  // 머리글의 상류 ID 는 어답터에서 [up:ID]([WO-29a-3]) — 로컬 ID(parent·자기)는 그대로다.
+  const head = `<!-- [Wiki] 작업 지시. 상태 정본은 이 frontmatter \`status:\` 하나뿐이다([PRO-15]). scaffold 생성 — 선택 절(배경·설계·절차)은 필요할 때만 추가. -->`;
   return [
-    `<!-- [Wiki] 작업 지시. 상태 정본은 이 frontmatter \`status:\` 하나뿐이다([PRO-15]). scaffold 생성 — 선택 절(배경·설계·절차)은 필요할 때만 추가. -->`,
+    adopter ? prefixUpstreamRefs(head) : head,
     '---',
     `id: ${domain}-${id}`,
     `title: ${title}`,
@@ -132,7 +135,7 @@ function plan(root, { domain, parent, title, slug, lineage = 'a', id: forcedId, 
   const file = `${DIR[domain]}/${domain}-${id}_${sl}.md`;
   if (!isValidName(path.basename(file))) return { ok: false, issues: [`파일명이 ZFS 문법에 맞지 않는다: ${path.basename(file)}`], domain, id, parent };
   if (fs.existsSync(path.join(root, file))) return { ok: false, issues: [`${file} 이 이미 있다 — 덮어쓰지 않는다`], domain, id, parent, file };
-  const body = renderBody({ domain, id, title: t, parent, sections: sectionNames(cfg) });
+  const body = renderBody({ domain, id, title: t, parent, sections: sectionNames(cfg), adopter: !isTemplateRepo(root) });
   const tokens = estimateTokens(body);
   if (tokens > MAX_TOKENS) issues.push(`뼈대가 ${tokens} tok — 상한 ${MAX_TOKENS}(뼈대는 짐이 되면 안 된다)`);
   return { ok: !issues.length, issues, domain, id, basis: prop ? prop.basis : 'forced', file, body, tokens, parent, written: false, write };

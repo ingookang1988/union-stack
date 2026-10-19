@@ -18,7 +18,8 @@ const { walkFiles } = require('./fs_walk');
 const { parse, parseId, isDescendant, ancestorChain } = require('./zfs_util');
 const { buildIndex } = require('./zfs_index');
 const { withContract, OUTCOME, toShellExit } = require('./gate-contract');
-const { load: loadAdapter, mapStatus, fieldAliases, missingSections: sectionsMissing } = require('./adapter');
+const { load: loadAdapter, mapStatus, fieldAliases, missingSections: sectionsMissing, isTemplateRepo } = require('./adapter');
+const { prefixUpstreamRefs } = require('./ref-linter');
 const receipts = require('./receipts');
 const { labelMap, renderId } = require('./label');
 
@@ -282,7 +283,8 @@ function run(argv = process.argv.slice(2), root = path.resolve(__dirname, '..'))
     let current;
     try { current = fs.readFileSync(nextPath, 'utf8'); } catch {
       if (!argv.includes('--write')) { console.error(`work-close: ${NEXT} 없음 — \`node scripts/work-close.js --table --write\` 로 작업대 뷰를 만들어라.`); surface(); return OUTCOME.CLARIFY; }
-      current = NEXT_SKELETON;
+      // 어답터에 쓰는 생성 파일의 상류 ID 는 [up:ID]([WO-29a-3] — 로컬 PRO-15 가 없는 어답터의 ref-linter --strict Fail-close, C 실측).
+      current = isTemplateRepo(root) ? NEXT_SKELETON : prefixUpstreamRefs(NEXT_SKELETON);
     }
     const expected = inject(current, buildTable(wos));
     if (expected === null) {

@@ -12,6 +12,12 @@ design, see [`DESIGN_RATIONALE.md`](./DESIGN_RATIONALE.md). Entries marked **⚠
 action in already-adopted projects.
 
 ## [Unreleased]
+- **Fixes from the first adopter apply round (PRO-29 ①).** Files that upstream tools *write into an adopter repo* now cite
+  upstream IDs with the `up:` prefix: the `sprint/next.md` skeleton (`work-close --table --write`), the `scaffold` WO header
+  and the `init` reset templates. An adopter's `ref-linter --strict` failed on `[PRO-15]` in a generated file it may not hand-edit.
+  The upstream repo itself is unchanged. `adopter-census` now raises ⚠ for anchors missing from upstream history only on **sync**
+  paths. The three-way guard ignores review-file anchors and `--apply` never writes review files, so those are shown as
+  "review 이력 밖 N(덮어쓰기 없음)". ⚠ If an older generated header in your `next.md` cites `[PRO-15]`, see MIGRATION.md §PRO-15.
 - **PRO-29 ①(c) — the update proposal has to reach a human, and upstream can see whether it did.** `handoff-linter` raises a
   CLARIFY (never a block) when the `upstream` cache says an update exists but neither "next work" nor "open items" in HANDOFF
   mentions it. Deferring is fine; it just has to be written down. It reads the cache only (no network) and stays silent upstream.

@@ -26,7 +26,7 @@ const { plan: backfillPlan } = require('./frontmatter-backfill');
 const { lint } = require('./zfs-linter');
 const { upwardFetch, fetchOutcome } = require('./query');
 const { load: loadAdapter, resolveSection } = require('./adapter');
-const { parseChangelogVersion } = require('./template-update');
+const { parseChangelogVersion, classifyPath } = require('./template-update');
 const ledger = require('./ledger');
 const { withContract, OUTCOME } = require('./gate-contract');
 
@@ -106,10 +106,12 @@ function syncLag(syncJson, upstreamTree, upstreamBlobs = null) {
   // 앵커 값은 sha 문자열 또는 후보 배열(시딩 — 개행 이형 흡수, template-update gitBlobShas). 후보 중 하나라도 같으면 정합.
   const same = (a, up) => Array.isArray(a) ? a.includes(up) : a === up;
   const lagging = paths.filter(p => upstreamTree[p] && !same(syncJson.blobs[p], upstreamTree[p]));
-  // foreign: 지연 중 앵커 값이 상류 이력 어디에도 없는 것 — 로컬 개조가 "정합"으로 시딩됐다(다음 --apply 가 개조를 덮는다). 이력 집합이 있을 때만.
+  // foreign: 지연 중 앵커 값이 상류 이력 어디에도 없는 것 — 로컬 개조가 "정합"으로 시딩됐다(sync 파일이면 다음 --apply 가 개조를 덮는다). 이력 집합이 있을 때만.
   if (upstreamBlobs) {
     const foreign = lagging.filter(p => !(Array.isArray(syncJson.blobs[p]) ? syncJson.blobs[p] : [syncJson.blobs[p]]).some(x => upstreamBlobs.has(x)));
-    out.foreign = foreign.length;
+    // ⚠ 는 sync 범주만([WO-29a-3] — B 실측 5건 전부 review): 3-way 가드는 sync 후보의 앵커만 쓰고 review 는 --apply·--force 어느 쪽도 쓰지 않는다.
+    out.foreign = foreign.filter(p => classifyPath(p) === 'sync').length;
+    out.foreignReview = foreign.length - out.foreign;
     out.behind = lagging.length - foreign.length;
   } else out.behind = lagging.length;
   out.removed = paths.filter(p => !upstreamTree[p]).length;
@@ -233,7 +235,7 @@ function anonymize(raw) {
     sections: raw.sections ? (raw.sections.active ? `활성 ${raw.sections.active} · 목표 ${Math.round(100 * raw.sections.goal / raw.sections.active)}% · 수용 기준 ${Math.round(100 * raw.sections.accept / raw.sections.active)}% · 증거 ${Math.round(100 * raw.sections.evidence / raw.sections.active)}% · 3절 충족 ${raw.sections.complete}` : '활성 0') : '—',
     residual: raw.residual ? `H2 없음 ${raw.residual.noH2} · 절 부재 ${raw.residual.absent} · 별칭 후보 ${raw.residual.alias} · evidence 소급 ${raw.residual.evidence}${raw.residual.unresolved.length ? ' — 미해소 헤딩: ' + raw.residual.unresolved.slice(0, DIST_CAP).map(u => `${u.heading}(${u.n})`).join(' · ') + (raw.residual.unresolved.length > DIST_CAP ? ` · 외 ${raw.residual.unresolved.length - DIST_CAP}종` : '') : ''}` : '—',
     sync: !raw.sync ? '—' : !raw.sync.anchor ? '판별 불가(앵커 없음)'
-      : `${raw.sync.behind == null ? '지연 ?(상류 트리 없음)' : `지연 ${raw.sync.behind}`} / 앵커 ${raw.sync.files}${raw.sync.removed ? ` · 상류 삭제 ${raw.sync.removed}` : ''}${raw.sync.foreign ? ` · ⚠ 이력 밖 앵커 ${raw.sync.foreign}` : ''}${raw.sync.lastCheck ? ` · 자기 확인 ${raw.sync.lastCheck.error && !raw.sync.lastCheck.at ? '실패' : raw.sync.lastCheck.updates ? '업데이트 있음' : '최신'} @ ${String(raw.sync.lastCheck.at || '').slice(0, 10) || '?'}` : ' · 자기 확인 없음'}`,
+      : `${raw.sync.behind == null ? '지연 ?(상류 트리 없음)' : `지연 ${raw.sync.behind}`} / 앵커 ${raw.sync.files}${raw.sync.removed ? ` · 상류 삭제 ${raw.sync.removed}` : ''}${raw.sync.foreign ? ` · ⚠ 이력 밖 앵커 ${raw.sync.foreign}` : ''}${raw.sync.foreignReview ? ` · review 이력 밖 ${raw.sync.foreignReview}(덮어쓰기 없음)` : ''}${raw.sync.lastCheck ? ` · 자기 확인 ${raw.sync.lastCheck.error && !raw.sync.lastCheck.at ? '실패' : raw.sync.lastCheck.updates ? '업데이트 있음' : '최신'} @ ${String(raw.sync.lastCheck.at || '').slice(0, 10) || '?'}` : ' · 자기 확인 없음'}`,
     headings, health, adrs: String(raw.ledger.adrs), planeKb: raw.health.planeKb != null ? String(raw.health.planeKb) : '—',
   };
 }

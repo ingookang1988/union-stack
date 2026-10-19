@@ -69,5 +69,16 @@ check('drop: leakage-guard 삭제', dropHas('scripts/leakage-guard.js'));
 check('drop: zfs_index.test 삭제', dropHas('scripts/zfs_index.test.js'));
 check('drop: template-guard.yml 삭제', dropHas('.github/workflows/template-guard.yml'));
 
+// --- [WO-29a-3] init 이 새 프로젝트에 쓰는 리셋 템플릿의 상류 ID 는 up: 접두(상류 PRO 는 새 프로젝트에 없다) ---
+{
+  const { resetTemplate } = require('./init');
+  const { extractRefs } = require('./ref-linter');
+  const rc = resetTemplate('.union-stack/verification/raw/receipts.md');
+  check('receipts 템플릿: [up:PRO-22]', rc.includes('[up:PRO-22]') && !rc.includes('[PRO-22]'));
+  const all = ['.union-stack/verification/raw/receipts.md', '.union-stack/project/GRANTS.md', '.union-stack/sprint/HANDOFF.md', '.union-stack/archive_ledger.md'].map(resetTemplate).filter(Boolean);
+  check('리셋 템플릿 전부: 접두 없는 상류 ID 0', all.length === 4 && all.every(t => extractRefs(t).every(r => r.external)));
+  check('비-ID 대괄호는 그대로([RCPT] · 날짜)', rc.includes('[RCPT]') && rc.includes('[2026-01-01]'));
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

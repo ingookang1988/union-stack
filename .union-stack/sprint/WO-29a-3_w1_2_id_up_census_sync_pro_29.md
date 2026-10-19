@@ -2,10 +2,10 @@
 ---
 id: WO-29a-3
 title: 1회차 적용 회신 결함 2 — 어답터 생성 파일의 상류 ID up: 접두 + census 이력 밖 앵커를 sync 경로로 한정 — [PRO-29] ①
-status: Draft
+status: Verifying
 parent: PRO-29
-evidence: "none — 착수 전"
-closed_by: []
+evidence: "구현 완료(2026-10-19, 테스트 먼저): 어답터에 쓰는 생성 파일 3곳(work-close next.md 뼈대 · scaffold 머리글 · init 리셋 템플릿)의 상류 ID → [up:ID](prefixUpstreamRefs 재사용, 상류 자신 불변) · census foreign ⚠ 를 sync 경로로 한정(review 는 INFO). rcpt:n/a — work-close.test 71 · scaffold.test 46 · init.test 25 · adopter-census.test 53 · 스위트 50 중 48(실패 2 = fdt spike) · 팔 7 형상 · ref-linter --strict 미해소 30 = 기준선 30(전부 fdt)"
+closed_by: [.union-stack/reference/tools/TOOL-30_adopter_census.md, .union-stack/proposals/PRO-29_connection_closure.md]
 version: 1.0
 ---
 # [WO-29a-3] 1회차 적용 회신 결함 2 — 어답터 생성 파일의 상류 ID up: 접두 + census 이력 밖 앵커를 sync 경로로 한정 — [PRO-29] ①
@@ -25,4 +25,9 @@ version: 1.0
 - 팔 7 형상 · 스위트 회귀 0 · CHANGELOG · 카드 [TOOL-23]·[TOOL-30] · 1회차 회신 요약(익명)을 증거 절에.
 
 ## 증거
-- 닫을 때 frontmatter `evidence:` 에 값 또는 `none — 이유`(선언 검사가 있으면 `rcpt:<name>@<sha>`). 상위 축 흔적은 `closed_by:`.
+- 1회차 회신 요약(익명): A = review 반영(가이드 17 · AGENTS.md 3절 · PRO-14 완료), sync 적용 여부 미기재 · B = sync 80파일 커밋, 미결 3(상류 전용 사본 20 · 회고 제안 · checks/localOwned) ·
+  C = sync 6 갱신 · 포크 2 보존 · **`[PRO-15]` ref-linter --strict Fail-close 보고**. 세 곳 모두 상류 `6286708` 기준(이번 세션 7커밋이 push 전) — 2회차 필요.
+- 생성기 전수(어답터 **파일**에 상류 ID 를 쓰는 것): work-close `NEXT_SKELETON` · scaffold 머리글(같은 `[PRO-15]` — 모든 신규 어답터 WO 에 들어갔다) · init 리셋 템플릿(`[PRO-09]`·`[PRO-22]`).
+  blocks-index·tools-index·test-catalog 는 상류 ID 를 stdout 에만 쓴다(ref-linter 대상 아님) — 0건.
+- 테스트: work-close +2 · scaffold +3 · init +3 · census +2(B 꼴 review 5 → ⚠ 0). 실측 dry-run(origin/main d95382a): A 지연 8 · B 21(review 이력 밖 5 — 덮어쓰기 없음) · C 9.
+- 정정: [WO-29a-2] 의 "이력 밖 앵커 = 다음 --apply 가 덮는다"와 B 안내문의 `--force` 경고는 review 경로엔 과했다(가드는 sync 후보 앵커만 쓴다).

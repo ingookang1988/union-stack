@@ -12,6 +12,7 @@ const fs = require('fs');
 const path = require('path');
 const { walkFiles } = require('./fs_walk');
 const { HEAD: LEDGER_HEAD, isLedgerStore } = require('./ledger');
+const { prefixUpstreamRefs } = require('./ref-linter');
 
 const KEEP_EXACT = new Set(['.union-stack/architecture/ARCH-00_zfs_naming.md']);
 const EXPLICIT_DUMMIES = new Set([
@@ -92,6 +93,9 @@ const RESET_TEMPLATES = {
   '.union-stack/project/GRANTS.md': '<!-- [Schema] 에이전트 Schema 편집 상시 스탬프 원장. 인간만 grant를 추가한다(자기부여 방지 — 에이전트는 인간 명시 승인이 있을 때만 이 파일 편집). 커밋에 `Approved-by: GRANT-id` 인용, `permission-guard --strict`가 스코프 커버 검증. 철회=행 삭제. [PRO-09] -->\n# Schema Edit Grants — 승인 스탬프 원장\n\n| Grant | Scope (glob) | Granted-by | Date | Rationale / 철회 |\n|---|---|---|---|---|\n',
 };
 
+/** 리셋 템플릿(순수) — 새 프로젝트에는 상류 PRO 가 없으므로 상류 ID 는 [up:ID]([WO-29a-3]). 없으면 null. */
+function resetTemplate(p) { return RESET_TEMPLATES[p] == null ? null : prefixUpstreamRefs(RESET_TEMPLATES[p]); }
+
 function apply(ops, root) {
   for (const o of ops) {
     if (o.op === 'identity') {
@@ -100,7 +104,7 @@ function apply(ops, root) {
     } else if (o.op === 'delete') {
       fs.rmSync(path.join(root, o.path), { force: true });
     } else if (o.op === 'reset') {
-      const t = RESET_TEMPLATES[o.path];
+      const t = resetTemplate(o.path);
       if (t) fs.writeFileSync(path.join(root, o.path), t);
     } else if (o.op === 'pkg') {
       const pp = path.join(root, 'package.json');
@@ -161,6 +165,6 @@ function main(argv = process.argv.slice(2)) {
   return 0;
 }
 
-module.exports = { planOps, RESET_TARGETS, TEMPLATE_BITS };
+module.exports = { planOps, resetTemplate, RESET_TARGETS, TEMPLATE_BITS };
 
 if (require.main === module) process.exit(main());

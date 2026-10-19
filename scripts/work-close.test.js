@@ -183,6 +183,9 @@ try {
   const made = fsN.readFileSync(pathN.join(nTmp, '.union-stack/sprint/next.md'), 'utf8');
   check('만든 뷰: 마커 블록 + 표 + WO 행', made.includes('<!-- worktable:begin') && made.includes('<!-- worktable:end -->') && made.includes('[WO-01a-1'), true);
   check('만든 뒤 재검사 PASS', hush(() => run(['--table'], nTmp)), 0);
+  // [WO-29a-3] 어답터에 쓰는 생성 파일의 상류 ID 는 up: 접두 — 로컬 PRO-15 가 없는 어답터의 ref-linter --strict Fail-close(C 실측)
+  check('만든 뷰(어답터): 상류 ID 는 [up:PRO-15]', made.includes('[up:PRO-15]') && !made.includes('([PRO-15])'), true);
+  check('만든 뷰: 로컬 해소 대상 참조 0(ref-linter extractRefs)', require('./ref-linter').extractRefs(made).filter(r => !r.external && r.domain === 'PRO').length === 0);
 } finally { fsN.rmSync(nTmp, { recursive: true, force: true }); }
 
 // --- 어답터 C 실측 ③: 상류 어휘 머리의 산문 status("Active — core production green…")는 첫 토큰으로 읽는다 — ACTIVE 정확 일치가 440 중 2 로 집계됐다. ---

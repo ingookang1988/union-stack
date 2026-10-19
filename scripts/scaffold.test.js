@@ -103,5 +103,14 @@ if (require('./adapter').isTemplateRepo()) {
   check('상류: PRO-28 다음 자식 제안 + 기존 ID 와 안 겹침', up.ok && /^28a-\d+$/.test(up.id) && !fs.existsSync(path.join(__dirname, '..', up.file)), true);
 }
 
+// --- [WO-29a-3] 어답터 뼈대의 상류 ID 는 up: 접두(C 실측 — 머리글 [PRO-15] 가 어답터 ref-linter --strict 를 깬다) ---
+{
+  const args = { domain: 'WO', id: '01a-2', title: 'x', parent: 'PLAN-01a', sections: sectionNames(cfg0) };
+  const up = renderBody(args), ad = renderBody({ ...args, adopter: true });
+  check('renderBody 기본(상류) = ([PRO-15])', up.includes('([PRO-15])'), true);
+  check('renderBody adopter:true = [up:PRO-15]', ad.includes('[up:PRO-15]') && !ad.includes('([PRO-15])'), true);
+  check('어답터 뼈대도 로컬 ID(parent·자기)는 접두 없음', ad.includes('parent: PLAN-01a') && ad.includes('# [WO-01a-2]'), true);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
