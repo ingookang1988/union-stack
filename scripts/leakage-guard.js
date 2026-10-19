@@ -78,6 +78,7 @@ const METHODOLOGY = new Set([
   'WO-28a-6_agents_md_injects_pro_28.md',
   // [PRO-29] ① 하류 제안 고리 구현 오더(2026-10-19) — 같은 근거(상류 도구 지시, 위탁 데이터 0).
   'WO-29a-1_health_upstream_template_update_pro_29_a_b.md',
+  'WO-29a-2_handoff_upstream_3_pro_29_c.md',
   // 이 템플릿 자신의 개발에서 얻은 교훈([LSN-17]). 위탁 데이터 0이고, 더미로 만들면 선주입되는
   // *경고*가 경고이기를 그만둔다 — WO-10a-1 과 같은 근거로 마커 대신 등재로 닫는다.
   'LSN-17_shape_blind_spot.md',
