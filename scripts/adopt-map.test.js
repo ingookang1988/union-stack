@@ -32,6 +32,11 @@ check('아무 신호 없음 → low · 자리 없음', C('misc/random.md', ['Hel
 check('디렉터리 > 파일명 키워드(proposals/handoff_x + 인계 헤딩 → PRO)', C('docs/proposals/handoff_compaction.md', ['인계 압축', 'handoff budget']).domain === 'PRO');
 check('디렉터리 > 파일명 키워드(proposals/gate_contract_sync → PRO, CON 아님)', C('docs/proposals/gate_contract_sync.md', ['contract sync']).domain === 'PRO');
 check('README 같은 파일명 규칙은 그대로(디렉터리 없음)', C('README.md', ['Overview']).home === '.union-stack/project/IDENTITY*.md');
+// 확신도 임계(인간 판정 2026-10-20, [PRO-29] §7-4): high = **디렉터리 + 헤딩** 만. 파일명 + 헤딩은 medium — 평평한 트리 실측에서 high 1/6 이었다.
+check('파일명+헤딩 → medium(README)', C('README.md', ['Overview']).confidence === 'medium');
+check('파일명+헤딩 → medium(평평한 docs/handoff)', C('docs/handoff_notes.md', ['Handoff']).confidence === 'medium');
+check('디렉터리+헤딩 → high', C('docs/meetings/kickoff.md', ['Attendees']).confidence === 'high');
+check('디렉터리+파일명(헤딩 없음) → medium', C('docs/meetings/meeting_notes.md').confidence === 'medium');
 check('한국어 헤딩도 신호(회의·참석자)', C('docs/x.md', ['회의록', '참석자']).domain === 'MTG');
 
 // --- ID 부여: 도메인별 연속 · 결정적 · ZFS 이름 유효 ---

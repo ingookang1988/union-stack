@@ -4,7 +4,7 @@ id: WO-29a-11
 title: 이식기 ② init --adopt dry-run — 기존 문서 트리 → 매핑안(자리·ZFS ID·확신도) + adapter.json 초안 — [PRO-29] ③(a)
 status: Verifying
 parent: PRO-29
-evidence: "구현 완료(2026-10-20, 테스트 먼저): adopt-map(매핑표 1:1 규칙 · 디렉터리3/파일명1/헤딩1 점수 · ID 부여 · adapter 초안 · 읽기 전용 스캔) + init --adopt [--out]. rcpt:n/a — adopt-map.test 36 · init.test 36(+6) · 스위트 52 중 50(실패 2 = fdt spike) · 팔 7 형상. 실측: 관례 디렉터리 74/74 · 평평한 docs high 1/6 · medium 33/59 — 확신도 임계·OSS 레포는 사람 판정 대기"
+evidence: "구현 완료(2026-10-20, 테스트 먼저): adopt-map(매핑표 1:1 규칙 · 디렉터리3/파일명1/헤딩1 점수 · ID 부여 · adapter 초안 · 읽기 전용 스캔) + init --adopt [--out]. rcpt:n/a — adopt-map.test 36 · init.test 36(+6) · 스위트 52 중 50(실패 2 = fdt spike) · 팔 7 형상. 실측: 관례 디렉터리 74/74 · 평평한 docs high 1/6 → 임계 판정(high = 디렉터리+헤딩, 2026-10-20) 뒤 high 0 · medium 34/65 · adopt-map.test 40. OSS 레포 선정 대기"
 closed_by: [.union-stack/reference/tools/TOOL-06_init.md, .union-stack/proposals/PRO-29_connection_closure.md]
 version: 1.0
 ---
@@ -33,3 +33,4 @@ version: 1.0
   (b) 평평한 `docs/`(헤딩만): high **1/6** · medium 33/59 · 채점 대상 low 9 — 헤딩만으로는 약하다. high 오답은 파일명+헤딩이 함께 엇나간 꼴(예: 인계 압축 제안 → HANDOFF).
 - **사람 판정 재료(§7-4)**: ① 확신도 임계 — 잠정값(파일명|디렉터리 + 헤딩 = high)으로는 (b) 가 성공 바(high 사람 수정률 ≤ 20%)를 못 넘는다. 대안 = high 를 **디렉터리+헤딩**으로만 한정(평평한 트리는 high 0 · 전부 medium 검토).
   ② (a) 는 내가 고른 디렉터리 이름이라 자기충족적 — 실제 OSS 레포 1곳 실측이 필요하다(클론은 승인 뒤).
+- **임계 판정 반영(2026-10-20)**: high = 디렉터리 + 헤딩만. 테스트 +4(README·평평한 handoff = medium · 디렉터리+헤딩 = high · 디렉터리+파일명 = medium). 재실측: (a) high 50/50 · medium 24/24 · (b) high **0/0** · medium 34/65 · low 9 — 평평한 트리는 전부 사람 검토로 간다.

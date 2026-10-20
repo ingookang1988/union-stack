@@ -4,7 +4,7 @@
 // dry-run 전용 — 대상 레포에 쓰지 않는다. 적용(git mv · 앵커)은 ③(b).
 //
 // 규칙의 정본은 MIGRATION.md 매핑표다: RULES 의 home 은 표의 둘째 열(첫 백틱 토큰)과 1:1 — adopt-map.test 가 대응을 강제한다(표와 코드가 갈라지지 않게).
-// 확신도(잠정, [PRO-29] §7-4): high = 경로 신호 + 헤딩 신호 · medium = 하나 · low = 없음(매핑 안 함, 목록만).
+// 확신도([PRO-29] §7-4, 인간 판정 2026-10-20): high = 디렉터리 + 헤딩 · medium = 그 밖의 신호(파일명+헤딩 포함) · low = 없음(매핑 안 함, 목록만).
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -90,7 +90,8 @@ function classify(file, headings = []) {
   }
   if (!best) return { home: null, domain: null, confidence: 'low', label: null, why: '경로·헤딩 신호 없음' };
   const { r, d, n, h } = best;
-  return { home: r.home, domain: r.domain, confidence: (d || n) && h ? 'high' : 'medium', label: r.label,
+  // high = 디렉터리 + 헤딩 만(인간 판정 2026-10-20, [PRO-29] §7-4) — 파일명+헤딩은 평평한 트리 실측에서 high 1/6 이었다.
+  return { home: r.home, domain: r.domain, confidence: d && h ? 'high' : 'medium', label: r.label,
     why: `${r.label} — ${[d ? '디렉터리' : null, n ? '파일명' : null, h ? '헤딩' : null].filter(Boolean).join('+')}` };
 }
 
