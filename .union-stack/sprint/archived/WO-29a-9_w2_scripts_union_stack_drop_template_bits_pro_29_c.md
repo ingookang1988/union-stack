@@ -2,9 +2,9 @@
 ---
 id: WO-29a-9
 title: 이식기 ① 키트 미지원 2건 — scripts/union-stack/ 하위 설치(루트 탐색) + drop-template-bits 의 상류 전용 삭제 — [PRO-29] ③(c)
-status: Verifying
+status: Closed
 parent: PRO-29
-evidence: "① 구현 완료(2026-10-20, 테스트 먼저): init --drop-template-bits 가 상류 전용 스크립트(ship-manifest upstreamOnly)·그 TOOL 카드를 지우고 tools-index 재생성. rcpt:n/a — init.test 30(+5) · 드롭 사본 스위트 39/39 · 스위트 51 중 49(실패 2 = fdt spike) · 팔 7 형상(env 바 강화). ② 하위 설치는 규모 실측(루트 60곳 · 경로 문자열 66곳) 뒤 인간 판정으로 [WO-29a-10] 보류"
+evidence: "① 구현 완료(2026-10-20, 테스트 먼저): init --drop-template-bits 가 상류 전용 스크립트(ship-manifest upstreamOnly)·그 TOOL 카드를 지우고 tools-index 재생성. rcpt:n/a — init.test 30(+5) · 드롭 사본 스위트 39/39 · 스위트 51 중 49(실패 2 = fdt spike) · 팔 7 형상(env 바 강화). ② 하위 설치는 규모 실측(루트 60곳 · 경로 문자열 66곳) 뒤 인간 판정으로 [WO-29a-10] 보류 · Closed 판정 2026-10-20(인간 승인)"
 closed_by: [.union-stack/reference/tools/TOOL-06_init.md, .union-stack/proposals/PRO-29_connection_closure.md]
 version: 1.0
 ---

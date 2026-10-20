@@ -8,5 +8,4 @@
 | [WO-01a-1 · auth_wiring] | (예시) 인증 게이트웨이 배선 | PLAN-01 | Draft | 해당없음 |
 | [WO-10a-1 · e6_scenario] | E6 시나리오 A/B 1사이클 (팔 2개 × 5런) | PRO-10 | Draft | 해당없음 |
 | [WO-29a-10 · scripts_union] | 하위 설치(보류) — scripts/union-stack/ 에 하네스 설치 · 루트 탐색 헬퍼 · scriptsDir 배송 매핑 — [PRO-29] ③(c) 잔여 | PRO-29 | Draft | 해당없음 |
-| [WO-29a-9 · w2_scripts] | 이식기 ① 키트 미지원 2건 — scripts/union-stack/ 하위 설치(루트 탐색) + drop-template-bits 의 상류 전용 삭제 — [PRO-29] ③(c) | PRO-29 | Verifying | 있음 |
 <!-- worktable:end -->
