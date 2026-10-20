@@ -37,9 +37,10 @@ const isKeep = p => isGuide(p) || KEEP_EXACT.has(p);
 
 /**
  * 순수 계획 함수: 현재 파일 목록 → 수행할 작업 목록. (FS 비의존 → 테스트 용이)
- * files: repo-상대 '/' 경로 배열. opts: {name, slug, drop}
+ * files: repo-상대 '/' 경로 배열. opts: {name, slug, drop, upstreamOnly}
+ * upstreamOnly: 상류 ship-manifest 의 상류 전용 목록 — drop 이면 함께 지운다([WO-29a-9]). 없으면 템플릿 비트만(현행).
  */
-function planOps({ name, slug, drop = false, files = [] }) {
+function planOps({ name, slug, drop = false, files = [], upstreamOnly = [], cardImpl = {} }) {
   const ops = [];
   if (files.includes(IDENTITY_SRC)) ops.push({ op: 'identity', from: IDENTITY_SRC, to: IDENTITY_DST, name });
   for (const f of files) {
@@ -56,6 +57,14 @@ function planOps({ name, slug, drop = false, files = [] }) {
   }
   ops.push({ op: 'pkg', name: slug, version: '0.1.0' });
   if (drop) for (const f of TEMPLATE_BITS) if (files.includes(f)) ops.push({ op: 'delete', path: f, templateBit: true });
+  // 상류 전용 스크립트(eval·adopter-arm·adopter-census 등) — 남기면 어답터에 "지워도 된다" INFO 가 영구히 남고 census 약화 판별의 오탐 재료가 된다(B 미결 · [WO-29a-7]).
+  if (drop) {
+    const done = new Set(ops.filter(o => o.op === 'delete').map(o => o.path));
+    for (const f of upstreamOnly) if (files.includes(f) && !done.has(f)) { ops.push({ op: 'delete', path: f, upstreamOnly: true }); done.add(f); }
+    // 그 도구의 카드(impl 이 상류 전용)도 — 남기면 tool-linter 가 "impl 실존 안 함" 으로 red 다(드롭 사본 실측).
+    const uo = new Set(upstreamOnly);
+    for (const [card, impl] of Object.entries(cardImpl)) if (uo.has(impl) && files.includes(card) && !done.has(card)) ops.push({ op: 'delete', path: card, upstreamOnly: true });
+  }
   return ops;
 }
 
@@ -140,7 +149,15 @@ function main(argv = process.argv.slice(2)) {
   ['package.json', '.github/workflows/template-guard.yml',
    'scripts/leakage-guard.js', 'scripts/leakage-guard.test.js', 'scripts/zfs_index.test.js']
     .forEach(f => { if (fs.existsSync(path.join(root, f))) files.push(f); });
-  const ops = planOps({ name, slug, drop, files });
+  let upstreamOnly = [];
+  try { upstreamOnly = JSON.parse(fs.readFileSync(path.join(root, 'scripts/ship-manifest.json'), 'utf8')).upstreamOnly || []; } catch { /* 매니페스트 없음 — 템플릿 비트만 */ }
+  for (const f of upstreamOnly) if (!files.includes(f) && fs.existsSync(path.join(root, f))) files.push(f);
+  const cardImpl = {};
+  for (const f of files) {
+    if (!/^\.union-stack\/reference\/tools\/TOOL-.*\.md$/.test(f)) continue;
+    try { const m = fs.readFileSync(path.join(root, f), 'utf8').match(/^impl:\s*(\S+)/m); if (m) cardImpl[f] = m[1]; } catch { /* 없음 */ }
+  }
+  const ops = planOps({ name, slug, drop, files, upstreamOnly, cardImpl });
   console.log(`# union-stack init — ${name} (${slug})${drop ? ' [drop-template-bits]' : ''}`);
   for (const o of ops) {
     const label = o.op === 'identity' ? `identity → ${o.to}` :
@@ -149,6 +166,16 @@ function main(argv = process.argv.slice(2)) {
   }
   if (!doApply) { console.log('\n(dry-run) 적용하려면 --apply 추가. IDENTITY의 TODO를 채우고 첫 PLAN을 작성한 뒤 `npm run lint`.'); return 0; }
   apply(ops, root);
+  // 드롭으로 카드가 줄면 AGENTS.md 의 tools-index 생성 블록이 낡는다 — 생성 블록이므로 여기서 다시 만든다(앵커 시딩 전에: 앵커가 새 본문을 기록하도록).
+  if (drop && ops.some(o => o.upstreamOnly)) {
+    try {
+      const ti = require('./tools-index');
+      const ap = path.join(root, 'AGENTS.md');
+      const cur = fs.readFileSync(ap, 'utf8');
+      const next = ti.inject(cur, ti.buildIndex(ti.gather(root)));
+      if (next && next !== cur) { fs.writeFileSync(ap, next); console.log('  ✓ tools-index 재생성(드롭된 카드 반영): AGENTS.md'); }
+    } catch (e) { console.error(`  ! tools-index 재생성 실패(치명적 아님 — node scripts/tools-index.js --write): ${e.message}`); }
+  }
   // 정합 앵커 시딩 — 지금 이 순간 로컬 == 상류다. 이후 `template-update --apply` 는 이 앵커와
   // 대조해 **어답터가 실제로 고친 sync 파일만** 골라 보존한다(앵커가 없으면 전부 '판별 불가').
   // 지연 require: template-update 가 이 모듈의 TEMPLATE_BITS 를 쓰므로 최상단이면 순환이 된다.

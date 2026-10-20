@@ -12,6 +12,11 @@ design, see [`DESIGN_RATIONALE.md`](./DESIGN_RATIONALE.md). Entries marked **⚠
 action in already-adopted projects.
 
 ## [Unreleased]
+- **`init --drop-template-bits` also removes upstream-only scripts.** It used to delete only the four template bits, leaving the
+  20 upstream-only scripts listed in `ship-manifest.json` (eval, adopter-arm, adopter-census …) in every new project, flagged forever
+  as "safe to delete". With `--drop-template-bits` they are now deleted, along with their TOOL cards (which `tool-linter` would
+  otherwise report as missing an impl), and the AGENTS.md tools-index block is regenerated. On a fresh dropped copy the test suite
+  passes 39/39. No migration; existing adopters can delete the copies themselves (`template-update` lists them).
 - **`health --root` judges the leakage gate only if the measured repo has it.** An adopter that dropped the template-only
   `leakage-guard.js` was still judged by upstream's own copy of the guard when the census measured it, so it showed a false FAIL.
   If the measured repo has no `scripts/leakage-guard.js`, the gate now reads "해당 없음", the same as when the adopter runs `health`

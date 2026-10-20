@@ -22,5 +22,5 @@ version: 1.0
 ## 호출
 ```bash
 node scripts/init.js --name "My Project"          # dry-run
-node scripts/init.js --name "My Project" --apply  # 적용 (+ --drop-template-bits)
+node scripts/init.js --name "My Project" --apply  # 적용 (+ --drop-template-bits: 템플릿 비트 + 상류 전용 스크립트·그 카드 삭제, tools-index 재생성 — [WO-29a-9])
 ```

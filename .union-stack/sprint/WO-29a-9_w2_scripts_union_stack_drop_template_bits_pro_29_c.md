@@ -2,7 +2,7 @@
 ---
 id: WO-29a-9
 title: 이식기 ① 키트 미지원 2건 — scripts/union-stack/ 하위 설치(루트 탐색) + drop-template-bits 의 상류 전용 삭제 — [PRO-29] ③(c)
-status: Draft
+status: Active
 parent: PRO-29
 evidence: "none — 착수 전"
 closed_by: []

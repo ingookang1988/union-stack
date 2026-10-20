@@ -69,6 +69,22 @@ check('drop: leakage-guard 삭제', dropHas('scripts/leakage-guard.js'));
 check('drop: zfs_index.test 삭제', dropHas('scripts/zfs_index.test.js'));
 check('drop: template-guard.yml 삭제', dropHas('.github/workflows/template-guard.yml'));
 
+// --- [WO-29a-9] drop-template-bits 는 상류 전용 스크립트(ship-manifest upstreamOnly)도 지운다 — 남기면 어답터에 "지워도 된다" INFO 가 영구히 남고 census 약화 오탐 재료가 됐다 ---
+{
+  const UO = ['scripts/adopter-census.js', 'scripts/adopter-census.test.js', 'scripts/eval.js'];
+  const fs2 = [...files, 'scripts/adopter-census.js', 'scripts/adopter-census.test.js'];   // eval.js 는 없다
+  const d = planOps({ name: 'X', slug: 'x', drop: true, files: fs2, upstreamOnly: UO });
+  const del = p => d.some(o => o.op === 'delete' && o.path === p && o.upstreamOnly);
+  check('drop: 상류 전용 스크립트 삭제(있는 것만)', del('scripts/adopter-census.js') && del('scripts/adopter-census.test.js') && !d.some(o => o.path === 'scripts/eval.js'));
+  check('drop 없으면 상류 전용도 남긴다', !planOps({ name: 'X', slug: 'x', drop: false, files: fs2, upstreamOnly: UO }).some(o => o.upstreamOnly));
+  check('upstreamOnly 미지정(매니페스트 없음) → 현행(템플릿 비트만)', !planOps({ name: 'X', slug: 'x', drop: true, files: fs2 }).some(o => o.upstreamOnly) && planOps({ name: 'X', slug: 'x', drop: true, files: fs2 }).some(o => o.templateBit));
+  // 지운 상류 전용 도구의 카드(impl 이 상류 전용)도 지운다 — 남기면 tool-linter 가 "impl 실존 안 함" 으로 red(실측: 드롭한 사본에서 카드 4+)
+  const cards = { '.union-stack/reference/tools/TOOL-30_adopter_census.md': 'scripts/adopter-census.js', '.union-stack/reference/tools/TOOL-04_health.md': 'scripts/health.js' };
+  const dc = planOps({ name: 'X', slug: 'x', drop: true, files: [...fs2, ...Object.keys(cards)], upstreamOnly: UO, cardImpl: cards });
+  check('drop: impl 이 상류 전용인 카드 삭제 · 배송 도구 카드는 유지', dc.some(o => o.op === 'delete' && o.path === '.union-stack/reference/tools/TOOL-30_adopter_census.md' && o.upstreamOnly) && !dc.some(o => o.path === '.union-stack/reference/tools/TOOL-04_health.md'));
+  check('같은 파일이 두 목록에 있어도 삭제는 한 번', planOps({ name: 'X', slug: 'x', drop: true, files: [...fs2, 'scripts/leakage-guard.js'], upstreamOnly: [...UO, 'scripts/leakage-guard.js'] }).filter(o => o.op === 'delete' && o.path === 'scripts/leakage-guard.js').length === 1);
+}
+
 // --- [WO-29a-3] init 이 새 프로젝트에 쓰는 리셋 템플릿의 상류 ID 는 up: 접두(상류 PRO 는 새 프로젝트에 없다) ---
 {
   const { resetTemplate } = require('./init');
