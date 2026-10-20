@@ -128,8 +128,28 @@ function listFiles(dir, root, out) {
   walkFiles(root, dir, rel => out.push(rel), { skipDir: n => n === '.git' || n === 'node_modules' });
 }
 
+/**
+ * init --adopt <repo> [--out file]: union-stack 이 없는 기존 프로젝트의 이식 **매핑안**(dry-run 전용 — [PRO-29] ③(a), [WO-29a-11]).
+ * 경로·헤딩만 읽어 자리·제안 ZFS ID·확신도와 adapter.json 초안을 낸다. 대상 레포에 쓰지 않는다(적용은 ③(b)).
+ */
+function adoptMain(argv, get) {
+  const target = get('--adopt');
+  if (!target || target.startsWith('--')) { console.error('사용법: node scripts/init.js --adopt <기존 프로젝트 경로> [--out plan.json]'); return 2; }
+  let p;
+  try { p = require('./adopt-map').plan(path.resolve(target)); } catch (e) { console.error(`init --adopt: ${e.message}`); return 2; }
+  console.log(`# union-stack 이식 매핑안(dry-run) — 문서 ${p.rows.length} · high ${p.summary.high} · medium ${p.summary.medium} · low ${p.summary.low}\n`);
+  for (const r of p.rows) console.log(`  ${r.confidence.padEnd(6)} ${r.from} → ${r.to || '(매핑 안 함)'}  — ${r.why}`);
+  const a = p.adapter;
+  console.log(`\n  adapter.json 초안: sections ${Object.keys(a.sections).length}절 · statusMap ${Object.keys(a.statusMap).length}값${a.unmappedStatus.length ? ` (모르는 status: ${a.unmappedStatus.join(', ')})` : ''} · localOwned ${a.localOwned.length}`);
+  const out = get('--out');
+  if (out && !out.startsWith('--')) { fs.writeFileSync(path.resolve(out), JSON.stringify(p, null, 2) + '\n'); console.log(`  → ${out}`); }
+  console.log('\n안을 고친 뒤 적용(③(b) — 미구현). low 행은 사람이 자리를 정한다. 확신도 임계는 잠정값([PRO-29] §7-4).');
+  return 0;
+}
+
 function main(argv = process.argv.slice(2)) {
   const get = k => { const i = argv.indexOf(k); return i >= 0 ? argv[i + 1] : null; };
+  if (argv.includes('--adopt')) return adoptMain(argv, get);
   const name = get('--name');
   const slug = get('--slug') || (name ? name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') : null);
   const drop = argv.includes('--drop-template-bits');
@@ -192,6 +212,6 @@ function main(argv = process.argv.slice(2)) {
   return 0;
 }
 
-module.exports = { planOps, resetTemplate, RESET_TARGETS, TEMPLATE_BITS };
+module.exports = { planOps, resetTemplate, main, RESET_TARGETS, TEMPLATE_BITS };
 
 if (require.main === module) process.exit(main());

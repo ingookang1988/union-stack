@@ -3,6 +3,8 @@
   "shipped": [
     "scripts/adapter.js",
     "scripts/adapter.test.js",
+    "scripts/adopt-map.js",
+    "scripts/adopt-map.test.js",
     "scripts/blast-radius.js",
     "scripts/blocks-index.js",
     "scripts/blocks-index.test.js",

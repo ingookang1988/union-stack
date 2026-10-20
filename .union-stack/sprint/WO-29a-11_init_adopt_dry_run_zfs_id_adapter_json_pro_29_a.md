@@ -2,10 +2,10 @@
 ---
 id: WO-29a-11
 title: 이식기 ② init --adopt dry-run — 기존 문서 트리 → 매핑안(자리·ZFS ID·확신도) + adapter.json 초안 — [PRO-29] ③(a)
-status: Draft
+status: Verifying
 parent: PRO-29
-evidence: "none — 착수 전"
-closed_by: []
+evidence: "구현 완료(2026-10-20, 테스트 먼저): adopt-map(매핑표 1:1 규칙 · 디렉터리3/파일명1/헤딩1 점수 · ID 부여 · adapter 초안 · 읽기 전용 스캔) + init --adopt [--out]. rcpt:n/a — adopt-map.test 36 · init.test 36(+6) · 스위트 52 중 50(실패 2 = fdt spike) · 팔 7 형상. 실측: 관례 디렉터리 74/74 · 평평한 docs high 1/6 · medium 33/59 — 확신도 임계·OSS 레포는 사람 판정 대기"
+closed_by: [.union-stack/reference/tools/TOOL-06_init.md, .union-stack/proposals/PRO-29_connection_closure.md]
 version: 1.0
 ---
 # [WO-29a-11] 이식기 ② init --adopt dry-run — 기존 문서 트리 → 매핑안(자리·ZFS ID·확신도) + adapter.json 초안 — [PRO-29] ③(a)
@@ -26,4 +26,10 @@ version: 1.0
 - 범위 밖: `--apply`(③(b)) · MIGRATION 재편(③(d)) · 하위 설치([WO-29a-10]). 카드 [TOOL-06] · CHANGELOG.
 
 ## 증거
-- 닫을 때 frontmatter `evidence:` 에 값 또는 `none — 이유`(선언 검사가 있으면 `rcpt:<name>@<sha>`). 상위 축 흔적은 `closed_by:`.
+- 테스트: adopt-map 신규 36(매핑표 17행 ↔ 규칙 1:1 양방향 · 분류 16꼴 · 디렉터리 > 파일명 3 · ID 연속·결정적·ZFS 유효·비ASCII · adapter 초안 3 · 실 git 스캔: 제외 디렉터리·헤딩만·본문 0·쓰기 0·.union-stack 거부) ·
+  init +6(`--adopt` exit·요약 · --out JSON · 쓰기 0 · --name 불요 · 거부 · 인자 없음).
+- **실측(이식 전 사본 — 상류 공개 평면 112문서를 ZFS ID 를 뗀 docs/ 트리로 되돌림, 채점 대상 = 규칙에 자리가 있는 도메인 74)**:
+  (a) 관례 디렉터리(`docs/plans/`·`meetings/`…): 1차 high 48/53 · medium 21/21 → **디렉터리 > 파일명 가중 뒤 high 50/50 · medium 24/24(74/74)**. 1차 오답 5 은 전부 파일명 키워드+헤딩이 디렉터리를 이긴 꼴.
+  (b) 평평한 `docs/`(헤딩만): high **1/6** · medium 33/59 · 채점 대상 low 9 — 헤딩만으로는 약하다. high 오답은 파일명+헤딩이 함께 엇나간 꼴(예: 인계 압축 제안 → HANDOFF).
+- **사람 판정 재료(§7-4)**: ① 확신도 임계 — 잠정값(파일명|디렉터리 + 헤딩 = high)으로는 (b) 가 성공 바(high 사람 수정률 ≤ 20%)를 못 넘는다. 대안 = high 를 **디렉터리+헤딩**으로만 한정(평평한 트리는 high 0 · 전부 medium 검토).
+  ② (a) 는 내가 고른 디렉터리 이름이라 자기충족적 — 실제 OSS 레포 1곳 실측이 필요하다(클론은 승인 뒤).

@@ -85,6 +85,29 @@ check('drop: template-guard.yml 삭제', dropHas('.github/workflows/template-gua
   check('같은 파일이 두 목록에 있어도 삭제는 한 번', planOps({ name: 'X', slug: 'x', drop: true, files: [...fs2, 'scripts/leakage-guard.js'], upstreamOnly: [...UO, 'scripts/leakage-guard.js'] }).filter(o => o.op === 'delete' && o.path === 'scripts/leakage-guard.js').length === 1);
 }
 
+// --- [WO-29a-11] init --adopt <repo>: dry-run 매핑안(대상 쓰기 0) · --out 파일 · .union-stack 있으면 거부 ---
+{
+  const fsA = require('fs'), osA = require('os'), pathA = require('path');
+  const { main } = require('./init');
+  const t = fsA.mkdtempSync(pathA.join(osA.tmpdir(), 'init-adopt-'));
+  const o = fsA.mkdtempSync(pathA.join(osA.tmpdir(), 'init-adopt-out-'));
+  const hush = fn => { const c = console.log, e = console.error; const out = []; console.log = (...a) => out.push(a.join(' ')); console.error = (...a) => out.push(a.join(' ')); try { return { code: fn(), out: out.join('\n') }; } finally { console.log = c; console.error = e; } };
+  try {
+    fsA.mkdirSync(pathA.join(t, 'docs/decisions'), { recursive: true });
+    fsA.writeFileSync(pathA.join(t, 'docs/decisions/0001-db.md'), '# Use Postgres\n## Decision\n');
+    const before = fsA.readdirSync(t, { recursive: true }).sort().join(',');
+    const r = hush(() => main(['--adopt', t, '--out', pathA.join(o, 'plan.json')]));
+    check('--adopt: exit 0 · 요약 출력', r.code === 0 && /high 1/.test(r.out));
+    check('--adopt: --out JSON 에 rows·adapter', (() => { const j = JSON.parse(fsA.readFileSync(pathA.join(o, 'plan.json'), 'utf8')); return j.rows.length === 1 && j.rows[0].to === '.union-stack/archive_ledger.md' && !!j.adapter; })());
+    check('--adopt: 대상 쓰기 0', fsA.readdirSync(t, { recursive: true }).sort().join(',') === before);
+    check('--adopt: --name 없이 동작(이식은 이름을 묻지 않는다 — ③(b) 몫)', r.code === 0);
+    fsA.mkdirSync(pathA.join(t, '.union-stack'));
+    const r2 = hush(() => main(['--adopt', t]));
+    check('--adopt: .union-stack 있으면 거부(exit 2)', r2.code === 2 && /이식 대상이 아니다/.test(r2.out));
+    check('--adopt: 경로 없음 → exit 2', hush(() => main(['--adopt'])).code === 2);
+  } finally { fsA.rmSync(t, { recursive: true, force: true }); fsA.rmSync(o, { recursive: true, force: true }); }
+}
+
 // --- [WO-29a-3] init 이 새 프로젝트에 쓰는 리셋 템플릿의 상류 ID 는 up: 접두(상류 PRO 는 새 프로젝트에 없다) ---
 {
   const { resetTemplate } = require('./init');

@@ -22,5 +22,6 @@ version: 1.0
 ## 호출
 ```bash
 node scripts/init.js --name "My Project"          # dry-run
+node scripts/init.js --adopt <기존 레포> [--out plan.json]  # 이식 매핑안(dry-run, 대상 쓰기 0) — 경로·헤딩만 → 자리·ZFS ID·확신도 + adapter.json 초안([PRO-29] ③(a))
 node scripts/init.js --name "My Project" --apply  # 적용 (+ --drop-template-bits: 템플릿 비트 + 상류 전용 스크립트·그 카드 삭제, tools-index 재생성 — [WO-29a-9])
 ```

@@ -12,6 +12,11 @@ design, see [`DESIGN_RATIONALE.md`](./DESIGN_RATIONALE.md). Entries marked **⚠
 action in already-adopted projects.
 
 ## [Unreleased]
+- **PRO-29 ③(a) — `init --adopt <repo>`: a filled-in migration map for an existing project (dry-run).** It reads only paths, file
+  names and heading lines of the target's Markdown docs (no bodies) and proposes, per document, a home on the plane, a ZFS ID and a
+  confidence (high = directory or file name and a heading agree; medium = one signal; low = no mapping, listed for a human). It also
+  drafts `adapter.json` (`sections` aliases, `statusMap`, `localOwned`). The rules are tied one-to-one to the MIGRATION.md mapping table
+  (a test enforces it), and the target repo is never written. Applying the plan is the next step. New shipped helper: `scripts/adopt-map.js`.
 - **`init --drop-template-bits` also removes upstream-only scripts.** It used to delete only the four template bits, leaving the
   20 upstream-only scripts listed in `ship-manifest.json` (eval, adopter-arm, adopter-census …) in every new project, flagged forever
   as "safe to delete". With `--drop-template-bits` they are now deleted, along with their TOOL cards (which `tool-linter` would
