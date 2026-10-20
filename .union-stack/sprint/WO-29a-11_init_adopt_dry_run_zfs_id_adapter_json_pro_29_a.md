@@ -4,7 +4,7 @@ id: WO-29a-11
 title: 이식기 ② init --adopt dry-run — 기존 문서 트리 → 매핑안(자리·ZFS ID·확신도) + adapter.json 초안 — [PRO-29] ③(a)
 status: Verifying
 parent: PRO-29
-evidence: "구현 완료(2026-10-20, 테스트 먼저): adopt-map(매핑표 1:1 규칙 · 디렉터리3/파일명1/헤딩1 점수 · ID 부여 · adapter 초안 · 읽기 전용 스캔) + init --adopt [--out]. rcpt:n/a — adopt-map.test 36 · init.test 36(+6) · 스위트 52 중 50(실패 2 = fdt spike) · 팔 7 형상. 실측: 관례 디렉터리 74/74 · 평평한 docs high 1/6 → 임계 판정(high = 디렉터리+헤딩, 2026-10-20) 뒤 high 0 · medium 34/65 · adopt-map.test 44. OSS 실측 nodejs/TSC(415문서): high 396 사람 판정 수정률 0%(2026-10-20) — 성공 바 충족"
+evidence: "구현 완료(2026-10-20, 테스트 먼저): adopt-map(매핑표 1:1 규칙 · 디렉터리3/파일명1/헤딩1 점수 · ID 부여 · adapter 초안 · 읽기 전용 스캔) + init --adopt [--out]. rcpt:n/a — adopt-map.test 36 · init.test 36(+6) · 스위트 52 중 50(실패 2 = fdt spike) · 팔 7 형상. 실측: 관례 디렉터리 74/74 · 평평한 docs high 1/6 → 임계 판정(high = 디렉터리+헤딩, 2026-10-20) 뒤 high 0 · medium 34/65 · adopt-map.test 57. OSS 실측 nodejs/TSC(415문서): high 396 사람 판정 수정률 0%(2026-10-20) — 성공 바 충족 · 매핑표 개정(거버넌스·전략) 뒤 low 12 → 6 · 제안 이름 ZFS 무효 396 → 0"
 closed_by: [.union-stack/reference/tools/TOOL-06_init.md, .union-stack/proposals/PRO-29_connection_closure.md]
 version: 1.0
 ---
@@ -37,3 +37,9 @@ version: 1.0
 - **OSS 실측 — nodejs/TSC**(공개 · 3.7MB · md 415 = meetings/ 400 · 루트 11 · votes 2 · Streaming 1 · surveys 1; shallow clone 은 scratchpad, 대상 쓰기 0): high **396**(전부 날짜 회의록 → MTG, 디렉터리+헤딩) · medium 9 · low 10.
   **사람 판정(2026-10-20): high 396 전부 정답 — 수정률 0%** → [PRO-29] ③ 성공 바 1 의 OSS 몫 충족. 한계: 한 디렉터리·한 문서 종류라 폭의 시험은 약하다.
   드러난 것 3: ① **결함** 하위 README(votes/README.md 등 2)가 IDENTITY — 루트 README 만 정체성으로 고침(테스트 +4, 재실측 low 로 이동 · high 불변 · 사본 실측 불변) ② `Streaming-To-Youtube`(how-to)가 헤딩으로 MTG — medium 이라 사람 검토 몫 ③ **자리 공백** 거버넌스·정책 문서 9(Charter·Moderation-Policy·CoC·Onboarding·Working Groups·전략 등)가 low — MIGRATION 매핑표에 행이 없다(행 추가는 사람 결정, 제안만).
+- **매핑표 개정(인간 승인 2026-10-20)**: 행 신설 "governance / charter / policies / code of conduct / working-group structure → ARCH-*(과정 규범)" · 로드맵 행에 "strategy & strategic initiatives".
+  표 18행 · 규칙 18(자리별 행 수 = 규칙 수 테스트 신설) · 테스트 +6(헌장·CoC·모더레이션·working groups·governance/ high·전략 → PHASE · 온보딩은 low 유지).
+  TSC 재실측: high 396 · medium **13** · low **6**(거버넌스 4 → ARCH · 전략 2 → PHASE). 남은 low = 온보딩·여행 기금·버그바운티 기금·설문·하위 README 2 — 의도된 자리 없음.
+  사본 재실측: 관례 디렉터리 74/74 불변 · 평평한 트리 medium 34 → 32/65(정책·전략 낱말이 든 2건이 새 규칙으로 끌림 — medium 이라 사람 검토).
+- **결함 2(같은 실측)**: 날짜뿐인 파일명의 slug 가 숫자로 시작/소실(`2015-05-27` → `27`) → **TSC high 396 행의 제안 이름이 전부 ZFS 무효였다**(픽스처는 못 잡음). 사람 판정(자리·ID 수정률 0%)은 유효하나 이름은 틀렸다.
+  수정: 선행 숫자는 뒤에 단어가 있을 때만 떼고, 숫자로 시작하면 `doc_` 접두(`MTG-01_doc_2015_05_27.md`). 재발 방지: `plan()` 이 제안 이름의 ZFS 유효성을 스스로 세어 요약에 싣는다(`invalidNames`) — TSC 0/408.

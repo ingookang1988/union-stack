@@ -10,9 +10,16 @@ function check(label, cond) { if (cond) pass++; else { fail++; console.error(`FA
 
 // --- 규칙의 정본 = MIGRATION.md 매핑표: 표의 모든 자리에 규칙이 있고, 표에 없는 규칙은 없다 ---
 const homes = migrationHomes(fs.readFileSync(path.join(__dirname, '..', 'MIGRATION.md'), 'utf8'));
-check('매핑표 판독: 17행', homes.length === 17);
+check('매핑표 판독: 18행(거버넌스 행 신설 2026-10-20)', homes.length === 18);
 check('표의 모든 자리에 규칙 1개 이상', homes.every(h => RULES.some(r => r.home === h)));
 check('표에 없는 규칙 없음', RULES.every(r => homes.includes(r.home)));
+// 같은 자리를 두 행이 쓰면(ARCH: 아키텍처 규범 · 거버넌스) 규칙도 둘 — 행 수 = 규칙 수(자리별)
+check('자리별 행 수 = 규칙 수', [...new Set(homes)].every(h => homes.filter(x => x === h).length === RULES.filter(r => r.home === h).length));
+{
+  const md = fs.readFileSync(path.join(__dirname, '..', 'MIGRATION.md'), 'utf8');
+  check('표: 거버넌스 행 → ARCH (인간 승인 2026-10-20)', /\|\s*governance[^|]*\|\s*`\.union-stack\/architecture\/ARCH-\*`/i.test(md));
+  check('표: 로드맵 행에 전략·전략 이니셔티브', /\|\s*roadmap \/ milestones \/ strategy[^|]*\|\s*`\.union-stack\/project\/roadmap\/PHASE-\*`/i.test(md));
+}
 
 // --- 분류기: 경로 + 헤딩 → 도메인 · 확신도 ---
 const C = (p, hs = []) => classify(p, hs);
@@ -42,6 +49,13 @@ check('하위 README → IDENTITY 아님', C('votes/README.md').home !== '.union
 check('루트 README → IDENTITY(파일명 신호)', C('README.md').home === '.union-stack/project/IDENTITY*.md');
 check('vision·scope·glossary 는 어디서든 IDENTITY', C('docs/vision.md').home === '.union-stack/project/IDENTITY*.md' && C('docs/glossary.md').home === '.union-stack/project/IDENTITY*.md');
 check('하위 README 라도 디렉터리 규칙은 그대로(docs/meetings/README → MTG)', C('docs/meetings/README.md', ['Meeting notes index']).domain === 'MTG');
+// OSS 실측(nodejs/TSC) 자리 공백 → 거버넌스 행 · 로드맵 행 확장(인간 승인 2026-10-20)
+check('헌장 → ARCH(거버넌스)', C('TSC-Charter.md', ['Section 1. Guiding Principle']).domain === 'ARCH' && C('TSC-Charter.md').label === '거버넌스·정책');
+check('행동 강령·모더레이션 정책 → ARCH', C('CODE_OF_CONDUCT.md').domain === 'ARCH' && C('Moderation-Policy.md', ['Moderation Policy']).domain === 'ARCH');
+check('working groups → ARCH', C('WORKING_GROUPS.md', ['Working Groups']).domain === 'ARCH');
+check('governance/ 디렉터리 + 헤딩 → ARCH high', C('docs/governance/voting.md', ['Voting policy']).confidence === 'high' && C('docs/governance/voting.md', ['Voting policy']).domain === 'ARCH');
+check('전략 이니셔티브 → PHASE', C('Strategic-Initiatives.md', ['Strategic Initiatives']).domain === 'PHASE' && C('OpenSSL-Strategy.md').domain === 'PHASE');
+check('온보딩 how-to 는 여전히 low(자리 없음 — 의도)', C('ONBOARDING.md', ['Onboarding']).confidence === 'low');
 check('한국어 헤딩도 신호(회의·참석자)', C('docs/x.md', ['회의록', '참석자']).domain === 'MTG');
 
 // --- ID 부여: 도메인별 연속 · 결정적 · ZFS 이름 유효 ---
@@ -57,6 +71,11 @@ check('to 파일명은 ZFS 유효', ided.filter(r => r.proposedId).every(r => is
 check('ID 없는 자리(IDENTITY)는 proposedId null · to = 그 자리', byFrom('README.md').proposedId === null && byFrom('README.md').to === '.union-stack/project/IDENTITY*.md');
 check('low 행은 to 없음(매핑 안 함)', byFrom('misc/random.md').to === null);
 check('결정적(같은 입력 → 같은 출력)', JSON.stringify(assignIds(rows)) === JSON.stringify(ided));
+// OSS 실측: 날짜 파일명의 날짜가 사라졌다(meetings/2015-05-27.md → MTG-01_27) — 선행 숫자는 뒤에 단어가 있을 때만(ADR 서수) 뗀다
+const { slugOf } = require('./adopt-map');
+check('날짜 파일명은 날짜를 지킨다(ZFS slug 는 글자로 시작 → doc_ 접두)', slugOf('meetings/2015-05-27.md') === 'doc_2015_05_27' && isValidName(`MTG-01_${slugOf('meetings/2015-05-27.md')}.md`));
+check('ADR 서수는 뗀다(0001-use-postgres → use_postgres)', slugOf('docs/decisions/0001-use-postgres.md') === 'use_postgres');
+check('날짜+단어는 날짜를 뗀다(2026-01-kickoff → kickoff)', slugOf('docs/meetings/2026-01-kickoff.md') === 'kickoff');
 check('비ASCII 파일명도 유효한 slug', isValidName(path.posix.basename(assignIds([{ from: 'docs/meetings/킥오프.md', ...C('docs/meetings/킥오프.md') }])[0].to)));
 
 // --- adapter.json 초안: sections(H2 별칭 후보) · statusMap(status 값) · localOwned(scripts/) ---
@@ -90,6 +109,8 @@ try {
   check('plan: 본문은 결과에 없다(헤딩만)', !JSON.stringify(p).includes('secret body text'));
   check('plan: 작업 문서 → WO · adapter 초안에 sections·statusMap', p.rows.find(r => r.from === 'docs/tasks/T-1.md').domain === 'WO' && p.adapter.statusMap['In progress'] === 'Active' && p.adapter.sections['목표'].includes('Objective'));
   check('plan: 요약 수(high·medium·low)', p.summary.high + p.summary.medium + p.summary.low === 4);
+  // OSS 실측: 날짜 회의록 396 행의 제안 이름이 전부 ZFS 무효였는데 픽스처 테스트가 못 잡았다 → plan 이 스스로 센다
+  check('plan: 제안 이름 ZFS 무효 수를 요약에 싣는다(0)', p.summary.invalidNames === 0);
   check('대상 쓰기 0(git status 불변)', execFileSync('git', ['status', '--porcelain'], { cwd: tmp, encoding: 'utf8' }) === before);
   check('.union-stack 이 이미 있으면 거부(이식 대상 아님)', (() => { fs.mkdirSync(path.join(tmp, '.union-stack')); try { plan(tmp); return false; } catch (e) { return /이미/.test(e.message); } })());
 } finally { fs.rmSync(tmp, { recursive: true, force: true }); }

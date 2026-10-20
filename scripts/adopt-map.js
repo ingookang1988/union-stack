@@ -16,12 +16,17 @@ const RULES = [
     path: /(^|\/)(adrs?|decisions?)(\/|$)/i, head: /^(status|context|decision|consequences)$|결정/i },
   { home: '.union-stack/architecture/infra/INF-*', label: '인프라 결정', kind: 'id', domain: 'INF', dir: '.union-stack/architecture/infra',
     path: /(^|\/)(infra|infrastructure|deploy(ment)?|ops|database)\b|\bdb\b/i, head: /deploy|database|infra|배포|인프라|데이터베이스/i },
+  // 전략·전략 이니셔티브 포함(인간 승인 2026-10-20 — OSS 실측 nodejs/TSC 의 Strategic-Initiatives·OpenSSL-Strategy 가 자리 없음이었다).
   { home: '.union-stack/project/roadmap/PHASE-*', label: '로드맵', kind: 'id', domain: 'PHASE', dir: '.union-stack/project/roadmap',
-    path: /roadmap|milestones?/i, head: /roadmap|milestone|phase|로드맵|마일스톤/i },
+    path: /roadmap|milestones?|strateg(y|ic|ies)/i, head: /roadmap|milestone|phase|strateg|initiative|로드맵|마일스톤|전략/i },
   { home: '.union-stack/project/HISTORY.md', label: '전략 분기점', kind: 'file', domain: null,
     path: /(^|\/)(history|pivots?)[^/]*\.md$/i, head: /pivot|why we changed|direction change|전략|방향 전환|분기점/i },
   { home: '.union-stack/architecture/ARCH-*', label: '아키텍처 규범', kind: 'id', domain: 'ARCH', dir: '.union-stack/architecture',
     path: /(^|\/)(architecture|arch|design)(\/|[-_.]|$)/i, head: /architecture|layer|dependenc|아키텍처|계층|의존/i },
+  // 거버넌스·정책 = 과정의 규범(당위) — ARCH-00(네이밍 규범)이 선례(인간 승인 2026-10-20, OSS 실측 nodejs/TSC 의 Charter·CoC·Moderation-Policy 자리 공백).
+  { home: '.union-stack/architecture/ARCH-*', label: '거버넌스·정책', kind: 'id', domain: 'ARCH', dir: '.union-stack/architecture',
+    path: /governance|charter|polic(y|ies)|code[-_ ]?of[-_ ]?conduct|working[-_ ]?groups?|bylaws?/i,
+    head: /charter|governance|\bpolicy\b|policies|code of conduct|moderation|working groups?|bylaws?|헌장|거버넌스|정책|행동 강령/i },
   { home: '.union-stack/plan/meetings/MTG-*', label: '회의록', kind: 'id', domain: 'MTG', dir: '.union-stack/plan/meetings',
     path: /(^|\/)(meetings?|minutes)(\/|[-_.]|$)/i, head: /meeting|attendees|agenda|minutes|회의|참석/i },
   { home: '.union-stack/reference/lessons/LSN-*', label: '교훈·포스트모템', kind: 'id', domain: 'LSN', dir: '.union-stack/reference/lessons',
@@ -100,8 +105,11 @@ function classify(file, headings = []) {
 /** 파일명 → ZFS slug(ASCII snake). 비ASCII 만이면 경로 해시(결정적). */
 function slugOf(file) {
   const base = path.posix.basename(file).replace(/\.md$/i, '');
-  const s = base.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').replace(/^(\d+_)+/, '');
-  return s || `doc_${crypto.createHash('sha1').update(file).digest('hex').slice(0, 6)}`;
+  // 선행 숫자 묶음(ADR 서수 0001- · 날짜 2026-01-)은 **뒤에 단어가 있을 때만** 뗀다 — 날짜뿐인 회의록 이름(2015-05-27)은 날짜가 곧 이름이다(OSS 실측: MTG-01_27 로 날짜 소실).
+  const snake = base.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+  const s = /^(\d+_)+[a-z]/.test(snake) ? snake.replace(/^(\d+_)+/, '') : snake;
+  if (!s) return `doc_${crypto.createHash('sha1').update(file).digest('hex').slice(0, 6)}`;
+  return /^\d/.test(s) ? `doc_${s}` : s;   // ZFS slug 는 글자로 시작한다
 }
 
 /** ID·자리 부여(순수): 경로 정렬 순으로 도메인별 01, 02, … low 행은 to 없음. */
@@ -178,8 +186,11 @@ function plan(root) {
   const rows = assignIds(docs.map(d => ({ from: d.file, ...classify(d.file, d.headings) })));
   const workDocs = docs.filter(d => rows.find(r => r.from === d.file && r.domain === 'WO'));
   const adapter = draftAdapter({ workDocs, statuses: docs.map(d => d.status), scripts });
-  const summary = { high: 0, medium: 0, low: 0 };
+  const summary = { high: 0, medium: 0, low: 0, invalidNames: 0 };
   for (const r of rows) summary[r.confidence]++;
+  // 제안 이름의 ZFS 유효성을 스스로 센다 — OSS 실측에서 날짜 회의록 396 행이 전부 무효였는데 픽스처가 못 잡았다([WO-29a-11]).
+  const { isValidName } = require('./zfs_util');
+  for (const r of rows) if (r.proposedId && !isValidName(path.posix.basename(r.to))) { summary.invalidNames++; r.invalidName = true; }
   return { rows, adapter, summary };
 }
 

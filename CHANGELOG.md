@@ -12,6 +12,12 @@ design, see [`DESIGN_RATIONALE.md`](./DESIGN_RATIONALE.md). Entries marked **⚠
 action in already-adopted projects.
 
 ## [Unreleased]
+- **MIGRATION.md mapping table: governance gets a home; roadmap includes strategy.** New row: governance / charter / policies /
+  code of conduct / working-group structure → `.union-stack/architecture/ARCH-*`, as process norms (the same plane as the ZFS naming
+  norm). The roadmap row now also covers strategy and strategic initiatives. Both came from running `init --adopt` on a public
+  project (nodejs/TSC), where nine governance docs had no home. `init --adopt` follows the table. Fixes from the same run: only the
+  repo-root README maps to IDENTITY; date-only file names keep their date in the proposed slug, and the slug starts with a letter, so
+  proposed names are valid ZFS names (the run had produced 396 invalid ones). The summary now counts invalid proposed names. Already-adopted projects need no migration.
 - **PRO-29 ③(a) — `init --adopt <repo>`: a filled-in migration map for an existing project (dry-run).** It reads only paths, file
   names and heading lines of the target's Markdown docs (no bodies) and proposes, per document, a home on the plane, a ZFS ID and a
   confidence (high = directory or file name and a heading agree; medium = one signal; low = no mapping, listed for a human). It also

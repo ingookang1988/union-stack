@@ -137,7 +137,7 @@ function adoptMain(argv, get) {
   if (!target || target.startsWith('--')) { console.error('사용법: node scripts/init.js --adopt <기존 프로젝트 경로> [--out plan.json]'); return 2; }
   let p;
   try { p = require('./adopt-map').plan(path.resolve(target)); } catch (e) { console.error(`init --adopt: ${e.message}`); return 2; }
-  console.log(`# union-stack 이식 매핑안(dry-run) — 문서 ${p.rows.length} · high ${p.summary.high} · medium ${p.summary.medium} · low ${p.summary.low}\n`);
+  console.log(`# union-stack 이식 매핑안(dry-run) — 문서 ${p.rows.length} · high ${p.summary.high} · medium ${p.summary.medium} · low ${p.summary.low}${p.summary.invalidNames ? ` · ⚠ ZFS 무효 이름 ${p.summary.invalidNames}` : ''}\n`);
   for (const r of p.rows) console.log(`  ${r.confidence.padEnd(6)} ${r.from} → ${r.to || '(매핑 안 함)'}  — ${r.why}`);
   const a = p.adapter;
   console.log(`\n  adapter.json 초안: sections ${Object.keys(a.sections).length}절 · statusMap ${Object.keys(a.statusMap).length}값${a.unmappedStatus.length ? ` (모르는 status: ${a.unmappedStatus.join(', ')})` : ''} · localOwned ${a.localOwned.length}`);

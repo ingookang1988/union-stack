@@ -14,9 +14,10 @@ Copy this, fill the right column, then move files.
 | Your existing artifact | union-stack home | Tier |
 |---|---|---|
 | project README / vision / scope / glossary | `.union-stack/project/IDENTITY*.md` | Schema |
-| roadmap / milestones | `.union-stack/project/roadmap/PHASE-*` | Schema |
+| roadmap / milestones / strategy & strategic initiatives | `.union-stack/project/roadmap/PHASE-*` | Schema |
 | strategic pivots / "why we changed direction" | `.union-stack/project/HISTORY.md` | Schema/Raw |
 | architecture rules / layering / dependency norms | `.union-stack/architecture/ARCH-*` | Schema |
+| governance / charter / policies / code of conduct / working-group structure | `.union-stack/architecture/ARCH-*` (process norms) | Schema |
 | deploy / DB / infra **decisions** | `.union-stack/architecture/infra/INF-*` | Schema |
 | feature plans / requirements / intent | `.union-stack/plan/PLAN-*` | Schema |
 | pre-plan discussion / meeting notes | `.union-stack/plan/meetings/MTG-*` | append-only |
