@@ -2,10 +2,10 @@
 ---
 id: WO-29a-9
 title: 이식기 ① 키트 미지원 2건 — scripts/union-stack/ 하위 설치(루트 탐색) + drop-template-bits 의 상류 전용 삭제 — [PRO-29] ③(c)
-status: Active
+status: Verifying
 parent: PRO-29
-evidence: "none — 착수 전"
-closed_by: []
+evidence: "① 구현 완료(2026-10-20, 테스트 먼저): init --drop-template-bits 가 상류 전용 스크립트(ship-manifest upstreamOnly)·그 TOOL 카드를 지우고 tools-index 재생성. rcpt:n/a — init.test 30(+5) · 드롭 사본 스위트 39/39 · 스위트 51 중 49(실패 2 = fdt spike) · 팔 7 형상(env 바 강화). ② 하위 설치는 규모 실측(루트 60곳 · 경로 문자열 66곳) 뒤 인간 판정으로 [WO-29a-10] 보류"
+closed_by: [.union-stack/reference/tools/TOOL-06_init.md, .union-stack/proposals/PRO-29_connection_closure.md]
 version: 1.0
 ---
 # [WO-29a-9] 이식기 ① 키트 미지원 2건 — scripts/union-stack/ 하위 설치(루트 탐색) + drop-template-bits 의 상류 전용 삭제 — [PRO-29] ③(c)
@@ -27,4 +27,10 @@ version: 1.0
 - 카드 [TOOL-06]·[TOOL-21]·[TOOL-35]·[TOOL-26] · MIGRATION("하위 설치") · CHANGELOG.
 
 ## 증거
-- 닫을 때 frontmatter `evidence:` 에 값 또는 `none — 이유`(선언 검사가 있으면 `rcpt:<name>@<sha>`). 상위 축 흔적은 `closed_by:`.
+- **범위 축소(인간 판정 2026-10-20)**: 이 WO 는 ① drop-template-bits 만으로 닫는다. ② 하위 설치는 [WO-29a-10] 으로 보류 — 트리거 = ③(a) 이식에서 `localOwned` 로 흡수되지 않는 `scripts/` 충돌.
+- ① 테스트: init +5(상류 전용 삭제 · drop 없으면 유지 · 매니페스트 없음 현행 · 그 카드 삭제(배송 도구 카드 유지) · 중복 삭제 1회). 드롭 사본 실측: 삭제 54 · 스위트 39/39 · tool-linter·tools-index 통과 · template-update 상류 전용 사본 INFO 0.
+- ① 구현 중 발견 2: 상류 전용 도구의 **카드**가 남아 tool-linter red → 카드도 삭제 · AGENTS.md tools-index 생성 블록이 낡음 → 드롭 적용 뒤 재생성(앵커 시딩 전).
+- 팔 갱신: env 형상 바 "로컬 사본은 INFO" 가 사본 > 0 을 요구했다 → "드롭 뒤 사본 0" + "심은 사본 1 = INFO" 로 강화(손 이식 어답터 경로 유지).
+- **② 규모 실측(착수 전 중단의 근거)**: 루트 계산 `path.resolve(__dirname, '..')` **60곳 · 43파일**(+ mcp-server·upward-fetch 변형 2 · `require('../package.json')` 1) ·
+  형제 스크립트 경로 문자열(`'scripts/x.js'` · `join(root, 'scripts', …)`) **66곳** — ci.js 게이트 체인 · health 의 template-update 호출 · 키트·ship-manifest 경로 · 카드 `impl:`(tool-linter) · 훅 · package.json · 워크플로.
+  루트 헬퍼 + 60곳 치환은 기계적이지만 66곳 + 배송 매핑(`scriptsDir`)은 배송 표면 대부분을 건드린다. 현 어답터 3곳의 충돌은 localOwned·localForked·upstreamIgnored 로 이미 흡수.

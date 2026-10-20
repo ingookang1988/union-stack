@@ -202,17 +202,19 @@ function envArm(ws) {
   }
   bars.push({ name: '무JS 도달성', ok: reach.ok, detail: reach.why });
   // [PRO-24] ①(c) — init 뒤 사본에서 상류 전용 스크립트가 배송 계획(buildPlan)에 들어가지 않는다(§6 성공 바). 네트워크 없이 합성 상류 맵으로.
+  // [WO-29a-9] drop-template-bits 가 상류 전용 사본을 지운다 → 드롭 직후 남은 사본 0 이어야 한다. 손 이식 어답터의 사본 INFO 경로는 사본 1개를 심어 계속 확인한다.
   const plan = run(ws, ['-e', [
-    "const t=require('./scripts/template-update');const lo=t.localCtx('.');",
+    "const fs=require('fs');const t=require('./scripts/template-update');let lo=t.localCtx('.');",
     "const up={'scripts/eval.js':'x1','scripts/adopter-arm.js':'x2','scripts/adopter-census.js':'x3','scripts/health.js':'y1'};",
-    "const p=t.buildPlan(t.localTemplateFiles('.',lo),up,{local:lo,upstream:{manifest:lo.manifest,localOwned:lo.localOwned}});",
-    "console.log(JSON.stringify({ns:p.newSync,cs:p.changedSync,uol:p.upstreamOnlyLocal.length,manifest:!!lo.manifest}));",
+    "const P=()=>t.buildPlan(t.localTemplateFiles('.',lo),up,{local:lo,upstream:{manifest:lo.manifest,localOwned:lo.localOwned}});",
+    "const p0=P();fs.writeFileSync('scripts/eval.js','// planted copy\\n');lo=t.localCtx('.');const p=P();fs.rmSync('scripts/eval.js');",
+    "console.log(JSON.stringify({ns:p.newSync,cs:p.changedSync,uol0:p0.upstreamOnlyLocal.length,uol:p.upstreamOnlyLocal.length,manifest:!!lo.manifest}));",
   ].join('')]);
   let pj = null;
   try { pj = JSON.parse(plan.stdout.trim().split('\n').pop()); } catch { /* null */ }
   const leaked = pj ? [...pj.ns, ...pj.cs].filter(f => /eval|adopter-arm|adopter-census/.test(f)) : null;
-  bars.push({ name: '상류 전용 스크립트가 배송 계획(buildPlan)에서 빠진다 · 로컬 사본은 INFO', ok: !crashed(plan) && !!pj && pj.manifest && leaked.length === 0 && pj.cs.includes('scripts/health.js') && pj.uol > 0,
-    detail: pj ? `매니페스트 ${pj.manifest} · 누출 ${leaked.length} · health 갱신 ${pj.cs.includes('scripts/health.js')} · 남은 사본 ${pj.uol}` : `exit ${plan.code} · 측정 실패` });
+  bars.push({ name: '상류 전용 스크립트가 배송 계획(buildPlan)에서 빠진다 · 드롭 뒤 남은 사본 0 · 심은 사본은 INFO', ok: !crashed(plan) && !!pj && pj.manifest && leaked.length === 0 && pj.cs.includes('scripts/health.js') && pj.uol0 === 0 && pj.uol === 1,
+    detail: pj ? `매니페스트 ${pj.manifest} · 누출 ${leaked.length} · health 갱신 ${pj.cs.includes('scripts/health.js')} · 드롭 뒤 사본 ${pj.uol0} · 심은 사본 ${pj.uol}` : `exit ${plan.code} · 측정 실패` });
   return bars;
 }
 
