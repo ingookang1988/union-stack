@@ -2,9 +2,9 @@
 ---
 id: WO-29a-11
 title: 이식기 ② init --adopt dry-run — 기존 문서 트리 → 매핑안(자리·ZFS ID·확신도) + adapter.json 초안 — [PRO-29] ③(a)
-status: Verifying
+status: Closed
 parent: PRO-29
-evidence: "구현 완료(2026-10-20, 테스트 먼저): adopt-map(매핑표 1:1 규칙 · 디렉터리3/파일명1/헤딩1 점수 · ID 부여 · adapter 초안 · 읽기 전용 스캔) + init --adopt [--out]. rcpt:n/a — adopt-map.test 36 · init.test 36(+6) · 스위트 52 중 50(실패 2 = fdt spike) · 팔 7 형상. 실측: 관례 디렉터리 74/74 · 평평한 docs high 1/6 → 임계 판정(high = 디렉터리+헤딩, 2026-10-20) 뒤 high 0 · medium 34/65 · adopt-map.test 57. OSS 실측 nodejs/TSC(415문서): high 396 사람 판정 수정률 0%(2026-10-20) — 성공 바 충족 · 매핑표 개정(거버넌스·전략) 뒤 low 12 → 6 · 제안 이름 ZFS 무효 396 → 0"
+evidence: "구현 완료(2026-10-20, 테스트 먼저): adopt-map(매핑표 1:1 규칙 · 디렉터리3/파일명1/헤딩1 점수 · ID 부여 · adapter 초안 · 읽기 전용 스캔) + init --adopt [--out]. rcpt:n/a — adopt-map.test 36 · init.test 36(+6) · 스위트 52 중 50(실패 2 = fdt spike) · 팔 7 형상. 실측: 관례 디렉터리 74/74 · 평평한 docs high 1/6 → 임계 판정(high = 디렉터리+헤딩, 2026-10-20) 뒤 high 0 · medium 34/65 · adopt-map.test 57. OSS 실측 nodejs/TSC(415문서): high 396 사람 판정 수정률 0%(2026-10-20) — 성공 바 충족 · 매핑표 개정(거버넌스·전략) 뒤 low 12 → 6 · 제안 이름 ZFS 무효 396 → 0 · Closed 판정 2026-10-20(인간 승인)"
 closed_by: [.union-stack/reference/tools/TOOL-06_init.md, .union-stack/proposals/PRO-29_connection_closure.md]
 version: 1.0
 ---
