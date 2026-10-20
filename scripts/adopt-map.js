@@ -45,7 +45,8 @@ const RULES = [
   { home: '.union-stack/spike/', label: '실험', kind: 'dir', domain: null, dir: '.union-stack/spike',
     path: /(^|\/)(spikes?|experiments?|poc|prototypes?|scratch)(\/|[-_.]|$)/i, head: /spike|experiment|proof of concept|실험|프로토타입/i },
   { home: '.union-stack/project/IDENTITY*.md', label: '정체성(README·비전)', kind: 'file', domain: null,
-    path: /(^|\/)(readme|vision|scope|glossary)[^/]*\.md$/i, head: /overview|vision|scope|glossary|비전|범위|용어/i },
+    // README 는 **레포 루트의 것만** 정체성이다(root) — OSS 실측(nodejs/TSC): votes/README.md 가 IDENTITY 로 갔다. vision·scope·glossary 는 어디서든.
+    path: /(^|\/)(vision|scope|glossary)[^/]*\.md$/i, root: /^readme[^/]*\.md$/i, head: /overview|vision|scope|glossary|비전|범위|용어/i },
 ];
 
 /** MIGRATION.md 매핑표 → 자리 목록(둘째 열의 첫 백틱 토큰, 순수). */
@@ -84,7 +85,8 @@ function classify(file, headings = []) {
   const dir = `${path.posix.dirname(file)}/`, name = path.posix.basename(file);
   let best = null;
   for (const r of RULES) {
-    const d = dir !== './' && r.path.test(dir), n = r.path.test(name), h = headings.some(x => r.head.test(x));
+    const d = dir !== './' && r.path.test(dir), h = headings.some(x => r.head.test(x));
+    const n = r.path.test(name) || (!!r.root && dir === './' && r.root.test(name));
     const score = (d ? 3 : 0) + (n ? 1 : 0) + (h ? 1 : 0);
     if (score && (!best || score > best.score)) best = { r, d, n, h, score };
   }

@@ -4,7 +4,7 @@ id: WO-29a-11
 title: 이식기 ② init --adopt dry-run — 기존 문서 트리 → 매핑안(자리·ZFS ID·확신도) + adapter.json 초안 — [PRO-29] ③(a)
 status: Verifying
 parent: PRO-29
-evidence: "구현 완료(2026-10-20, 테스트 먼저): adopt-map(매핑표 1:1 규칙 · 디렉터리3/파일명1/헤딩1 점수 · ID 부여 · adapter 초안 · 읽기 전용 스캔) + init --adopt [--out]. rcpt:n/a — adopt-map.test 36 · init.test 36(+6) · 스위트 52 중 50(실패 2 = fdt spike) · 팔 7 형상. 실측: 관례 디렉터리 74/74 · 평평한 docs high 1/6 → 임계 판정(high = 디렉터리+헤딩, 2026-10-20) 뒤 high 0 · medium 34/65 · adopt-map.test 40. OSS 레포 선정 대기"
+evidence: "구현 완료(2026-10-20, 테스트 먼저): adopt-map(매핑표 1:1 규칙 · 디렉터리3/파일명1/헤딩1 점수 · ID 부여 · adapter 초안 · 읽기 전용 스캔) + init --adopt [--out]. rcpt:n/a — adopt-map.test 36 · init.test 36(+6) · 스위트 52 중 50(실패 2 = fdt spike) · 팔 7 형상. 실측: 관례 디렉터리 74/74 · 평평한 docs high 1/6 → 임계 판정(high = 디렉터리+헤딩, 2026-10-20) 뒤 high 0 · medium 34/65 · adopt-map.test 44. OSS 실측 nodejs/TSC(415문서): high 396 사람 판정 수정률 0%(2026-10-20) — 성공 바 충족"
 closed_by: [.union-stack/reference/tools/TOOL-06_init.md, .union-stack/proposals/PRO-29_connection_closure.md]
 version: 1.0
 ---
@@ -34,3 +34,6 @@ version: 1.0
 - **사람 판정 재료(§7-4)**: ① 확신도 임계 — 잠정값(파일명|디렉터리 + 헤딩 = high)으로는 (b) 가 성공 바(high 사람 수정률 ≤ 20%)를 못 넘는다. 대안 = high 를 **디렉터리+헤딩**으로만 한정(평평한 트리는 high 0 · 전부 medium 검토).
   ② (a) 는 내가 고른 디렉터리 이름이라 자기충족적 — 실제 OSS 레포 1곳 실측이 필요하다(클론은 승인 뒤).
 - **임계 판정 반영(2026-10-20)**: high = 디렉터리 + 헤딩만. 테스트 +4(README·평평한 handoff = medium · 디렉터리+헤딩 = high · 디렉터리+파일명 = medium). 재실측: (a) high 50/50 · medium 24/24 · (b) high **0/0** · medium 34/65 · low 9 — 평평한 트리는 전부 사람 검토로 간다.
+- **OSS 실측 — nodejs/TSC**(공개 · 3.7MB · md 415 = meetings/ 400 · 루트 11 · votes 2 · Streaming 1 · surveys 1; shallow clone 은 scratchpad, 대상 쓰기 0): high **396**(전부 날짜 회의록 → MTG, 디렉터리+헤딩) · medium 9 · low 10.
+  **사람 판정(2026-10-20): high 396 전부 정답 — 수정률 0%** → [PRO-29] ③ 성공 바 1 의 OSS 몫 충족. 한계: 한 디렉터리·한 문서 종류라 폭의 시험은 약하다.
+  드러난 것 3: ① **결함** 하위 README(votes/README.md 등 2)가 IDENTITY — 루트 README 만 정체성으로 고침(테스트 +4, 재실측 low 로 이동 · high 불변 · 사본 실측 불변) ② (how-to)가 헤딩으로 MTG — medium 이라 사람 검토 몫 ③ **자리 공백** 거버넌스·정책 문서 9(Charter·Moderation-Policy·CoC·Onboarding·Working Groups·전략 등)가 low — MIGRATION 매핑표에 행이 없다(행 추가는 사람 결정, 제안만).

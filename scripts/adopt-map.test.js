@@ -37,6 +37,11 @@ check('파일명+헤딩 → medium(README)', C('README.md', ['Overview']).confid
 check('파일명+헤딩 → medium(평평한 docs/handoff)', C('docs/handoff_notes.md', ['Handoff']).confidence === 'medium');
 check('디렉터리+헤딩 → high', C('docs/meetings/kickoff.md', ['Attendees']).confidence === 'high');
 check('디렉터리+파일명(헤딩 없음) → medium', C('docs/meetings/meeting_notes.md').confidence === 'medium');
+// OSS 실측(nodejs/TSC): 하위 디렉터리의 README(votes/README.md)가 IDENTITY 로 갔다 — 정체성 README 는 레포 루트 하나뿐이다
+check('하위 README → IDENTITY 아님', C('votes/README.md').home !== '.union-stack/project/IDENTITY*.md' && C('votes/initiateNewVote/README.md', ['How to start a vote']).home !== '.union-stack/project/IDENTITY*.md');
+check('루트 README → IDENTITY(파일명 신호)', C('README.md').home === '.union-stack/project/IDENTITY*.md');
+check('vision·scope·glossary 는 어디서든 IDENTITY', C('docs/vision.md').home === '.union-stack/project/IDENTITY*.md' && C('docs/glossary.md').home === '.union-stack/project/IDENTITY*.md');
+check('하위 README 라도 디렉터리 규칙은 그대로(docs/meetings/README → MTG)', C('docs/meetings/README.md', ['Meeting notes index']).domain === 'MTG');
 check('한국어 헤딩도 신호(회의·참석자)', C('docs/x.md', ['회의록', '참석자']).domain === 'MTG');
 
 // --- ID 부여: 도메인별 연속 · 결정적 · ZFS 이름 유효 ---
