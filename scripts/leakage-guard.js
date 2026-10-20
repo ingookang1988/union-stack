@@ -88,6 +88,7 @@ const METHODOLOGY = new Set([
   'WO-29a-9_w2_scripts_union_stack_drop_template_bits_pro_29_c.md',
   'WO-29a-10_scripts_union_stack_scriptsdir_pro_29_c.md',
   'WO-29a-11_init_adopt_dry_run_zfs_id_adapter_json_pro_29_a.md',
+  'WO-29a-12_init_adopt_apply_git_mv_1_pro_29_b.md',
   // 이 템플릿 자신의 개발에서 얻은 교훈([LSN-17]). 위탁 데이터 0이고, 더미로 만들면 선주입되는
   // *경고*가 경고이기를 그만둔다 — WO-10a-1 과 같은 근거로 마커 대신 등재로 닫는다.
   'LSN-17_shape_blind_spot.md',
